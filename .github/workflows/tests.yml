@@ -15,5 +15,13 @@ jobs:
         with:
           node-version: "20"
       - run: pip install pytest
+      # GitHub Actions' ubuntu-latest AppArmor policy blocks the unprivileged user namespace
+      # Chromium's sandbox needs; this opt-in escape hatch (unset by default, see check.sh) is
+      # only needed in a locked-down CI-style environment, not for normal/local use.
+      - name: Allow Chromium to run without a sandbox
+        run: |
+          echo '{"args": ["--no-sandbox"]}' > /tmp/puppeteer-config.json
       - run: python3 -m pytest tests/ -q
         working-directory: mermaid
+        env:
+          MERMAID_PUPPETEER_CONFIG: /tmp/puppeteer-config.json

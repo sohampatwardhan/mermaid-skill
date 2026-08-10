@@ -10,6 +10,11 @@
 #   check.sh -c 'flowchart TD; A-->B'    # inline code
 #
 # Exit 0 = renders cleanly. Non-zero = syntax/render error (message printed).
+#
+# Optional: set MERMAID_PUPPETEER_CONFIG to a puppeteer JSON config path (e.g.
+# {"args": ["--no-sandbox"]}) when the host can't grant Chromium a sandbox — some CI runners
+# (e.g. GitHub Actions' ubuntu-latest, whose AppArmor policy blocks unprivileged user
+# namespaces) need this. Unset by default; local/interactive use is unaffected.
 set -euo pipefail
 
 OUT=""; INPUT=""; CODE=""
@@ -55,7 +60,18 @@ fi
 VALIDATION_DEST="${TMPDIR_LOCAL}/validation.svg"
 ERRLOG="${TMPDIR_LOCAL}/err.log"
 
-if ! "${RUN[@]}" -i "${SRC}" -o "${VALIDATION_DEST}" >"${ERRLOG}" 2>&1; then
+# Portable helper (avoids expanding a possibly-empty array under `set -u`, which throws
+# "unbound variable" on bash 3.2 — macOS's default /usr/bin/bash — even though bash 4.4+
+# handles it fine).
+run_mmdc() {
+  if [ -n "${MERMAID_PUPPETEER_CONFIG:-}" ]; then
+    "${RUN[@]}" -i "${SRC}" -o "$1" -p "${MERMAID_PUPPETEER_CONFIG}"
+  else
+    "${RUN[@]}" -i "${SRC}" -o "$1"
+  fi
+}
+
+if ! run_mmdc "${VALIDATION_DEST}" >"${ERRLOG}" 2>&1; then
   echo "FAIL: Mermaid could not render the diagram."
   echo "----- mermaid-cli output -----"
   cat "${ERRLOG}"
@@ -81,7 +97,7 @@ if [ -n "${OUT}" ]; then
   case "${OUT}" in
     *.svg) cp "${VALIDATION_DEST}" "${OUT}" ;;
     *)
-      if ! "${RUN[@]}" -i "${SRC}" -o "${OUT}" >"${ERRLOG}" 2>&1; then
+      if ! run_mmdc "${OUT}" >"${ERRLOG}" 2>&1; then
         echo "FAIL: Mermaid validated as SVG but could not write ${OUT}."
         cat "${ERRLOG}"
         exit 1
