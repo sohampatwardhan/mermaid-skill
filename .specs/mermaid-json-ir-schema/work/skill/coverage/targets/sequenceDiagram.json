@@ -1,0 +1,474 @@
+{
+  "entries": [
+    {
+      "constructId": "actor.id",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/actor/id",
+      "presence": "optional",
+      "schemaRef": "schema/targets/sequenceDiagram.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.sequence_diagram.SPEC",
+      "testIds": [
+        "test_sequence_diagram.test_minimal",
+        "test_sequence_diagram.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "actor.kind",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/actor/kind",
+      "presence": "optional",
+      "schemaRef": "schema/targets/sequenceDiagram.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.sequence_diagram.SPEC",
+      "testIds": [
+        "test_sequence_diagram.test_minimal",
+        "test_sequence_diagram.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "actor.alias",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/actor/alias",
+      "presence": "optional",
+      "schemaRef": "schema/targets/sequenceDiagram.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.sequence_diagram.SPEC",
+      "testIds": [
+        "test_sequence_diagram.test_minimal",
+        "test_sequence_diagram.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "actor.externalAlias",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/actor/externalAlias",
+      "presence": "optional",
+      "schemaRef": "schema/targets/sequenceDiagram.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.sequence_diagram.SPEC",
+      "testIds": [
+        "test_sequence_diagram.test_minimal",
+        "test_sequence_diagram.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "actor.create",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/actor/create",
+      "presence": "optional",
+      "schemaRef": "schema/targets/sequenceDiagram.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.sequence_diagram.SPEC",
+      "testIds": [
+        "test_sequence_diagram.test_minimal",
+        "test_sequence_diagram.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "actor.destroy",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/actor/destroy",
+      "presence": "optional",
+      "schemaRef": "schema/targets/sequenceDiagram.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.sequence_diagram.SPEC",
+      "testIds": [
+        "test_sequence_diagram.test_minimal",
+        "test_sequence_diagram.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "box.label",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/box/label",
+      "presence": "optional",
+      "schemaRef": "schema/targets/sequenceDiagram.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.sequence_diagram.SPEC",
+      "testIds": [
+        "test_sequence_diagram.test_minimal",
+        "test_sequence_diagram.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "box.color",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/box/color",
+      "presence": "optional",
+      "schemaRef": "schema/targets/sequenceDiagram.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.sequence_diagram.SPEC",
+      "testIds": [
+        "test_sequence_diagram.test_minimal",
+        "test_sequence_diagram.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "message.from",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/message/from",
+      "presence": "optional",
+      "schemaRef": "schema/targets/sequenceDiagram.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.sequence_diagram.SPEC",
+      "testIds": [
+        "test_sequence_diagram.test_minimal",
+        "test_sequence_diagram.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "message.to",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/message/to",
+      "presence": "optional",
+      "schemaRef": "schema/targets/sequenceDiagram.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.sequence_diagram.SPEC",
+      "testIds": [
+        "test_sequence_diagram.test_minimal",
+        "test_sequence_diagram.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "message.kind",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/message/kind",
+      "presence": "optional",
+      "schemaRef": "schema/targets/sequenceDiagram.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.sequence_diagram.SPEC",
+      "testIds": [
+        "test_sequence_diagram.test_minimal",
+        "test_sequence_diagram.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "message.label",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/message/label",
+      "presence": "optional",
+      "schemaRef": "schema/targets/sequenceDiagram.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.sequence_diagram.SPEC",
+      "testIds": [
+        "test_sequence_diagram.test_minimal",
+        "test_sequence_diagram.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "message.central",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/message/central",
+      "presence": "optional",
+      "schemaRef": "schema/targets/sequenceDiagram.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.sequence_diagram.SPEC",
+      "testIds": [
+        "test_sequence_diagram.test_minimal",
+        "test_sequence_diagram.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "activation.start",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/activation/start",
+      "presence": "optional",
+      "schemaRef": "schema/targets/sequenceDiagram.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.sequence_diagram.SPEC",
+      "testIds": [
+        "test_sequence_diagram.test_minimal",
+        "test_sequence_diagram.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "activation.end",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/activation/end",
+      "presence": "optional",
+      "schemaRef": "schema/targets/sequenceDiagram.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.sequence_diagram.SPEC",
+      "testIds": [
+        "test_sequence_diagram.test_minimal",
+        "test_sequence_diagram.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "note.position",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/note/position",
+      "presence": "optional",
+      "schemaRef": "schema/targets/sequenceDiagram.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.sequence_diagram.SPEC",
+      "testIds": [
+        "test_sequence_diagram.test_minimal",
+        "test_sequence_diagram.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "note.actors",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/note/actors",
+      "presence": "optional",
+      "schemaRef": "schema/targets/sequenceDiagram.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.sequence_diagram.SPEC",
+      "testIds": [
+        "test_sequence_diagram.test_minimal",
+        "test_sequence_diagram.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "note.text",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/note/text",
+      "presence": "optional",
+      "schemaRef": "schema/targets/sequenceDiagram.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.sequence_diagram.SPEC",
+      "testIds": [
+        "test_sequence_diagram.test_minimal",
+        "test_sequence_diagram.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "block.loop",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/block/loop",
+      "presence": "optional",
+      "schemaRef": "schema/targets/sequenceDiagram.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.sequence_diagram.SPEC",
+      "testIds": [
+        "test_sequence_diagram.test_minimal",
+        "test_sequence_diagram.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "block.opt",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/block/opt",
+      "presence": "optional",
+      "schemaRef": "schema/targets/sequenceDiagram.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.sequence_diagram.SPEC",
+      "testIds": [
+        "test_sequence_diagram.test_minimal",
+        "test_sequence_diagram.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "block.alt",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/block/alt",
+      "presence": "optional",
+      "schemaRef": "schema/targets/sequenceDiagram.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.sequence_diagram.SPEC",
+      "testIds": [
+        "test_sequence_diagram.test_minimal",
+        "test_sequence_diagram.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "block.par",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/block/par",
+      "presence": "optional",
+      "schemaRef": "schema/targets/sequenceDiagram.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.sequence_diagram.SPEC",
+      "testIds": [
+        "test_sequence_diagram.test_minimal",
+        "test_sequence_diagram.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "block.critical",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/block/critical",
+      "presence": "optional",
+      "schemaRef": "schema/targets/sequenceDiagram.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.sequence_diagram.SPEC",
+      "testIds": [
+        "test_sequence_diagram.test_minimal",
+        "test_sequence_diagram.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "block.break",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/block/break",
+      "presence": "optional",
+      "schemaRef": "schema/targets/sequenceDiagram.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.sequence_diagram.SPEC",
+      "testIds": [
+        "test_sequence_diagram.test_minimal",
+        "test_sequence_diagram.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "block.rect",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/block/rect",
+      "presence": "optional",
+      "schemaRef": "schema/targets/sequenceDiagram.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.sequence_diagram.SPEC",
+      "testIds": [
+        "test_sequence_diagram.test_minimal",
+        "test_sequence_diagram.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "autonumber.enabled",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/autonumber/enabled",
+      "presence": "optional",
+      "schemaRef": "schema/targets/sequenceDiagram.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.sequence_diagram.SPEC",
+      "testIds": [
+        "test_sequence_diagram.test_minimal",
+        "test_sequence_diagram.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "autonumber.start",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/autonumber/start",
+      "presence": "optional",
+      "schemaRef": "schema/targets/sequenceDiagram.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.sequence_diagram.SPEC",
+      "testIds": [
+        "test_sequence_diagram.test_minimal",
+        "test_sequence_diagram.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "autonumber.increment",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/autonumber/increment",
+      "presence": "optional",
+      "schemaRef": "schema/targets/sequenceDiagram.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.sequence_diagram.SPEC",
+      "testIds": [
+        "test_sequence_diagram.test_minimal",
+        "test_sequence_diagram.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "actorMenu.link",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/actorMenu/link",
+      "presence": "optional",
+      "schemaRef": "schema/targets/sequenceDiagram.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.sequence_diagram.SPEC",
+      "testIds": [
+        "test_sequence_diagram.test_minimal",
+        "test_sequence_diagram.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "actorMenu.links",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/actorMenu/links",
+      "presence": "optional",
+      "schemaRef": "schema/targets/sequenceDiagram.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.sequence_diagram.SPEC",
+      "testIds": [
+        "test_sequence_diagram.test_minimal",
+        "test_sequence_diagram.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "comments",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/comments",
+      "presence": "optional",
+      "schemaRef": "schema/targets/sequenceDiagram.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.sequence_diagram.SPEC",
+      "testIds": [
+        "test_sequence_diagram.test_minimal",
+        "test_sequence_diagram.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "accessibility.title",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/accessibility/title",
+      "presence": "optional",
+      "schemaRef": "schema/targets/sequenceDiagram.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.sequence_diagram.SPEC",
+      "testIds": [
+        "test_sequence_diagram.test_minimal",
+        "test_sequence_diagram.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "accessibility.description",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/accessibility/description",
+      "presence": "optional",
+      "schemaRef": "schema/targets/sequenceDiagram.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.sequence_diagram.SPEC",
+      "testIds": [
+        "test_sequence_diagram.test_minimal",
+        "test_sequence_diagram.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "source.title",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/source/title",
+      "presence": "optional",
+      "schemaRef": "schema/targets/sequenceDiagram.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.sequence_diagram.SPEC",
+      "testIds": [
+        "test_sequence_diagram.test_minimal",
+        "test_sequence_diagram.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "config.sequence.useMaxWidth",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/config/sequence/useMaxWidth",
+      "presence": "optional",
+      "schemaRef": "schema/targets/sequenceDiagram.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.sequence_diagram.SPEC",
+      "testIds": [
+        "test_sequence_diagram.test_minimal",
+        "test_sequence_diagram.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "config.sequence.wrap",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/config/sequence/wrap",
+      "presence": "optional",
+      "schemaRef": "schema/targets/sequenceDiagram.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.sequence_diagram.SPEC",
+      "testIds": [
+        "test_sequence_diagram.test_minimal",
+        "test_sequence_diagram.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "config.sequence.showSequenceNumbers",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/config/sequence/showSequenceNumbers",
+      "presence": "optional",
+      "schemaRef": "schema/targets/sequenceDiagram.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.sequence_diagram.SPEC",
+      "testIds": [
+        "test_sequence_diagram.test_minimal",
+        "test_sequence_diagram.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "config.sequence.mirrorActors",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/config/sequence/mirrorActors",
+      "presence": "optional",
+      "schemaRef": "schema/targets/sequenceDiagram.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.sequence_diagram.SPEC",
+      "testIds": [
+        "test_sequence_diagram.test_minimal",
+        "test_sequence_diagram.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "config.sequence.bottomMarginAdj",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/config/sequence/bottomMarginAdj",
+      "presence": "optional",
+      "schemaRef": "schema/targets/sequenceDiagram.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.sequence_diagram.SPEC",
+      "testIds": [
+        "test_sequence_diagram.test_minimal",
+        "test_sequence_diagram.test_deterministic"
+      ]
+    }
+  ],
+  "mermaidVersion": "11.16.1",
+  "target": "sequenceDiagram"
+}

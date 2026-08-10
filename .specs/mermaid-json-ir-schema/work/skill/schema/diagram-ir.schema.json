@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "diagram-ir.schema.json",
+  "title": "Mermaid JSON IR 1.0.0",
+  "oneOf": [
+    {
+      "$ref": "targets/flowchart.schema.json"
+    },
+    {
+      "$ref": "targets/mindmap.schema.json"
+    },
+    {
+      "$ref": "targets/block.schema.json"
+    },
+    {
+      "$ref": "targets/C4Context.schema.json"
+    },
+    {
+      "$ref": "targets/C4Container.schema.json"
+    },
+    {
+      "$ref": "targets/architecture-beta.schema.json"
+    },
+    {
+      "$ref": "targets/erDiagram.schema.json"
+    },
+    {
+      "$ref": "targets/classDiagram.schema.json"
+    },
+    {
+      "$ref": "targets/gantt.schema.json"
+    },
+    {
+      "$ref": "targets/stateDiagram-v2.schema.json"
+    },
+    {
+      "$ref": "targets/sequenceDiagram.schema.json"
+    },
+    {
+      "$ref": "targets/requirementDiagram.schema.json"
+    }
+  ]
+}

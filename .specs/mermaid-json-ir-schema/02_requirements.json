@@ -1,0 +1,644 @@
+{
+  "feature": "mermaid-json-ir-schema",
+  "requirements": [
+    {
+      "id": "1",
+      "name": "Canonical document contract",
+      "user_story": {
+        "role": "diagram producer",
+        "capability": "a versioned canonical JSON envelope",
+        "benefit": "every diagram can be interpreted against an explicit contract"
+      },
+      "criteria": [
+        {
+          "id": "R1.1",
+          "kind": "ubiquitous",
+          "trigger": null,
+          "actor": "Mermaid_IR_Tool",
+          "behavior": "require `schemaVersion`, `diagram`, `target`, and `content` in every canonical document"
+        },
+        {
+          "id": "R1.2",
+          "kind": "event-driven",
+          "trigger": "a canonical document names one of the 12 supported targets",
+          "actor": "Mermaid_IR_Tool",
+          "behavior": "validate it against that target's contract"
+        },
+        {
+          "id": "R1.3",
+          "kind": "unwanted",
+          "trigger": "a compulsory field is absent",
+          "actor": "Mermaid_IR_Tool",
+          "behavior": "reject the document with a diagnostic identifying the field's JSON Pointer"
+        },
+        {
+          "id": "R1.4",
+          "kind": "unwanted",
+          "trigger": "an ordinary object contains an unknown field",
+          "actor": "Mermaid_IR_Tool",
+          "behavior": "reject the document with a diagnostic identifying that field's JSON Pointer"
+        },
+        {
+          "id": "R1.5",
+          "kind": "optional-feature",
+          "trigger": "namespaced extensions are included",
+          "actor": "Mermaid_IR_Tool",
+          "behavior": "preserve their JSON values through normalization"
+        },
+        {
+          "id": "R1.6",
+          "kind": "unwanted",
+          "trigger": "an extension key is not namespaced",
+          "actor": "Mermaid_IR_Tool",
+          "behavior": "reject the extension with a diagnostic identifying its JSON Pointer"
+        }
+      ]
+    },
+    {
+      "id": "2",
+      "name": "Optional fields and defaults",
+      "user_story": {
+        "role": "diagram producer",
+        "capability": "optional fields and defaults to have explicit behavior",
+        "benefit": "omitted data never causes hidden or changing output"
+      },
+      "criteria": [
+        {
+          "id": "R2.1",
+          "kind": "event-driven",
+          "trigger": "an optional field with a declared default is absent",
+          "actor": "Mermaid_IR_Tool",
+          "behavior": "materialize that declared default in the normalized document"
+        },
+        {
+          "id": "R2.2",
+          "kind": "event-driven",
+          "trigger": "an optional field without a declared default is absent",
+          "actor": "Mermaid_IR_Tool",
+          "behavior": "leave that field absent from the normalized document"
+        },
+        {
+          "id": "R2.3",
+          "kind": "event-driven",
+          "trigger": "a normalized document is normalized again",
+          "actor": "Mermaid_IR_Tool",
+          "behavior": "return an equivalent document"
+        },
+        {
+          "id": "R2.4",
+          "kind": "event-driven",
+          "trigger": "normalization completes",
+          "actor": "Mermaid_IR_Tool",
+          "behavior": "leave the caller's input document unchanged"
+        },
+        {
+          "id": "R2.5",
+          "kind": "unwanted",
+          "trigger": "a supplied value conflicts with its field contract",
+          "actor": "Mermaid_IR_Tool",
+          "behavior": "reject the value instead of substituting a default"
+        }
+      ]
+    },
+    {
+      "id": "3",
+      "name": "Legacy compatibility and migration",
+      "user_story": {
+        "role": "existing IR consumer",
+        "capability": "valid legacy documents to migrate predictably",
+        "benefit": "adopting the schema does not break existing diagram generation"
+      },
+      "criteria": [
+        {
+          "id": "R3.1",
+          "kind": "event-driven",
+          "trigger": "a previously valid legacy document is received",
+          "actor": "Mermaid_IR_Tool",
+          "behavior": "convert it into an equivalent canonical document"
+        },
+        {
+          "id": "R3.2",
+          "kind": "event-driven",
+          "trigger": "a legacy document is migrated",
+          "actor": "Mermaid_IR_Tool",
+          "behavior": "preserve its previously generated diagram meaning"
+        },
+        {
+          "id": "R3.3",
+          "kind": "event-driven",
+          "trigger": "canonical output is requested for a legacy document",
+          "actor": "Mermaid_IR_Tool",
+          "behavior": "emit the versioned canonical shape"
+        },
+        {
+          "id": "R3.4",
+          "kind": "unwanted",
+          "trigger": "a legacy document was invalid under the previous contract",
+          "actor": "Mermaid_IR_Tool",
+          "behavior": "reject it without guessing missing semantic content"
+        },
+        {
+          "id": "R3.5",
+          "kind": "unwanted",
+          "trigger": "a legacy field has no canonical equivalent",
+          "actor": "Mermaid_IR_Tool",
+          "behavior": "reject migration with a diagnostic identifying the unmapped field"
+        }
+      ]
+    },
+    {
+      "id": "4",
+      "name": "Complete implemented-target addressability",
+      "user_story": {
+        "role": "diagram producer",
+        "capability": "every supported Mermaid parameter represented in JSON",
+        "benefit": "diagrams can be created and updated without editing generated Mermaid text"
+      },
+      "criteria": [
+        {
+          "id": "R4.1",
+          "kind": "ubiquitous",
+          "trigger": null,
+          "actor": "Mermaid_IR_Tool",
+          "behavior": "provide a JSON address for every supported `flowchart` source construct and configuration field in the selected Mermaid version"
+        },
+        {
+          "id": "R4.2",
+          "kind": "ubiquitous",
+          "trigger": null,
+          "actor": "Mermaid_IR_Tool",
+          "behavior": "provide a JSON address for every supported `mindmap` source construct and configuration field in the selected Mermaid version"
+        },
+        {
+          "id": "R4.3",
+          "kind": "ubiquitous",
+          "trigger": null,
+          "actor": "Mermaid_IR_Tool",
+          "behavior": "provide a JSON address for every supported `gantt` source construct and configuration field in the selected Mermaid version"
+        },
+        {
+          "id": "R4.4",
+          "kind": "ubiquitous",
+          "trigger": null,
+          "actor": "Mermaid_IR_Tool",
+          "behavior": "provide a JSON address for every supported `stateDiagram-v2` source construct and configuration field in the selected Mermaid version"
+        },
+        {
+          "id": "R4.5",
+          "kind": "ubiquitous",
+          "trigger": null,
+          "actor": "Mermaid_IR_Tool",
+          "behavior": "provide a JSON address for every supported `sequenceDiagram` source construct and configuration field in the selected Mermaid version"
+        },
+        {
+          "id": "R4.6",
+          "kind": "ubiquitous",
+          "trigger": null,
+          "actor": "Mermaid_IR_Tool",
+          "behavior": "provide a JSON address for every supported `requirementDiagram` source construct and configuration field in the selected Mermaid version"
+        },
+        {
+          "id": "R4.7",
+          "kind": "ubiquitous",
+          "trigger": null,
+          "actor": "Mermaid_IR_Tool",
+          "behavior": "provide a JSON address for every supported `block` source construct and configuration field in the selected Mermaid version"
+        },
+        {
+          "id": "R4.8",
+          "kind": "ubiquitous",
+          "trigger": null,
+          "actor": "Mermaid_IR_Tool",
+          "behavior": "provide a JSON address for every supported `C4Context` source construct and configuration field in the selected Mermaid version"
+        },
+        {
+          "id": "R4.9",
+          "kind": "ubiquitous",
+          "trigger": null,
+          "actor": "Mermaid_IR_Tool",
+          "behavior": "provide a JSON address for every supported `C4Container` source construct and configuration field in the selected Mermaid version"
+        },
+        {
+          "id": "R4.10",
+          "kind": "ubiquitous",
+          "trigger": null,
+          "actor": "Mermaid_IR_Tool",
+          "behavior": "provide a JSON address for every supported `architecture-beta` source construct and configuration field in the selected Mermaid version"
+        },
+        {
+          "id": "R4.11",
+          "kind": "ubiquitous",
+          "trigger": null,
+          "actor": "Mermaid_IR_Tool",
+          "behavior": "provide a JSON address for every supported `erDiagram` source construct and configuration field in the selected Mermaid version"
+        },
+        {
+          "id": "R4.12",
+          "kind": "ubiquitous",
+          "trigger": null,
+          "actor": "Mermaid_IR_Tool",
+          "behavior": "provide a JSON address for every supported `classDiagram` source construct and configuration field in the selected Mermaid version"
+        },
+        {
+          "id": "R4.13",
+          "kind": "unwanted",
+          "trigger": "a caller supplies a raw Mermaid fragment outside a declared extension contract",
+          "actor": "Mermaid_IR_Tool",
+          "behavior": "reject the fragment"
+        },
+        {
+          "id": "R4.14",
+          "kind": "event-driven",
+          "trigger": "a supported field is supplied",
+          "actor": "Mermaid_IR_Tool",
+          "behavior": "serialize its value without silently dropping it"
+        }
+      ]
+    },
+    {
+      "id": "5",
+      "name": "Configuration and accessibility scopes",
+      "user_story": {
+        "role": "renderer integrator",
+        "capability": "diagram source settings separated from host settings",
+        "benefit": "the same content can be rendered reproducibly in different environments"
+      },
+      "criteria": [
+        {
+          "id": "R5.1",
+          "kind": "event-driven",
+          "trigger": "an accessibility title is supplied",
+          "actor": "Mermaid_IR_Tool",
+          "behavior": "emit the corresponding Mermaid accessibility title statement"
+        },
+        {
+          "id": "R5.2",
+          "kind": "event-driven",
+          "trigger": "an accessibility description is supplied",
+          "actor": "Mermaid_IR_Tool",
+          "behavior": "emit the corresponding Mermaid accessibility description statement"
+        },
+        {
+          "id": "R5.3",
+          "kind": "event-driven",
+          "trigger": "per-diagram frontmatter configuration is supplied",
+          "actor": "Mermaid_IR_Tool",
+          "behavior": "serialize it as per-diagram Mermaid frontmatter"
+        },
+        {
+          "id": "R5.4",
+          "kind": "event-driven",
+          "trigger": "initialization configuration is supplied",
+          "actor": "Mermaid_IR_Tool",
+          "behavior": "expose it separately from the generated Mermaid source"
+        },
+        {
+          "id": "R5.5",
+          "kind": "unwanted",
+          "trigger": "the selected source configuration is not supported by the selected Mermaid version",
+          "actor": "Mermaid_IR_Tool",
+          "behavior": "reject it with a version-aware diagnostic"
+        },
+        {
+          "id": "R5.6",
+          "kind": "event-driven",
+          "trigger": "no renderer version is supplied",
+          "actor": "Mermaid_IR_Tool",
+          "behavior": "use the documented pinned Mermaid version"
+        },
+        {
+          "id": "R5.7",
+          "kind": "event-driven",
+          "trigger": "deterministic rendering is enabled",
+          "actor": "Mermaid_IR_Tool",
+          "behavior": "expose deterministic identifier settings in the effective renderer configuration"
+        },
+        {
+          "id": "R5.8",
+          "kind": "unwanted",
+          "trigger": "a caller explicitly selects nondeterministic identifier behavior while deterministic rendering is enabled",
+          "actor": "Mermaid_IR_Tool",
+          "behavior": "reject the conflict"
+        }
+      ]
+    },
+    {
+      "id": "6",
+      "name": "Semantic integrity and diagnostics",
+      "user_story": {
+        "role": "diagram producer",
+        "capability": "invalid relationships rejected before rendering",
+        "benefit": "failures identify the faulty JSON rather than an opaque generated-source error"
+      },
+      "criteria": [
+        {
+          "id": "R6.1",
+          "kind": "unwanted",
+          "trigger": "a document contains duplicate identifiers where uniqueness is required",
+          "actor": "Mermaid_IR_Tool",
+          "behavior": "reject it with diagnostics for the conflicting JSON locations"
+        },
+        {
+          "id": "R6.2",
+          "kind": "unwanted",
+          "trigger": "a relationship references an undeclared identifier",
+          "actor": "Mermaid_IR_Tool",
+          "behavior": "reject it with a diagnostic for the referencing JSON location"
+        },
+        {
+          "id": "R6.3",
+          "kind": "unwanted",
+          "trigger": "a target-specific graph invariant is violated",
+          "actor": "Mermaid_IR_Tool",
+          "behavior": "reject it with a diagnostic naming the violated invariant"
+        },
+        {
+          "id": "R6.4",
+          "kind": "unwanted",
+          "trigger": "supplied fields form a forbidden combination",
+          "actor": "Mermaid_IR_Tool",
+          "behavior": "reject them with diagnostics identifying the conflicting JSON locations"
+        },
+        {
+          "id": "R6.5",
+          "kind": "event-driven",
+          "trigger": "independent structural errors exist",
+          "actor": "Mermaid_IR_Tool",
+          "behavior": "report them in stable JSON Pointer order"
+        },
+        {
+          "id": "R6.6",
+          "kind": "unwanted",
+          "trigger": "structural validation fails",
+          "actor": "Mermaid_IR_Tool",
+          "behavior": "produce no Mermaid source"
+        },
+        {
+          "id": "R6.7",
+          "kind": "unwanted",
+          "trigger": "semantic validation fails",
+          "actor": "Mermaid_IR_Tool",
+          "behavior": "produce no Mermaid source"
+        }
+      ]
+    },
+    {
+      "id": "7",
+      "name": "Deterministic serialization",
+      "user_story": {
+        "role": "automation author",
+        "capability": "identical normalized JSON to produce identical source",
+        "benefit": "generated diagrams can be cached, compared, and audited reliably"
+      },
+      "criteria": [
+        {
+          "id": "R7.1",
+          "kind": "event-driven",
+          "trigger": "the same normalized document is serialized repeatedly with the same backend contract",
+          "actor": "Mermaid_IR_Tool",
+          "behavior": "produce byte-identical Mermaid source"
+        },
+        {
+          "id": "R7.2",
+          "kind": "event-driven",
+          "trigger": "an ordered JSON collection is serialized",
+          "actor": "Mermaid_IR_Tool",
+          "behavior": "preserve its declared array order"
+        },
+        {
+          "id": "R7.3",
+          "kind": "event-driven",
+          "trigger": "an unordered JSON object affects output",
+          "actor": "Mermaid_IR_Tool",
+          "behavior": "serialize its keys in a documented stable order"
+        },
+        {
+          "id": "R7.4",
+          "kind": "event-driven",
+          "trigger": "text contains context-sensitive special characters",
+          "actor": "Mermaid_IR_Tool",
+          "behavior": "escape the text according to its Mermaid syntax context"
+        },
+        {
+          "id": "R7.5",
+          "kind": "unwanted",
+          "trigger": "identifier sanitization creates a collision",
+          "actor": "Mermaid_IR_Tool",
+          "behavior": "resolve the collision reproducibly"
+        },
+        {
+          "id": "R7.6",
+          "kind": "event-driven",
+          "trigger": "optional sections are absent",
+          "actor": "Mermaid_IR_Tool",
+          "behavior": "omit their corresponding source statements"
+        }
+      ]
+    },
+    {
+      "id": "8",
+      "name": "Mermaid render verification",
+      "user_story": {
+        "role": "diagram consumer",
+        "capability": "generated source verified by Mermaid",
+        "benefit": "accepted JSON produces renderable diagrams rather than merely plausible text"
+      },
+      "criteria": [
+        {
+          "id": "R8.1",
+          "kind": "event-driven",
+          "trigger": "render verification is requested",
+          "actor": "Mermaid_IR_Tool",
+          "behavior": "validate the exact source produced from the normalized document"
+        },
+        {
+          "id": "R8.2",
+          "kind": "unwanted",
+          "trigger": "Mermaid reports a parser error",
+          "actor": "Mermaid_IR_Tool",
+          "behavior": "report render verification as failed"
+        },
+        {
+          "id": "R8.3",
+          "kind": "unwanted",
+          "trigger": "Mermaid produces its generated error-placeholder artifact",
+          "actor": "Mermaid_IR_Tool",
+          "behavior": "report render verification as failed"
+        },
+        {
+          "id": "R8.4",
+          "kind": "event-driven",
+          "trigger": "representative minimal and maximal documents for each supported target are verified",
+          "actor": "Mermaid_IR_Tool",
+          "behavior": "produce no Mermaid render error"
+        }
+      ]
+    },
+    {
+      "id": "9",
+      "name": "Coverage evidence and extensibility",
+      "user_story": {
+        "role": "skill maintainer",
+        "capability": "measurable target coverage",
+        "benefit": "completeness claims and future target additions can be verified"
+      },
+      "criteria": [
+        {
+          "id": "R9.1",
+          "kind": "ubiquitous",
+          "trigger": null,
+          "actor": "Coverage_Manifest",
+          "behavior": "map each supported Mermaid construct to its canonical JSON Pointer"
+        },
+        {
+          "id": "R9.2",
+          "kind": "ubiquitous",
+          "trigger": null,
+          "actor": "Coverage_Manifest",
+          "behavior": "classify each mapped field as compulsory or optional"
+        },
+        {
+          "id": "R9.3",
+          "kind": "ubiquitous",
+          "trigger": null,
+          "actor": "Coverage_Manifest",
+          "behavior": "record the default policy for each mapped field"
+        },
+        {
+          "id": "R9.4",
+          "kind": "ubiquitous",
+          "trigger": null,
+          "actor": "Coverage_Manifest",
+          "behavior": "identify serializer evidence for each mapped construct"
+        },
+        {
+          "id": "R9.5",
+          "kind": "ubiquitous",
+          "trigger": null,
+          "actor": "Coverage_Manifest",
+          "behavior": "identify verification evidence for each mapped construct"
+        },
+        {
+          "id": "R9.6",
+          "kind": "unwanted",
+          "trigger": "a supported construct lacks any required coverage entry",
+          "actor": "Mermaid_IR_Tool",
+          "behavior": "fail the coverage check"
+        },
+        {
+          "id": "R9.7",
+          "kind": "event-driven",
+          "trigger": "an additional Mermaid target module is added",
+          "actor": "Mermaid_IR_Tool",
+          "behavior": "accept it without changing the canonical envelope fields"
+        },
+        {
+          "id": "R9.8",
+          "kind": "unwanted",
+          "trigger": "a document selects an unsupported target",
+          "actor": "Mermaid_IR_Tool",
+          "behavior": "reject it with a diagnostic listing supported targets"
+        }
+      ]
+    },
+    {
+      "id": "10",
+      "name": "Offline operation and interaction safety",
+      "user_story": {
+        "role": "local tool user",
+        "capability": "schema processing to be safe and offline",
+        "benefit": "validation does not execute diagram behavior or depend on remote services"
+      },
+      "criteria": [
+        {
+          "id": "R10.1",
+          "kind": "event-driven",
+          "trigger": "a canonical or legacy document is validated",
+          "actor": "Mermaid_IR_Tool",
+          "behavior": "perform schema resolution without network access"
+        },
+        {
+          "id": "R10.2",
+          "kind": "event-driven",
+          "trigger": "a document is normalized or serialized",
+          "actor": "Mermaid_IR_Tool",
+          "behavior": "perform the operation without network access"
+        },
+        {
+          "id": "R10.3",
+          "kind": "event-driven",
+          "trigger": "a link or callback declaration is serialized",
+          "actor": "Mermaid_IR_Tool",
+          "behavior": "treat its value as data without executing it"
+        },
+        {
+          "id": "R10.4",
+          "kind": "unwanted",
+          "trigger": "validation fails through the command-line interface",
+          "actor": "Mermaid_IR_Tool",
+          "behavior": "return a nonzero exit status"
+        },
+        {
+          "id": "R10.5",
+          "kind": "event-driven",
+          "trigger": "validation succeeds through the command-line interface",
+          "actor": "Mermaid_IR_Tool",
+          "behavior": "return a zero exit status"
+        }
+      ]
+    },
+    {
+      "id": "11",
+      "name": "Usable documentation",
+      "user_story": {
+        "role": "diagram author",
+        "capability": "accurate schema documentation and examples",
+        "benefit": "I can construct canonical JSON without reading serializer code"
+      },
+      "criteria": [
+        {
+          "id": "R11.1",
+          "kind": "ubiquitous",
+          "trigger": null,
+          "actor": "Mermaid_IR_Documentation",
+          "behavior": "identify every canonical envelope field as compulsory or optional"
+        },
+        {
+          "id": "R11.2",
+          "kind": "ubiquitous",
+          "trigger": null,
+          "actor": "Mermaid_IR_Documentation",
+          "behavior": "state the default policy for every optional field with a default"
+        },
+        {
+          "id": "R11.3",
+          "kind": "ubiquitous",
+          "trigger": null,
+          "actor": "Mermaid_IR_Documentation",
+          "behavior": "include a minimal canonical example for each supported target"
+        },
+        {
+          "id": "R11.4",
+          "kind": "ubiquitous",
+          "trigger": null,
+          "actor": "Mermaid_IR_Documentation",
+          "behavior": "include a feature-complete canonical example for each supported target"
+        },
+        {
+          "id": "R11.5",
+          "kind": "ubiquitous",
+          "trigger": null,
+          "actor": "Mermaid_IR_Documentation",
+          "behavior": "describe how to migrate a legacy document to canonical JSON"
+        },
+        {
+          "id": "R11.6",
+          "kind": "ubiquitous",
+          "trigger": null,
+          "actor": "Mermaid_IR_Documentation",
+          "behavior": "distinguish source configuration from initialization configuration"
+        }
+      ]
+    }
+  ]
+}

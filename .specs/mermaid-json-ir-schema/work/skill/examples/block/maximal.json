@@ -1,0 +1,20 @@
+{
+  "accessibility": {
+    "description": "Deterministic maximal envelope",
+    "title": "block example"
+  },
+  "content": {
+    "edges": [],
+    "nodes": []
+  },
+  "diagram": "graph",
+  "renderer": {
+    "deterministic": true,
+    "mermaidVersion": "11.16.1"
+  },
+  "schemaVersion": "1.0.0",
+  "source": {
+    "title": "block source"
+  },
+  "target": "block"
+}

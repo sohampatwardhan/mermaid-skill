@@ -1,0 +1,43 @@
+{
+  "change_control": [
+    "The earlier exploratory design is background evidence only. This spec-driven artifact chain is",
+    "A material change to target coverage, compatibility policy, strictness, or deterministic-output",
+    "Discovery was approved without changes on 2026-08-09; Requirements may now proceed.",
+    "On 2026-08-09, current source inspection found six additional implemented targets: `block`,",
+    "The user approved rebasing phase one to all 12 targets on 2026-08-09. The planning baseline is",
+    "The revised 74-criterion Requirements gate was approved by the user on 2026-08-09; Design may",
+    "The user explicitly approved [Design](03_design.md) on 2026-08-09; Tasks may proceed against the",
+    "The user approved [Tasks](04_tasks.md) and authorized execution of all tasks on 2026-08-09."
+  ],
+  "gates": {
+    "audit": {
+      "evidence": "Optional quality gate not selected",
+      "status": "not_run"
+    },
+    "design": {
+      "evidence": "Approved by the user on 2026-08-09",
+      "status": "approved"
+    },
+    "discovery": {
+      "evidence": "Rebased to the current 12-target source snapshot and approved by the user on 2026-08-09",
+      "status": "approved"
+    },
+    "execution": {
+      "evidence": "Run `run-20260810T004517Z`; preflight and Stage 1 active",
+      "status": "in_progress"
+    },
+    "requirements": {
+      "evidence": "Revised 12-target requirements approved by the user on 2026-08-09",
+      "status": "approved"
+    },
+    "tasks": {
+      "evidence": "Approved by the user on 2026-08-09 with authorization to execute all tasks",
+      "status": "approved"
+    }
+  },
+  "generated_from": {
+    "file": "00_state.md",
+    "sha256": "f538d7c944f75ac0b1f7c4f884bd6d5fb74d117c643487db65016a9597cd4b53"
+  },
+  "schema_version": 1
+}

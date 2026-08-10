@@ -1,0 +1,15 @@
+{
+  "content": {
+    "edges": [],
+    "nodes": [
+      {
+        "id": "root",
+        "label": "Root"
+      }
+    ],
+    "root": "root"
+  },
+  "diagram": "graph",
+  "schemaVersion": "1.0.0",
+  "target": "mindmap"
+}

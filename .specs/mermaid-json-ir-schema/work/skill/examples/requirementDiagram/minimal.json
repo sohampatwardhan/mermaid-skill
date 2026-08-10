@@ -1,0 +1,10 @@
+{
+  "content": {
+    "elements": [],
+    "links": [],
+    "requirements": []
+  },
+  "diagram": "requirement-links",
+  "schemaVersion": "1.0.0",
+  "target": "requirementDiagram"
+}

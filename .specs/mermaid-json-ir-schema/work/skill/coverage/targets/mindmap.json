@@ -1,0 +1,162 @@
+{
+  "entries": [
+    {
+      "constructId": "root",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/root",
+      "presence": "compulsory",
+      "schemaRef": "schema/targets/mindmap.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.mindmap.SPEC",
+      "testIds": [
+        "test_mindmap.test_minimal",
+        "test_mindmap.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "node.id",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/node/id",
+      "presence": "optional",
+      "schemaRef": "schema/targets/mindmap.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.mindmap.SPEC",
+      "testIds": [
+        "test_mindmap.test_minimal",
+        "test_mindmap.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "node.label",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/node/label",
+      "presence": "optional",
+      "schemaRef": "schema/targets/mindmap.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.mindmap.SPEC",
+      "testIds": [
+        "test_mindmap.test_minimal",
+        "test_mindmap.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "node.parent",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/node/parent",
+      "presence": "optional",
+      "schemaRef": "schema/targets/mindmap.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.mindmap.SPEC",
+      "testIds": [
+        "test_mindmap.test_minimal",
+        "test_mindmap.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "node.shape",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/node/shape",
+      "presence": "optional",
+      "schemaRef": "schema/targets/mindmap.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.mindmap.SPEC",
+      "testIds": [
+        "test_mindmap.test_minimal",
+        "test_mindmap.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "node.icon",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/node/icon",
+      "presence": "optional",
+      "schemaRef": "schema/targets/mindmap.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.mindmap.SPEC",
+      "testIds": [
+        "test_mindmap.test_minimal",
+        "test_mindmap.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "node.class",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/node/class",
+      "presence": "optional",
+      "schemaRef": "schema/targets/mindmap.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.mindmap.SPEC",
+      "testIds": [
+        "test_mindmap.test_minimal",
+        "test_mindmap.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "node.markdown",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/node/markdown",
+      "presence": "optional",
+      "schemaRef": "schema/targets/mindmap.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.mindmap.SPEC",
+      "testIds": [
+        "test_mindmap.test_minimal",
+        "test_mindmap.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "layout",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/layout",
+      "presence": "optional",
+      "schemaRef": "schema/targets/mindmap.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.mindmap.SPEC",
+      "testIds": [
+        "test_mindmap.test_minimal",
+        "test_mindmap.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "accessibility.title",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/accessibility/title",
+      "presence": "optional",
+      "schemaRef": "schema/targets/mindmap.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.mindmap.SPEC",
+      "testIds": [
+        "test_mindmap.test_minimal",
+        "test_mindmap.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "accessibility.description",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/accessibility/description",
+      "presence": "optional",
+      "schemaRef": "schema/targets/mindmap.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.mindmap.SPEC",
+      "testIds": [
+        "test_mindmap.test_minimal",
+        "test_mindmap.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "source.title",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/source/title",
+      "presence": "optional",
+      "schemaRef": "schema/targets/mindmap.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.mindmap.SPEC",
+      "testIds": [
+        "test_mindmap.test_minimal",
+        "test_mindmap.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "config.mindmap.layout",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/config/mindmap/layout",
+      "presence": "optional",
+      "schemaRef": "schema/targets/mindmap.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.mindmap.SPEC",
+      "testIds": [
+        "test_mindmap.test_minimal",
+        "test_mindmap.test_deterministic"
+      ]
+    }
+  ],
+  "mermaidVersion": "11.16.1",
+  "target": "mindmap"
+}

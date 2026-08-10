@@ -1,0 +1,9 @@
+{
+  "content": {
+    "actors": [],
+    "steps": []
+  },
+  "diagram": "sequence",
+  "schemaVersion": "1.0.0",
+  "target": "sequenceDiagram"
+}

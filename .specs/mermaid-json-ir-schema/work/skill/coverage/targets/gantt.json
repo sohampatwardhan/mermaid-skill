@@ -1,0 +1,378 @@
+{
+  "entries": [
+    {
+      "constructId": "title",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/title",
+      "presence": "optional",
+      "schemaRef": "schema/targets/gantt.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.gantt.SPEC",
+      "testIds": [
+        "test_gantt.test_minimal",
+        "test_gantt.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "dateFormat",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/dateFormat",
+      "presence": "compulsory",
+      "schemaRef": "schema/targets/gantt.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.gantt.SPEC",
+      "testIds": [
+        "test_gantt.test_minimal",
+        "test_gantt.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "axisFormat",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/axisFormat",
+      "presence": "optional",
+      "schemaRef": "schema/targets/gantt.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.gantt.SPEC",
+      "testIds": [
+        "test_gantt.test_minimal",
+        "test_gantt.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "tickInterval",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/tickInterval",
+      "presence": "optional",
+      "schemaRef": "schema/targets/gantt.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.gantt.SPEC",
+      "testIds": [
+        "test_gantt.test_minimal",
+        "test_gantt.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "weekday",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/weekday",
+      "presence": "optional",
+      "schemaRef": "schema/targets/gantt.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.gantt.SPEC",
+      "testIds": [
+        "test_gantt.test_minimal",
+        "test_gantt.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "excludes",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/excludes",
+      "presence": "optional",
+      "schemaRef": "schema/targets/gantt.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.gantt.SPEC",
+      "testIds": [
+        "test_gantt.test_minimal",
+        "test_gantt.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "section.name",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/section/name",
+      "presence": "optional",
+      "schemaRef": "schema/targets/gantt.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.gantt.SPEC",
+      "testIds": [
+        "test_gantt.test_minimal",
+        "test_gantt.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "task.id",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/task/id",
+      "presence": "optional",
+      "schemaRef": "schema/targets/gantt.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.gantt.SPEC",
+      "testIds": [
+        "test_gantt.test_minimal",
+        "test_gantt.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "task.label",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/task/label",
+      "presence": "optional",
+      "schemaRef": "schema/targets/gantt.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.gantt.SPEC",
+      "testIds": [
+        "test_gantt.test_minimal",
+        "test_gantt.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "task.tags",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/task/tags",
+      "presence": "optional",
+      "schemaRef": "schema/targets/gantt.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.gantt.SPEC",
+      "testIds": [
+        "test_gantt.test_minimal",
+        "test_gantt.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "task.start",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/task/start",
+      "presence": "optional",
+      "schemaRef": "schema/targets/gantt.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.gantt.SPEC",
+      "testIds": [
+        "test_gantt.test_minimal",
+        "test_gantt.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "task.end",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/task/end",
+      "presence": "optional",
+      "schemaRef": "schema/targets/gantt.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.gantt.SPEC",
+      "testIds": [
+        "test_gantt.test_minimal",
+        "test_gantt.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "task.duration",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/task/duration",
+      "presence": "optional",
+      "schemaRef": "schema/targets/gantt.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.gantt.SPEC",
+      "testIds": [
+        "test_gantt.test_minimal",
+        "test_gantt.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "task.after",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/task/after",
+      "presence": "optional",
+      "schemaRef": "schema/targets/gantt.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.gantt.SPEC",
+      "testIds": [
+        "test_gantt.test_minimal",
+        "test_gantt.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "task.until",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/task/until",
+      "presence": "optional",
+      "schemaRef": "schema/targets/gantt.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.gantt.SPEC",
+      "testIds": [
+        "test_gantt.test_minimal",
+        "test_gantt.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "task.milestone",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/task/milestone",
+      "presence": "optional",
+      "schemaRef": "schema/targets/gantt.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.gantt.SPEC",
+      "testIds": [
+        "test_gantt.test_minimal",
+        "test_gantt.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "verticalMarker",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/verticalMarker",
+      "presence": "optional",
+      "schemaRef": "schema/targets/gantt.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.gantt.SPEC",
+      "testIds": [
+        "test_gantt.test_minimal",
+        "test_gantt.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "compact",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/compact",
+      "presence": "optional",
+      "schemaRef": "schema/targets/gantt.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.gantt.SPEC",
+      "testIds": [
+        "test_gantt.test_minimal",
+        "test_gantt.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "todayMarker",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/todayMarker",
+      "presence": "optional",
+      "schemaRef": "schema/targets/gantt.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.gantt.SPEC",
+      "testIds": [
+        "test_gantt.test_minimal",
+        "test_gantt.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "interaction.link",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/interaction/link",
+      "presence": "optional",
+      "schemaRef": "schema/targets/gantt.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.gantt.SPEC",
+      "testIds": [
+        "test_gantt.test_minimal",
+        "test_gantt.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "interaction.callback",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/interaction/callback",
+      "presence": "optional",
+      "schemaRef": "schema/targets/gantt.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.gantt.SPEC",
+      "testIds": [
+        "test_gantt.test_minimal",
+        "test_gantt.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "accessibility.title",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/accessibility/title",
+      "presence": "optional",
+      "schemaRef": "schema/targets/gantt.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.gantt.SPEC",
+      "testIds": [
+        "test_gantt.test_minimal",
+        "test_gantt.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "accessibility.description",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/accessibility/description",
+      "presence": "optional",
+      "schemaRef": "schema/targets/gantt.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.gantt.SPEC",
+      "testIds": [
+        "test_gantt.test_minimal",
+        "test_gantt.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "config.gantt.barHeight",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/config/gantt/barHeight",
+      "presence": "optional",
+      "schemaRef": "schema/targets/gantt.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.gantt.SPEC",
+      "testIds": [
+        "test_gantt.test_minimal",
+        "test_gantt.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "config.gantt.barGap",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/config/gantt/barGap",
+      "presence": "optional",
+      "schemaRef": "schema/targets/gantt.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.gantt.SPEC",
+      "testIds": [
+        "test_gantt.test_minimal",
+        "test_gantt.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "config.gantt.topPadding",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/config/gantt/topPadding",
+      "presence": "optional",
+      "schemaRef": "schema/targets/gantt.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.gantt.SPEC",
+      "testIds": [
+        "test_gantt.test_minimal",
+        "test_gantt.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "config.gantt.leftPadding",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/config/gantt/leftPadding",
+      "presence": "optional",
+      "schemaRef": "schema/targets/gantt.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.gantt.SPEC",
+      "testIds": [
+        "test_gantt.test_minimal",
+        "test_gantt.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "config.gantt.gridLineStartPadding",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/config/gantt/gridLineStartPadding",
+      "presence": "optional",
+      "schemaRef": "schema/targets/gantt.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.gantt.SPEC",
+      "testIds": [
+        "test_gantt.test_minimal",
+        "test_gantt.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "config.gantt.fontSize",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/config/gantt/fontSize",
+      "presence": "optional",
+      "schemaRef": "schema/targets/gantt.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.gantt.SPEC",
+      "testIds": [
+        "test_gantt.test_minimal",
+        "test_gantt.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "config.gantt.sectionFontSize",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/config/gantt/sectionFontSize",
+      "presence": "optional",
+      "schemaRef": "schema/targets/gantt.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.gantt.SPEC",
+      "testIds": [
+        "test_gantt.test_minimal",
+        "test_gantt.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "config.gantt.numberSectionStyles",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/config/gantt/numberSectionStyles",
+      "presence": "optional",
+      "schemaRef": "schema/targets/gantt.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.gantt.SPEC",
+      "testIds": [
+        "test_gantt.test_minimal",
+        "test_gantt.test_deterministic"
+      ]
+    }
+  ],
+  "mermaidVersion": "11.16.1",
+  "target": "gantt"
+}

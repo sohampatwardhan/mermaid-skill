@@ -1,0 +1,19 @@
+{
+  "accessibility": {
+    "description": "Deterministic maximal envelope",
+    "title": "stateDiagram-v2 example"
+  },
+  "content": {
+    "transitions": []
+  },
+  "diagram": "state-machine",
+  "renderer": {
+    "deterministic": true,
+    "mermaidVersion": "11.16.1"
+  },
+  "schemaVersion": "1.0.0",
+  "source": {
+    "title": "stateDiagram-v2 source"
+  },
+  "target": "stateDiagram-v2"
+}

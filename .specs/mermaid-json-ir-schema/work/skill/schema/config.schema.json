@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "config.schema.json",
+  "title": "Mermaid renderer controls",
+  "$defs": {
+    "renderer": {
+      "type": "object",
+      "properties": {
+        "mermaidVersion": {"type": "string", "default": "11.16.1"},
+        "deterministic": {"type": "boolean", "default": true},
+        "frontmatter": {
+          "type": "object",
+          "properties": {"config": {"type": "object"}},
+          "additionalProperties": false
+        },
+        "initialize": {"type": "object"}
+      },
+      "additionalProperties": false
+    }
+  }
+}

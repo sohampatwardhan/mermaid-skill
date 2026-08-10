@@ -1,0 +1,129 @@
+{
+  "gantt": {
+    "axisFormat": "%m-%d %H:%M",
+    "dateFormat": "YYYY-MM-DDTHH:mm:ss",
+    "diagram": "timeline",
+    "sections": [
+      {
+        "bars": [
+          {
+            "end": "2026-08-10T01:02:32",
+            "id": "b_1_1_attempt1",
+            "label": "1.1 attempt 1 (verified, 297s)",
+            "start": "2026-08-10T00:57:35",
+            "tags": [
+              "done"
+            ]
+          }
+        ],
+        "name": "Stage 1"
+      },
+      {
+        "bars": [
+          {
+            "end": "2026-08-10T01:07:20",
+            "id": "b_2_1_attempt1",
+            "label": "2.1 attempt 1 (verified, 207s)",
+            "start": "2026-08-10T01:03:53",
+            "tags": [
+              "done"
+            ]
+          }
+        ],
+        "name": "Stage 2"
+      },
+      {
+        "bars": [
+          {
+            "end": "2026-08-10T01:11:36",
+            "id": "b_3_1_attempt1",
+            "label": "3.1 attempt 1 (verified, 176s)",
+            "start": "2026-08-10T01:08:40",
+            "tags": [
+              "done"
+            ]
+          }
+        ],
+        "name": "Stage 3"
+      },
+      {
+        "bars": [
+          {
+            "end": "2026-08-10T01:14:57",
+            "id": "b_4_1_attempt1",
+            "label": "4.1 attempt 1 (verified, 155s)",
+            "start": "2026-08-10T01:12:22",
+            "tags": [
+              "done"
+            ]
+          }
+        ],
+        "name": "Stage 4"
+      }
+    ],
+    "target": "gantt"
+  },
+  "generated_from": {
+    "file": "05_execution.md",
+    "sha256": "794571a732ebd533ce0856159ac92e22d4a7bcafda064ff1391ef1dd5721f647"
+  },
+  "runs": [
+    {
+      "elapsed_seconds": "pending",
+      "outcome": "active",
+      "run_id": "run-20260810T004517Z",
+      "started_utc": "2026-08-10T00:45:17Z",
+      "stopped_utc": "pending"
+    }
+  ],
+  "schema_version": 1,
+  "task_attempts": [
+    {
+      "attempt": 1,
+      "elapsed_seconds": 297,
+      "outcome": "verified",
+      "run_id": "run-20260810T004517Z",
+      "stage_wave": "Stage 1",
+      "started_utc": "2026-08-10T00:57:35Z",
+      "stopped_utc": "2026-08-10T01:02:32Z",
+      "task": "1.1"
+    },
+    {
+      "attempt": 1,
+      "elapsed_seconds": 207,
+      "outcome": "verified",
+      "run_id": "run-20260810T004517Z",
+      "stage_wave": "Stage 2",
+      "started_utc": "2026-08-10T01:03:53Z",
+      "stopped_utc": "2026-08-10T01:07:20Z",
+      "task": "2.1"
+    },
+    {
+      "attempt": 1,
+      "elapsed_seconds": 176,
+      "outcome": "verified",
+      "run_id": "run-20260810T004517Z",
+      "stage_wave": "Stage 3",
+      "started_utc": "2026-08-10T01:08:40Z",
+      "stopped_utc": "2026-08-10T01:11:36Z",
+      "task": "3.1"
+    },
+    {
+      "attempt": 1,
+      "elapsed_seconds": 155,
+      "outcome": "verified",
+      "run_id": "run-20260810T004517Z",
+      "stage_wave": "Stage 4",
+      "started_utc": "2026-08-10T01:12:22Z",
+      "stopped_utc": "2026-08-10T01:14:57Z",
+      "task": "4.1"
+    }
+  ],
+  "unresolved": [
+    {
+      "id": "run-20260810T004517Z",
+      "kind": "run",
+      "reason": "active"
+    }
+  ]
+}

@@ -1,0 +1,234 @@
+{
+  "entries": [
+    {
+      "constructId": "direction",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/direction",
+      "presence": "optional",
+      "schemaRef": "schema/targets/requirementDiagram.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.requirement_diagram.SPEC",
+      "testIds": [
+        "test_requirement_diagram.test_minimal",
+        "test_requirement_diagram.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "requirement.id",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/requirement/id",
+      "presence": "optional",
+      "schemaRef": "schema/targets/requirementDiagram.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.requirement_diagram.SPEC",
+      "testIds": [
+        "test_requirement_diagram.test_minimal",
+        "test_requirement_diagram.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "requirement.type",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/requirement/type",
+      "presence": "optional",
+      "schemaRef": "schema/targets/requirementDiagram.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.requirement_diagram.SPEC",
+      "testIds": [
+        "test_requirement_diagram.test_minimal",
+        "test_requirement_diagram.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "requirement.text",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/requirement/text",
+      "presence": "optional",
+      "schemaRef": "schema/targets/requirementDiagram.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.requirement_diagram.SPEC",
+      "testIds": [
+        "test_requirement_diagram.test_minimal",
+        "test_requirement_diagram.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "requirement.risk",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/requirement/risk",
+      "presence": "optional",
+      "schemaRef": "schema/targets/requirementDiagram.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.requirement_diagram.SPEC",
+      "testIds": [
+        "test_requirement_diagram.test_minimal",
+        "test_requirement_diagram.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "requirement.verifyMethod",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/requirement/verifyMethod",
+      "presence": "optional",
+      "schemaRef": "schema/targets/requirementDiagram.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.requirement_diagram.SPEC",
+      "testIds": [
+        "test_requirement_diagram.test_minimal",
+        "test_requirement_diagram.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "element.id",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/element/id",
+      "presence": "optional",
+      "schemaRef": "schema/targets/requirementDiagram.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.requirement_diagram.SPEC",
+      "testIds": [
+        "test_requirement_diagram.test_minimal",
+        "test_requirement_diagram.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "element.type",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/element/type",
+      "presence": "optional",
+      "schemaRef": "schema/targets/requirementDiagram.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.requirement_diagram.SPEC",
+      "testIds": [
+        "test_requirement_diagram.test_minimal",
+        "test_requirement_diagram.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "element.docRef",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/element/docRef",
+      "presence": "optional",
+      "schemaRef": "schema/targets/requirementDiagram.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.requirement_diagram.SPEC",
+      "testIds": [
+        "test_requirement_diagram.test_minimal",
+        "test_requirement_diagram.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "relationship.from",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/relationship/from",
+      "presence": "optional",
+      "schemaRef": "schema/targets/requirementDiagram.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.requirement_diagram.SPEC",
+      "testIds": [
+        "test_requirement_diagram.test_minimal",
+        "test_requirement_diagram.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "relationship.to",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/relationship/to",
+      "presence": "optional",
+      "schemaRef": "schema/targets/requirementDiagram.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.requirement_diagram.SPEC",
+      "testIds": [
+        "test_requirement_diagram.test_minimal",
+        "test_requirement_diagram.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "relationship.kind",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/relationship/kind",
+      "presence": "optional",
+      "schemaRef": "schema/targets/requirementDiagram.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.requirement_diagram.SPEC",
+      "testIds": [
+        "test_requirement_diagram.test_minimal",
+        "test_requirement_diagram.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "markdown",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/markdown",
+      "presence": "optional",
+      "schemaRef": "schema/targets/requirementDiagram.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.requirement_diagram.SPEC",
+      "testIds": [
+        "test_requirement_diagram.test_minimal",
+        "test_requirement_diagram.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "style.direct",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/style/direct",
+      "presence": "optional",
+      "schemaRef": "schema/targets/requirementDiagram.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.requirement_diagram.SPEC",
+      "testIds": [
+        "test_requirement_diagram.test_minimal",
+        "test_requirement_diagram.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "style.classDef",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/style/classDef",
+      "presence": "optional",
+      "schemaRef": "schema/targets/requirementDiagram.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.requirement_diagram.SPEC",
+      "testIds": [
+        "test_requirement_diagram.test_minimal",
+        "test_requirement_diagram.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "style.classAssignment",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/style/classAssignment",
+      "presence": "optional",
+      "schemaRef": "schema/targets/requirementDiagram.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.requirement_diagram.SPEC",
+      "testIds": [
+        "test_requirement_diagram.test_minimal",
+        "test_requirement_diagram.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "accessibility.title",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/accessibility/title",
+      "presence": "optional",
+      "schemaRef": "schema/targets/requirementDiagram.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.requirement_diagram.SPEC",
+      "testIds": [
+        "test_requirement_diagram.test_minimal",
+        "test_requirement_diagram.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "accessibility.description",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/accessibility/description",
+      "presence": "optional",
+      "schemaRef": "schema/targets/requirementDiagram.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.requirement_diagram.SPEC",
+      "testIds": [
+        "test_requirement_diagram.test_minimal",
+        "test_requirement_diagram.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "source.title",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/source/title",
+      "presence": "optional",
+      "schemaRef": "schema/targets/requirementDiagram.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.requirement_diagram.SPEC",
+      "testIds": [
+        "test_requirement_diagram.test_minimal",
+        "test_requirement_diagram.test_deterministic"
+      ]
+    }
+  ],
+  "mermaidVersion": "11.16.1",
+  "target": "requirementDiagram"
+}

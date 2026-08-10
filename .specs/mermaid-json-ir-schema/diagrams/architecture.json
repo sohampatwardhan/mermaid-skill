@@ -1,0 +1,92 @@
+{
+  "diagram": "graph",
+  "target": "C4Container",
+  "title": "Mermaid JSON IR Tool",
+  "groups": [
+    {
+      "id": "tool_boundary",
+      "label": "Mermaid JSON IR Tool",
+      "kind": "container_boundary"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "caller",
+      "label": "Diagram Producer",
+      "kind": "person",
+      "description": "Agent script or developer"
+    },
+    {
+      "id": "compiler",
+      "label": "Canonical Compiler",
+      "kind": "container",
+      "technology": "Python",
+      "description": "Migrates normalizes and validates JSON",
+      "group": "tool_boundary"
+    },
+    {
+      "id": "contract",
+      "label": "Schema and Coverage Registry",
+      "kind": "container_db",
+      "technology": "JSON",
+      "description": "Twelve strict target contracts",
+      "group": "tool_boundary"
+    },
+    {
+      "id": "targets",
+      "label": "Target Modules",
+      "kind": "container",
+      "technology": "Python",
+      "description": "Semantic validators and pure serializers",
+      "group": "tool_boundary"
+    },
+    {
+      "id": "outputs",
+      "label": "Output Adapters",
+      "kind": "container",
+      "technology": "Python",
+      "description": "Canonical JSON source config and diagnostics",
+      "group": "tool_boundary"
+    },
+    {
+      "id": "mermaid",
+      "label": "Mermaid Renderer",
+      "kind": "container_ext",
+      "technology": "Mermaid 11.16.1",
+      "description": "Exact source render verification"
+    }
+  ],
+  "edges": [
+    {
+      "from": "caller",
+      "to": "compiler",
+      "label": "Submits legacy or canonical JSON",
+      "technology": "CLI or Python API"
+    },
+    {
+      "from": "compiler",
+      "to": "contract",
+      "label": "Loads schema defaults and coverage"
+    },
+    {
+      "from": "compiler",
+      "to": "targets",
+      "label": "Dispatches validated canonical data"
+    },
+    {
+      "from": "targets",
+      "to": "outputs",
+      "label": "Returns deterministic artifacts"
+    },
+    {
+      "from": "outputs",
+      "to": "caller",
+      "label": "Returns JSON source config or diagnostics"
+    },
+    {
+      "from": "outputs",
+      "to": "mermaid",
+      "label": "Verifies exact generated source"
+    }
+  ]
+}

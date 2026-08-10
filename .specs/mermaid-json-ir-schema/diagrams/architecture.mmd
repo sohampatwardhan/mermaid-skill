@@ -1,0 +1,16 @@
+C4Container
+    title Mermaid JSON IR Tool
+    Container_Boundary(tool_boundary, "Mermaid JSON IR Tool") {
+        Container(compiler, "Canonical Compiler", "Python", "Migrates normalizes and validates JSON")
+        ContainerDb(contract, "Schema and Coverage Registry", "JSON", "Twelve strict target contracts")
+        Container(targets, "Target Modules", "Python", "Semantic validators and pure serializers")
+        Container(outputs, "Output Adapters", "Python", "Canonical JSON source config and diagnostics")
+    }
+    Person(caller, "Diagram Producer", "Agent script or developer")
+    Container_Ext(mermaid, "Mermaid Renderer", "Mermaid 11.16.1", "Exact source render verification")
+    Rel(caller, compiler, "Submits legacy or canonical JSON", "CLI or Python API")
+    Rel(compiler, contract, "Loads schema defaults and coverage")
+    Rel(compiler, targets, "Dispatches validated canonical data")
+    Rel(targets, outputs, "Returns deterministic artifacts")
+    Rel(outputs, caller, "Returns JSON source config or diagnostics")
+    Rel(outputs, mermaid, "Verifies exact generated source")

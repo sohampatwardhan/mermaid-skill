@@ -1,0 +1,57 @@
+{
+  "schemaVersion": 1,
+  "mermaidVersion": "11.16.1",
+  "canonicalRepository": "https://github.com/mermaid-js/mermaid",
+  "sourceTag": "v11.16.1",
+  "fileCount": 12,
+  "files": [
+    {
+      "sha256": "420cefdf4ff337af41e862e7838433a51c70badfbc866d9c149b4f79bc7d26cb",
+      "path": "C4Container.json"
+    },
+    {
+      "sha256": "5a512dc21ab04bb1dabdd73a99c444ca640467e35575315760afebae9a73a7ab",
+      "path": "C4Context.json"
+    },
+    {
+      "sha256": "2fff829f725918f97e81465caf4698c9d58be450d29dbd5694bb6f05aa45a150",
+      "path": "architecture-beta.json"
+    },
+    {
+      "sha256": "19b41bc827eb7971f4d9a3d20f54f40485585b51dcd736ca0b51cccae0ec7fa7",
+      "path": "block.json"
+    },
+    {
+      "sha256": "b7ce561fa284cddfbbf8597c901143dcacd665ebee0d79fd429efe6016378a18",
+      "path": "classDiagram.json"
+    },
+    {
+      "sha256": "14868467ed4c0927c10f9f79144a1f3451175e1d87b10a64fc86a70ca2b5f3c3",
+      "path": "erDiagram.json"
+    },
+    {
+      "sha256": "fec76823b3c2d254a6847df6da708bd21071d2d4a6bf405761273960433bc3b2",
+      "path": "flowchart.json"
+    },
+    {
+      "sha256": "f558afc743af94d1176bb982ae90592cfe1f0a56d851a2b25cccc700fa73aefc",
+      "path": "gantt.json"
+    },
+    {
+      "sha256": "6c91b69786057af09bb84963e55240bd42ca41b945f20a1ab7767fdc17895b25",
+      "path": "mindmap.json"
+    },
+    {
+      "sha256": "c3872f8cca6490b1853c6b969469f35fa0ca9ce4a6e57991201971715bf2527a",
+      "path": "requirementDiagram.json"
+    },
+    {
+      "sha256": "ad866a1881f23070ff1c27b368d011406ed130254102e5f1f2434583b9a28b2b",
+      "path": "sequenceDiagram.json"
+    },
+    {
+      "sha256": "c5fa69f5d829133eaa755642cca03baa9a7a4a4a43ea541ecf904c7088bacb39",
+      "path": "stateDiagram-v2.json"
+    }
+  ]
+}

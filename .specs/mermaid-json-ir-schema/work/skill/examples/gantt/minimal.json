@@ -1,0 +1,9 @@
+{
+  "content": {
+    "dateFormat": "YYYY-MM-DD",
+    "sections": []
+  },
+  "diagram": "timeline",
+  "schemaVersion": "1.0.0",
+  "target": "gantt"
+}

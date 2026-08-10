@@ -1,0 +1,972 @@
+{
+  "concurrency": {
+    "active_stage": 5,
+    "blocked": {},
+    "parallel_candidates": [
+      "5.1",
+      "5.2",
+      "5.3",
+      "5.4",
+      "5.5",
+      "5.6",
+      "5.7",
+      "5.8",
+      "5.9",
+      "5.10",
+      "5.11",
+      "5.12"
+    ],
+    "ready": [
+      "5.1",
+      "5.2",
+      "5.3",
+      "5.4",
+      "5.5",
+      "5.6",
+      "5.7",
+      "5.8",
+      "5.9",
+      "5.10",
+      "5.11",
+      "5.12"
+    ],
+    "serial_candidates": [],
+    "waves": [
+      {
+        "mode": "parallel",
+        "tasks": [
+          "5.1",
+          "5.2",
+          "5.3",
+          "5.4",
+          "5.5",
+          "5.6",
+          "5.7",
+          "5.8",
+          "5.9",
+          "5.10",
+          "5.11",
+          "5.12"
+        ],
+        "wave": 1
+      }
+    ]
+  },
+  "generated_from": {
+    "file": "04_tasks.md",
+    "sha256": "7ac793427cd2727d39479a7cedab1b07981b9d584e4b99ae30cab6d371ea3fd1"
+  },
+  "requirement_count": 74,
+  "schema_version": 1,
+  "stages": {
+    "1": [
+      "1.1"
+    ],
+    "2": [
+      "2.1"
+    ],
+    "3": [
+      "3.1"
+    ],
+    "4": [
+      "4.1"
+    ],
+    "5": [
+      "5.1",
+      "5.2",
+      "5.3",
+      "5.4",
+      "5.5",
+      "5.6",
+      "5.7",
+      "5.8",
+      "5.9",
+      "5.10",
+      "5.11",
+      "5.12"
+    ],
+    "6": [
+      "6.1"
+    ],
+    "7": [
+      "6.2"
+    ],
+    "8": [
+      "7.1"
+    ],
+    "9": [
+      "8.1"
+    ]
+  },
+  "tasks": [
+    {
+      "capability_tier": "high-reasoning",
+      "checked": true,
+      "delegation": "controller",
+      "dependency_delivery": "none",
+      "dependency_resolution": "none",
+      "depends_on": [],
+      "files": [
+        "work/mermaid-json-ir-schema/baseline/skill",
+        "work/mermaid-json-ir-schema/skill",
+        "work/mermaid-json-ir-schema/baseline-manifest.json",
+        "work/mermaid-json-ir-schema/inventory/mermaid-11.16.1",
+        "work/mermaid-json-ir-schema/inventory-manifest.json",
+        "work/mermaid-json-ir-schema/skill/tests/fixtures/legacy"
+      ],
+      "id": "1.1",
+      "interfaces": "Consumes: planning digest `b82d695a14f4ab0e6867808cd40d798cea55c4a39470a62d00cf16c532f8af22`, current live skill, official Mermaid 11.16.1 evidence, `render(ir, target, backend) -> str`, and existing tests; Produces: immutable `baseline/skill`, separate working `skill`, canonical baseline/inventory manifests, independent per-target inventory, and legacy input/source/error corpus",
+      "optional": false,
+      "requirements": [
+        "3.1",
+        "3.2",
+        "3.4",
+        "3.5",
+        "7.1"
+      ],
+      "resolved_model": "claude-opus-4.8",
+      "risk": "medium; an incomplete baseline could hide migration regressions, so rollback is discarding the staging tree",
+      "stage": 1,
+      "task_category": "code_analysis",
+      "title": "Preserve the executable skill baseline and independent Mermaid inventory",
+      "verification": "`python -m unittest discover -s work/mermaid-json-ir-schema/skill/tests -v`; verify baseline/working manifests, inventory provenance and uniqueness, all legacy goldens, C4 override permutations, and unmapped-field failures"
+    },
+    {
+      "capability_tier": "high-reasoning",
+      "checked": true,
+      "delegation": "sequential subagent",
+      "dependency_delivery": "none",
+      "dependency_resolution": "none",
+      "depends_on": [
+        "1.1"
+      ],
+      "files": [
+        "work/mermaid-json-ir-schema/skill/scripts/mermaid_ir/__init__.py",
+        "work/mermaid-json-ir-schema/skill/scripts/mermaid_ir/model.py",
+        "work/mermaid-json-ir-schema/skill/scripts/mermaid_ir/diagnostics.py",
+        "work/mermaid-json-ir-schema/skill/scripts/mermaid_ir/schema_runtime.py",
+        "work/mermaid-json-ir-schema/skill/schema/envelope.schema.json",
+        "work/mermaid-json-ir-schema/skill/schema/common.schema.json",
+        "work/mermaid-json-ir-schema/skill/schema/config.schema.json",
+        "work/mermaid-json-ir-schema/skill/tests/test_schema_runtime.py",
+        "work/mermaid-json-ir-schema/skill/tests/test_diagnostics.py"
+      ],
+      "id": "2.1",
+      "interfaces": "Consumes: staged skill and approved canonical envelope; Produces: `Diagnostic`, `CompileResult`, `IRError`, RFC 6901 helpers, `SchemaRegistry`, `validate_schema(instance, schema_ref) -> tuple[Diagnostic, ...]`, strict shared schemas, and explicit validation-keyword versus annotation policy",
+      "optional": false,
+      "requirements": [
+        "1.1",
+        "1.2",
+        "1.3",
+        "1.4",
+        "1.5",
+        "1.6",
+        "2.5",
+        "6.5",
+        "9.8",
+        "10.1"
+      ],
+      "resolved_model": "claude-opus-4.8",
+      "risk": "high; a validator bug can accept malformed documents, so rollback retains the legacy facade and removes the new package",
+      "stage": 2,
+      "task_category": "heavy_reasoning",
+      "title": "Implement diagnostics, canonical models, and constrained JSON Schema evaluation",
+      "verification": "`python -m unittest work/mermaid-json-ir-schema/skill/tests/test_schema_runtime.py work/mermaid-json-ir-schema/skill/tests/test_diagnostics.py -v`; review public documentation"
+    },
+    {
+      "capability_tier": "high-reasoning",
+      "checked": true,
+      "delegation": "sequential subagent",
+      "dependency_delivery": "none",
+      "dependency_resolution": "none",
+      "depends_on": [
+        "2.1"
+      ],
+      "files": [
+        "work/mermaid-json-ir-schema/skill/scripts/mermaid_ir/migrate.py",
+        "work/mermaid-json-ir-schema/skill/scripts/mermaid_ir/normalize.py",
+        "work/mermaid-json-ir-schema/skill/scripts/mermaid_ir/compiler.py",
+        "work/mermaid-json-ir-schema/skill/tests/test_migration.py",
+        "work/mermaid-json-ir-schema/skill/tests/test_normalize.py",
+        "work/mermaid-json-ir-schema/skill/tests/test_compiler.py"
+      ],
+      "id": "3.1",
+      "interfaces": "Consumes: `SchemaRegistry`, diagnostic/result models, shared schemas, legacy corpus, and private fixture `TargetSpec`; Produces: registry-dispatched `migrate_legacy(ir, target_override) -> dict[str, Any]`, `normalize(ir, target_override=None) -> dict[str, Any]`, and target-agnostic `compile_ir(ir, target=None, backend=\"mermaid\", *, deterministic=True) -> CompileResult` scaffolding",
+      "optional": false,
+      "requirements": [
+        "2.1",
+        "2.2",
+        "2.3",
+        "2.4",
+        "2.5",
+        "3.1",
+        "3.2",
+        "3.3",
+        "3.4",
+        "3.5",
+        "6.6",
+        "6.7",
+        "10.2"
+      ],
+      "resolved_model": "claude-opus-4.8",
+      "risk": "high; migration drift can change existing diagrams, so rollback restores the staged baseline [work/mermaid-json-ir-schema/skill/scripts/render.py](../../work/mermaid-json-ir-schema/skill/scripts/render.py)",
+      "stage": 3,
+      "task_category": "heavy_reasoning",
+      "title": "Implement legacy migration, default normalization, and compiler scaffolding",
+      "verification": "`python -m unittest work/mermaid-json-ir-schema/skill/tests/test_migration.py work/mermaid-json-ir-schema/skill/tests/test_normalize.py work/mermaid-json-ir-schema/skill/tests/test_compiler.py -v`; verify fixture-target compilation, unmapped-field failures, defaults, and no production-facade change; review public documentation"
+    },
+    {
+      "capability_tier": "high-reasoning",
+      "checked": true,
+      "delegation": "sequential subagent",
+      "dependency_delivery": "none",
+      "dependency_resolution": "none",
+      "depends_on": [
+        "3.1"
+      ],
+      "files": [
+        "work/mermaid-json-ir-schema/skill/scripts/mermaid_ir/registry.py",
+        "work/mermaid-json-ir-schema/skill/scripts/mermaid_ir/semantic.py",
+        "work/mermaid-json-ir-schema/skill/scripts/mermaid_ir/serialization.py",
+        "work/mermaid-json-ir-schema/skill/scripts/mermaid_ir/config.py",
+        "work/mermaid-json-ir-schema/skill/scripts/mermaid_ir/targets/__init__.py",
+        "work/mermaid-json-ir-schema/skill/tests/test_registry.py",
+        "work/mermaid-json-ir-schema/skill/tests/test_serialization.py",
+        "work/mermaid-json-ir-schema/skill/tests/test_config.py"
+      ],
+      "id": "4.1",
+      "interfaces": "Consumes: canonical compiler pipeline and approved serializer/configuration contracts; Produces: `TargetSpec`, `TARGETS`, semantic validation helpers, canonical frontmatter/escaping/ID utilities, and effective source/initialization configuration builders",
+      "optional": false,
+      "requirements": [
+        "4.13",
+        "4.14",
+        "5.1",
+        "5.2",
+        "5.3",
+        "5.4",
+        "5.5",
+        "5.6",
+        "5.7",
+        "5.8",
+        "6.1",
+        "6.2",
+        "6.3",
+        "6.4",
+        "7.1",
+        "7.2",
+        "7.3",
+        "7.4",
+        "7.5",
+        "7.6",
+        "10.3",
+        "11.6"
+      ],
+      "resolved_model": "claude-opus-4.8",
+      "risk": "high; shared escaping or configuration mistakes affect every target, so rollback removes the shared layer before target integration",
+      "stage": 4,
+      "task_category": "heavy_reasoning",
+      "title": "Implement the target registry, semantic helpers, configuration scopes, and pure serializer utilities",
+      "verification": "`python -m unittest work/mermaid-json-ir-schema/skill/tests/test_registry.py work/mermaid-json-ir-schema/skill/tests/test_serialization.py work/mermaid-json-ir-schema/skill/tests/test_config.py -v`; review public documentation"
+    },
+    {
+      "capability_tier": "high-reasoning",
+      "checked": false,
+      "delegation": "parallel-safe",
+      "dependency_delivery": "none",
+      "dependency_resolution": "none",
+      "depends_on": [
+        "4.1"
+      ],
+      "files": [
+        "work/mermaid-json-ir-schema/skill/scripts/mermaid_ir/targets/flowchart.py",
+        "work/mermaid-json-ir-schema/skill/schema/targets/flowchart.schema.json",
+        "work/mermaid-json-ir-schema/skill/coverage/targets/flowchart.json",
+        "work/mermaid-json-ir-schema/skill/examples/flowchart/",
+        "work/mermaid-json-ir-schema/skill/tests/targets/test_flowchart.py"
+      ],
+      "id": "5.1",
+      "interfaces": "Consumes: `TargetSpec`, shared graph/configuration schemas, semantic helpers, and serializer utilities; Produces: registered `flowchart` schema/validator/serializer, field-level coverage records, and canonical examples",
+      "optional": false,
+      "requirements": [
+        "4.1",
+        "4.13",
+        "4.14",
+        "5.5",
+        "6.1",
+        "6.2",
+        "6.3",
+        "6.4",
+        "7.4",
+        "7.6",
+        "8.4",
+        "11.3",
+        "11.4"
+      ],
+      "resolved_model": "claude-opus-4.8",
+      "risk": "high; flowchart grammar breadth may expose inventory gaps, with rollback isolated to this target module",
+      "stage": 5,
+      "task_category": "heavy_reasoning",
+      "title": "Implement complete `flowchart` addressability",
+      "verification": "`python -m unittest work/mermaid-json-ir-schema/skill/tests/targets/test_flowchart.py -v`; render minimal and maximal examples with the exact pinned checker; review documentation"
+    },
+    {
+      "capability_tier": "high-reasoning",
+      "checked": false,
+      "delegation": "parallel-safe",
+      "dependency_delivery": "none",
+      "dependency_resolution": "none",
+      "depends_on": [
+        "4.1"
+      ],
+      "files": [
+        "work/mermaid-json-ir-schema/skill/scripts/mermaid_ir/targets/mindmap.py",
+        "work/mermaid-json-ir-schema/skill/schema/targets/mindmap.schema.json",
+        "work/mermaid-json-ir-schema/skill/coverage/targets/mindmap.json",
+        "work/mermaid-json-ir-schema/skill/examples/mindmap/",
+        "work/mermaid-json-ir-schema/skill/tests/targets/test_mindmap.py"
+      ],
+      "id": "5.2",
+      "interfaces": "Consumes: shared target contracts and mindmap 11.16.1 inventory; Produces: registered `mindmap` schema/validator/serializer, coverage records, and canonical examples",
+      "optional": false,
+      "requirements": [
+        "4.2",
+        "4.13",
+        "4.14",
+        "5.5",
+        "6.1",
+        "6.2",
+        "6.3",
+        "6.4",
+        "7.4",
+        "7.6",
+        "8.4",
+        "11.3",
+        "11.4"
+      ],
+      "resolved_model": "claude-opus-4.8",
+      "risk": "medium; tree invariants and indentation are target-local, with rollback isolated to this module",
+      "stage": 5,
+      "task_category": "code_analysis",
+      "title": "Implement complete `mindmap` addressability",
+      "verification": "`python -m unittest work/mermaid-json-ir-schema/skill/tests/targets/test_mindmap.py -v`; render minimal and maximal examples; review documentation"
+    },
+    {
+      "capability_tier": "high-reasoning",
+      "checked": false,
+      "delegation": "parallel-safe",
+      "dependency_delivery": "none",
+      "dependency_resolution": "none",
+      "depends_on": [
+        "4.1"
+      ],
+      "files": [
+        "work/mermaid-json-ir-schema/skill/scripts/mermaid_ir/targets/block.py",
+        "work/mermaid-json-ir-schema/skill/schema/targets/block.schema.json",
+        "work/mermaid-json-ir-schema/skill/coverage/targets/block.json",
+        "work/mermaid-json-ir-schema/skill/examples/block/",
+        "work/mermaid-json-ir-schema/skill/tests/targets/test_block.py"
+      ],
+      "id": "5.3",
+      "interfaces": "Consumes: shared target contracts and block 11.16.1 inventory; Produces: registered `block` schema/validator/serializer, coverage records, and canonical examples",
+      "optional": false,
+      "requirements": [
+        "4.7",
+        "4.13",
+        "4.14",
+        "5.5",
+        "6.1",
+        "6.2",
+        "6.3",
+        "6.4",
+        "7.4",
+        "7.6",
+        "8.4",
+        "11.3",
+        "11.4"
+      ],
+      "resolved_model": "claude-opus-4.8",
+      "risk": "high; beta grammar and nesting combinations may be version-sensitive, with rollback isolated to this module",
+      "stage": 5,
+      "task_category": "heavy_reasoning",
+      "title": "Implement complete `block` addressability",
+      "verification": "`python -m unittest work/mermaid-json-ir-schema/skill/tests/targets/test_block.py -v`; render minimal and maximal examples; review documentation"
+    },
+    {
+      "capability_tier": "high-reasoning",
+      "checked": false,
+      "delegation": "parallel-safe",
+      "dependency_delivery": "none",
+      "dependency_resolution": "none",
+      "depends_on": [
+        "4.1"
+      ],
+      "files": [
+        "work/mermaid-json-ir-schema/skill/scripts/mermaid_ir/targets/c4_context.py",
+        "work/mermaid-json-ir-schema/skill/schema/targets/C4Context.schema.json",
+        "work/mermaid-json-ir-schema/skill/coverage/targets/C4Context.json",
+        "work/mermaid-json-ir-schema/skill/examples/C4Context/",
+        "work/mermaid-json-ir-schema/skill/tests/targets/test_c4_context.py"
+      ],
+      "id": "5.4",
+      "interfaces": "Consumes: shared target contracts and C4Context 11.16.1 inventory; Produces: registered `C4Context` schema/validator/serializer, coverage records, and canonical examples",
+      "optional": false,
+      "requirements": [
+        "4.8",
+        "4.13",
+        "4.14",
+        "5.5",
+        "6.1",
+        "6.2",
+        "6.3",
+        "6.4",
+        "7.4",
+        "7.6",
+        "8.4",
+        "11.3",
+        "11.4"
+      ],
+      "resolved_model": "claude-opus-4.8",
+      "risk": "high; positional macro compatibility is strict, with rollback isolated to this module",
+      "stage": 5,
+      "task_category": "heavy_reasoning",
+      "title": "Implement complete `C4Context` addressability",
+      "verification": "`python -m unittest work/mermaid-json-ir-schema/skill/tests/targets/test_c4_context.py -v`; render minimal and maximal examples; review documentation"
+    },
+    {
+      "capability_tier": "high-reasoning",
+      "checked": false,
+      "delegation": "parallel-safe",
+      "dependency_delivery": "none",
+      "dependency_resolution": "none",
+      "depends_on": [
+        "4.1"
+      ],
+      "files": [
+        "work/mermaid-json-ir-schema/skill/scripts/mermaid_ir/targets/c4_container.py",
+        "work/mermaid-json-ir-schema/skill/schema/targets/C4Container.schema.json",
+        "work/mermaid-json-ir-schema/skill/coverage/targets/C4Container.json",
+        "work/mermaid-json-ir-schema/skill/examples/C4Container/",
+        "work/mermaid-json-ir-schema/skill/tests/targets/test_c4_container.py"
+      ],
+      "id": "5.5",
+      "interfaces": "Consumes: shared target contracts and C4Container 11.16.1 inventory; Produces: registered `C4Container` schema/validator/serializer, coverage records, and canonical examples",
+      "optional": false,
+      "requirements": [
+        "4.9",
+        "4.13",
+        "4.14",
+        "5.5",
+        "6.1",
+        "6.2",
+        "6.3",
+        "6.4",
+        "7.4",
+        "7.6",
+        "8.4",
+        "11.3",
+        "11.4"
+      ],
+      "resolved_model": "claude-opus-4.8",
+      "risk": "high; nested boundaries and positional arguments are strict, with rollback isolated to this module",
+      "stage": 5,
+      "task_category": "heavy_reasoning",
+      "title": "Implement complete `C4Container` addressability",
+      "verification": "`python -m unittest work/mermaid-json-ir-schema/skill/tests/targets/test_c4_container.py -v`; render minimal and maximal examples; review documentation"
+    },
+    {
+      "capability_tier": "high-reasoning",
+      "checked": false,
+      "delegation": "parallel-safe",
+      "dependency_delivery": "none",
+      "dependency_resolution": "none",
+      "depends_on": [
+        "4.1"
+      ],
+      "files": [
+        "work/mermaid-json-ir-schema/skill/scripts/mermaid_ir/targets/architecture.py",
+        "work/mermaid-json-ir-schema/skill/schema/targets/architecture-beta.schema.json",
+        "work/mermaid-json-ir-schema/skill/coverage/targets/architecture-beta.json",
+        "work/mermaid-json-ir-schema/skill/examples/architecture-beta/",
+        "work/mermaid-json-ir-schema/skill/tests/targets/test_architecture.py"
+      ],
+      "id": "5.6",
+      "interfaces": "Consumes: shared target contracts and architecture 11.16.1 inventory; Produces: registered `architecture-beta` schema/validator/serializer, coverage records, and canonical examples",
+      "optional": false,
+      "requirements": [
+        "4.10",
+        "4.13",
+        "4.14",
+        "5.5",
+        "6.1",
+        "6.2",
+        "6.3",
+        "6.4",
+        "7.4",
+        "7.6",
+        "8.4",
+        "11.3",
+        "11.4"
+      ],
+      "resolved_model": "claude-opus-4.8",
+      "risk": "high; beta grammar, icon names, and title punctuation are version-sensitive, with rollback isolated to this module",
+      "stage": 5,
+      "task_category": "heavy_reasoning",
+      "title": "Implement complete `architecture-beta` addressability",
+      "verification": "`python -m unittest work/mermaid-json-ir-schema/skill/tests/targets/test_architecture.py -v`; render minimal and maximal examples; review documentation"
+    },
+    {
+      "capability_tier": "high-reasoning",
+      "checked": false,
+      "delegation": "parallel-safe",
+      "dependency_delivery": "none",
+      "dependency_resolution": "none",
+      "depends_on": [
+        "4.1"
+      ],
+      "files": [
+        "work/mermaid-json-ir-schema/skill/scripts/mermaid_ir/targets/er_diagram.py",
+        "work/mermaid-json-ir-schema/skill/scripts/mermaid_ir/legacy/er_diagram.py",
+        "work/mermaid-json-ir-schema/skill/schema/targets/erDiagram.schema.json",
+        "work/mermaid-json-ir-schema/skill/coverage/targets/erDiagram.json",
+        "work/mermaid-json-ir-schema/skill/examples/erDiagram/",
+        "work/mermaid-json-ir-schema/skill/tests/targets/test_er_diagram.py",
+        "work/mermaid-json-ir-schema/skill/tests/legacy/test_er_diagram.py"
+      ],
+      "id": "5.7",
+      "interfaces": "Consumes: shared target contracts, independent ER 11.16.1 inventory, and legacy member corpus; Produces: registered `erDiagram` schema/validator/serializer, `migrate_er_legacy_content()`, coverage records, and canonical examples without raw member syntax",
+      "optional": false,
+      "requirements": [
+        "4.11",
+        "4.13",
+        "4.14",
+        "5.5",
+        "6.1",
+        "6.2",
+        "6.3",
+        "6.4",
+        "7.4",
+        "7.6",
+        "8.4",
+        "11.3",
+        "11.4"
+      ],
+      "resolved_model": "claude-opus-4.8",
+      "risk": "medium; identifier quoting and cardinality orientation can drift, with rollback isolated to this module",
+      "stage": 5,
+      "task_category": "heavy_reasoning",
+      "title": "Implement complete `erDiagram` addressability",
+      "verification": "`python -m unittest work/mermaid-json-ir-schema/skill/tests/targets/test_er_diagram.py work/mermaid-json-ir-schema/skill/tests/legacy/test_er_diagram.py -v`; golden-migrate key/comment/quoted member forms, assert no raw syntax field, render minimal and maximal examples, and review documentation"
+    },
+    {
+      "capability_tier": "high-reasoning",
+      "checked": false,
+      "delegation": "parallel-safe",
+      "dependency_delivery": "none",
+      "dependency_resolution": "none",
+      "depends_on": [
+        "4.1"
+      ],
+      "files": [
+        "work/mermaid-json-ir-schema/skill/scripts/mermaid_ir/targets/class_diagram.py",
+        "work/mermaid-json-ir-schema/skill/scripts/mermaid_ir/legacy/class_diagram.py",
+        "work/mermaid-json-ir-schema/skill/schema/targets/classDiagram.schema.json",
+        "work/mermaid-json-ir-schema/skill/coverage/targets/classDiagram.json",
+        "work/mermaid-json-ir-schema/skill/examples/classDiagram/",
+        "work/mermaid-json-ir-schema/skill/tests/targets/test_class_diagram.py",
+        "work/mermaid-json-ir-schema/skill/tests/legacy/test_class_diagram.py"
+      ],
+      "id": "5.8",
+      "interfaces": "Consumes: shared target contracts, independent classDiagram 11.16.1 inventory, and legacy member corpus; Produces: registered `classDiagram` schema/validator/serializer, `migrate_class_legacy_content()`, coverage records, and canonical examples without raw member syntax",
+      "optional": false,
+      "requirements": [
+        "4.12",
+        "4.13",
+        "4.14",
+        "5.5",
+        "6.1",
+        "6.2",
+        "6.3",
+        "6.4",
+        "7.4",
+        "7.6",
+        "8.4",
+        "10.3",
+        "11.3",
+        "11.4"
+      ],
+      "resolved_model": "claude-opus-4.8",
+      "risk": "high; member grammar and relationship direction are extensive, with rollback isolated to this module",
+      "stage": 5,
+      "task_category": "heavy_reasoning",
+      "title": "Implement complete `classDiagram` addressability",
+      "verification": "`python -m unittest work/mermaid-json-ir-schema/skill/tests/targets/test_class_diagram.py work/mermaid-json-ir-schema/skill/tests/legacy/test_class_diagram.py -v`; golden-migrate visibility/generic/return-type forms, assert no raw syntax field, render minimal and maximal examples, and review documentation"
+    },
+    {
+      "capability_tier": "high-reasoning",
+      "checked": false,
+      "delegation": "parallel-safe",
+      "dependency_delivery": "none",
+      "dependency_resolution": "none",
+      "depends_on": [
+        "4.1"
+      ],
+      "files": [
+        "work/mermaid-json-ir-schema/skill/scripts/mermaid_ir/targets/gantt.py",
+        "work/mermaid-json-ir-schema/skill/schema/targets/gantt.schema.json",
+        "work/mermaid-json-ir-schema/skill/coverage/targets/gantt.json",
+        "work/mermaid-json-ir-schema/skill/examples/gantt/",
+        "work/mermaid-json-ir-schema/skill/tests/targets/test_gantt.py"
+      ],
+      "id": "5.9",
+      "interfaces": "Consumes: shared target contracts and Gantt 11.16.1 inventory; Produces: registered `gantt` schema/validator/serializer, coverage records, and canonical examples",
+      "optional": false,
+      "requirements": [
+        "4.3",
+        "4.13",
+        "4.14",
+        "5.5",
+        "6.1",
+        "6.2",
+        "6.3",
+        "6.4",
+        "7.4",
+        "7.6",
+        "8.4",
+        "11.3",
+        "11.4"
+      ],
+      "resolved_model": "claude-opus-4.8",
+      "risk": "high; date grammar and dependency combinations are complex, with rollback isolated to this module",
+      "stage": 5,
+      "task_category": "heavy_reasoning",
+      "title": "Implement complete `gantt` addressability",
+      "verification": "`python -m unittest work/mermaid-json-ir-schema/skill/tests/targets/test_gantt.py -v`; render minimal and maximal examples; review documentation"
+    },
+    {
+      "capability_tier": "high-reasoning",
+      "checked": false,
+      "delegation": "parallel-safe",
+      "dependency_delivery": "none",
+      "dependency_resolution": "none",
+      "depends_on": [
+        "4.1"
+      ],
+      "files": [
+        "work/mermaid-json-ir-schema/skill/scripts/mermaid_ir/targets/state_diagram.py",
+        "work/mermaid-json-ir-schema/skill/schema/targets/stateDiagram-v2.schema.json",
+        "work/mermaid-json-ir-schema/skill/coverage/targets/stateDiagram-v2.json",
+        "work/mermaid-json-ir-schema/skill/examples/stateDiagram-v2/",
+        "work/mermaid-json-ir-schema/skill/tests/targets/test_state_diagram.py"
+      ],
+      "id": "5.10",
+      "interfaces": "Consumes: shared target contracts and stateDiagram-v2 11.16.1 inventory; Produces: registered `stateDiagram-v2` schema/validator/serializer, coverage records, and canonical examples",
+      "optional": false,
+      "requirements": [
+        "4.4",
+        "4.13",
+        "4.14",
+        "5.5",
+        "6.1",
+        "6.2",
+        "6.3",
+        "6.4",
+        "7.4",
+        "7.6",
+        "8.4",
+        "11.3",
+        "11.4"
+      ],
+      "resolved_model": "claude-opus-4.8",
+      "risk": "high; recursive state integrity and concurrency syntax are complex, with rollback isolated to this module",
+      "stage": 5,
+      "task_category": "heavy_reasoning",
+      "title": "Implement complete `stateDiagram-v2` addressability",
+      "verification": "`python -m unittest work/mermaid-json-ir-schema/skill/tests/targets/test_state_diagram.py -v`; render minimal and maximal examples; review documentation"
+    },
+    {
+      "capability_tier": "high-reasoning",
+      "checked": false,
+      "delegation": "parallel-safe",
+      "dependency_delivery": "none",
+      "dependency_resolution": "none",
+      "depends_on": [
+        "4.1"
+      ],
+      "files": [
+        "work/mermaid-json-ir-schema/skill/scripts/mermaid_ir/targets/sequence_diagram.py",
+        "work/mermaid-json-ir-schema/skill/schema/targets/sequenceDiagram.schema.json",
+        "work/mermaid-json-ir-schema/skill/coverage/targets/sequenceDiagram.json",
+        "work/mermaid-json-ir-schema/skill/examples/sequenceDiagram/",
+        "work/mermaid-json-ir-schema/skill/tests/targets/test_sequence_diagram.py"
+      ],
+      "id": "5.11",
+      "interfaces": "Consumes: shared target contracts and sequenceDiagram 11.16.1 inventory; Produces: registered `sequenceDiagram` schema/validator/serializer, coverage records, and canonical examples",
+      "optional": false,
+      "requirements": [
+        "4.5",
+        "4.13",
+        "4.14",
+        "5.5",
+        "6.1",
+        "6.2",
+        "6.3",
+        "6.4",
+        "7.4",
+        "7.6",
+        "8.4",
+        "10.3",
+        "11.3",
+        "11.4"
+      ],
+      "resolved_model": "claude-opus-4.8",
+      "risk": "high; deeply nested control blocks and interaction syntax are extensive, with rollback isolated to this module",
+      "stage": 5,
+      "task_category": "heavy_reasoning",
+      "title": "Implement complete `sequenceDiagram` addressability",
+      "verification": "`python -m unittest work/mermaid-json-ir-schema/skill/tests/targets/test_sequence_diagram.py -v`; render minimal and maximal examples; review documentation"
+    },
+    {
+      "capability_tier": "high-reasoning",
+      "checked": false,
+      "delegation": "parallel-safe",
+      "dependency_delivery": "none",
+      "dependency_resolution": "none",
+      "depends_on": [
+        "4.1"
+      ],
+      "files": [
+        "work/mermaid-json-ir-schema/skill/scripts/mermaid_ir/targets/requirement_diagram.py",
+        "work/mermaid-json-ir-schema/skill/schema/targets/requirementDiagram.schema.json",
+        "work/mermaid-json-ir-schema/skill/coverage/targets/requirementDiagram.json",
+        "work/mermaid-json-ir-schema/skill/examples/requirementDiagram/",
+        "work/mermaid-json-ir-schema/skill/tests/targets/test_requirement_diagram.py"
+      ],
+      "id": "5.12",
+      "interfaces": "Consumes: shared target contracts and requirementDiagram 11.16.1 inventory; Produces: registered `requirementDiagram` schema/validator/serializer, coverage records, and canonical examples",
+      "optional": false,
+      "requirements": [
+        "4.6",
+        "4.13",
+        "4.14",
+        "5.5",
+        "6.1",
+        "6.2",
+        "6.3",
+        "6.4",
+        "7.4",
+        "7.6",
+        "8.4",
+        "11.3",
+        "11.4"
+      ],
+      "resolved_model": "claude-opus-4.8",
+      "risk": "medium; relationship direction and enum mappings must remain exact, with rollback isolated to this module",
+      "stage": 5,
+      "task_category": "code_analysis",
+      "title": "Implement complete `requirementDiagram` addressability",
+      "verification": "`python -m unittest work/mermaid-json-ir-schema/skill/tests/targets/test_requirement_diagram.py -v`; render minimal and maximal examples; review documentation"
+    },
+    {
+      "capability_tier": "high-reasoning",
+      "checked": false,
+      "delegation": "sequential subagent",
+      "dependency_delivery": "none",
+      "dependency_resolution": "none",
+      "depends_on": [
+        "5.1",
+        "5.2",
+        "5.3",
+        "5.4",
+        "5.5",
+        "5.6",
+        "5.7",
+        "5.8",
+        "5.9",
+        "5.10",
+        "5.11",
+        "5.12"
+      ],
+      "files": [
+        "work/mermaid-json-ir-schema/skill/scripts/mermaid_ir/registry.py",
+        "work/mermaid-json-ir-schema/skill/scripts/mermaid_ir/coverage.py",
+        "work/mermaid-json-ir-schema/skill/schema/diagram-ir.schema.json",
+        "work/mermaid-json-ir-schema/skill/coverage/mermaid-11.16.1.json",
+        "work/mermaid-json-ir-schema/skill/scripts/render.py",
+        "work/mermaid-json-ir-schema/skill/tests/test_coverage.py",
+        "work/mermaid-json-ir-schema/skill/tests/test_extensibility.py",
+        "work/mermaid-json-ir-schema/skill/tests/test_legacy_compatibility.py"
+      ],
+      "id": "6.1",
+      "interfaces": "Consumes: independent upstream inventory, 12 target-owned `TargetSpec` modules/legacy adapters/schemas/coverage/examples/tests, compiler scaffolding, and legacy corpus; Produces: populated `TARGETS`, strict root schema, aggregate `coverage/mermaid-11.16.1.json`, `check_coverage()`, production compatibility `render()`, and envelope/legacy-stability evidence",
+      "optional": false,
+      "requirements": [
+        "1.2",
+        "4.1",
+        "4.2",
+        "4.3",
+        "4.4",
+        "4.5",
+        "4.6",
+        "4.7",
+        "4.8",
+        "4.9",
+        "4.10",
+        "4.11",
+        "4.12",
+        "4.14",
+        "9.1",
+        "9.2",
+        "9.3",
+        "9.4",
+        "9.5",
+        "9.6",
+        "9.7",
+        "9.8"
+      ],
+      "resolved_model": "claude-opus-4.8",
+      "risk": "high; false completeness claims would defeat the feature, so rollback blocks integration rather than weakening the checker",
+      "stage": 6,
+      "task_category": "review",
+      "title": "Assemble the target registry and enforce field-level coverage completeness",
+      "verification": "`python -m unittest work/mermaid-json-ir-schema/skill/tests/test_coverage.py work/mermaid-json-ir-schema/skill/tests/test_extensibility.py work/mermaid-json-ir-schema/skill/tests/test_legacy_compatibility.py -v`; mutate inventory/coverage independently to prove bidirectional failure, compare every legacy golden including C4 overrides, and review public documentation"
+    },
+    {
+      "capability_tier": "high-reasoning",
+      "checked": false,
+      "delegation": "sequential subagent",
+      "dependency_delivery": "none",
+      "dependency_resolution": "none",
+      "depends_on": [
+        "6.1"
+      ],
+      "files": [
+        "work/mermaid-json-ir-schema/skill/scripts/mermaid_ir/cli.py",
+        "work/mermaid-json-ir-schema/skill/scripts/render.py",
+        "work/mermaid-json-ir-schema/skill/scripts/check.sh",
+        "work/mermaid-json-ir-schema/skill/tests/test_cli.py",
+        "work/mermaid-json-ir-schema/skill/tests/test_render_verification.py"
+      ],
+      "id": "6.2",
+      "interfaces": "Consumes: populated compiler/target registry, production compatibility facade, pinned renderer contract, and current official Context7 evidence; Produces: deterministic CLI, canonical JSON/config output adapters, exact-source version-asserting render checker, documented ephemeral acquisition/cache boundary, and stable exit statuses 0/1/2/3",
+      "optional": false,
+      "requirements": [
+        "3.3",
+        "5.4",
+        "5.6",
+        "5.7",
+        "5.8",
+        "6.6",
+        "6.7",
+        "8.1",
+        "8.2",
+        "8.3",
+        "8.4",
+        "10.1",
+        "10.2",
+        "10.4",
+        "10.5"
+      ],
+      "resolved_model": "claude-opus-4.8",
+      "risk": "high; incorrect version or partial-write behavior could corrupt outputs, so rollback restores the baseline CLI/checker",
+      "stage": 7,
+      "task_category": "heavy_reasoning",
+      "title": "Implement deterministic CLI outputs and exact-version render verification",
+      "verification": "`python -m unittest work/mermaid-json-ir-schema/skill/tests/test_cli.py work/mermaid-json-ir-schema/skill/tests/test_render_verification.py -v`; run pinned minimal/maximal render matrix and review documentation"
+    },
+    {
+      "capability_tier": "high-reasoning",
+      "checked": false,
+      "delegation": "sequential subagent",
+      "dependency_delivery": "none",
+      "dependency_resolution": "none",
+      "depends_on": [
+        "6.2"
+      ],
+      "files": [
+        "work/mermaid-json-ir-schema/skill/reference/ir.md",
+        "work/mermaid-json-ir-schema/skill/SKILL.md",
+        "work/mermaid-json-ir-schema/skill/tests/test_documentation.py",
+        "work/mermaid-json-ir-schema/acceptance-report.json"
+      ],
+      "id": "7.1",
+      "interfaces": "Consumes: complete staged compiler, schemas, coverage manifest, CLI, checker, and 24 target examples; Produces: self-sufficient canonical IR documentation, updated skill instructions, documentation checks, and hash-bound `acceptance-report.json`",
+      "optional": false,
+      "requirements": [
+        "1.3",
+        "1.4",
+        "2.1",
+        "2.2",
+        "3.3",
+        "4.1",
+        "4.2",
+        "4.3",
+        "4.4",
+        "4.5",
+        "4.6",
+        "4.7",
+        "4.8",
+        "4.9",
+        "4.10",
+        "4.11",
+        "4.12",
+        "5.4",
+        "8.1",
+        "8.2",
+        "8.3",
+        "8.4",
+        "9.1",
+        "9.2",
+        "9.3",
+        "9.4",
+        "9.5",
+        "11.1",
+        "11.2",
+        "11.3",
+        "11.4",
+        "11.5",
+        "11.6"
+      ],
+      "resolved_model": "claude-opus-4.8",
+      "risk": "medium; misleading documentation would make a correct schema unusable, so installation is blocked until documentation checks pass",
+      "stage": 8,
+      "task_category": "review",
+      "title": "Publish the canonical IR reference and run the complete acceptance matrix",
+      "verification": "`python -m unittest discover -s work/mermaid-json-ir-schema/skill/tests -v`; run every minimal/maximal example through `scripts/render.py` and the exact pinned `scripts/check.sh`; verify no network access during schema/normalize/compile tests"
+    },
+    {
+      "capability_tier": "high-reasoning",
+      "checked": false,
+      "delegation": "controller",
+      "dependency_delivery": "none",
+      "dependency_resolution": "none",
+      "depends_on": [
+        "7.1"
+      ],
+      "files": [
+        "work/mermaid-json-ir-schema/install.py",
+        "work/mermaid-json-ir-schema/install-report.json",
+        "/Users/soham/.agents/skills/mermaid/",
+        "/Users/soham/.codex/skills/mermaid/"
+      ],
+      "id": "8.1",
+      "interfaces": "Consumes: hash-bound staged skill, canonical baseline manifest, both live destination trees, and `acceptance-report.json`; Produces: atomically installed Agent skill, byte-identical Codex mirror, separate recoverable pre-install copies, two-destination rollback behavior, and `install-report.json`",
+      "optional": false,
+      "requirements": [
+        "3.1",
+        "3.2",
+        "7.1",
+        "8.1",
+        "8.4",
+        "10.1",
+        "10.2",
+        "11.5"
+      ],
+      "resolved_model": "claude-opus-4.8",
+      "risk": "high; concurrent skill edits could be overwritten, so any hash mismatch stops installation and recovery restores the prior tree",
+      "stage": 9,
+      "task_category": "review",
+      "title": "Merge and synchronize the staged tree into Agent and Codex skill locations",
+      "verification": "exercise a simulated second-destination failure and prove both baselines restore; then rerun compiler/CLI smoke tests from both installed locations, compare non-cache manifests/hashes, confirm both recovery copies and install report, and review installer documentation"
+    }
+  ]
+}

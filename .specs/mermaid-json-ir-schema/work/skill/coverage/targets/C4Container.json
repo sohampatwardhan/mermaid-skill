@@ -1,0 +1,234 @@
+{
+  "entries": [
+    {
+      "constructId": "title",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/title",
+      "presence": "optional",
+      "schemaRef": "schema/targets/C4Container.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.c4_container.SPEC",
+      "testIds": [
+        "test_c4_container.test_minimal",
+        "test_c4_container.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "element.person",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/element/person",
+      "presence": "optional",
+      "schemaRef": "schema/targets/C4Container.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.c4_container.SPEC",
+      "testIds": [
+        "test_c4_container.test_minimal",
+        "test_c4_container.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "element.system",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/element/system",
+      "presence": "optional",
+      "schemaRef": "schema/targets/C4Container.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.c4_container.SPEC",
+      "testIds": [
+        "test_c4_container.test_minimal",
+        "test_c4_container.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "element.container",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/element/container",
+      "presence": "optional",
+      "schemaRef": "schema/targets/C4Container.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.c4_container.SPEC",
+      "testIds": [
+        "test_c4_container.test_minimal",
+        "test_c4_container.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "element.containerDb",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/element/containerDb",
+      "presence": "optional",
+      "schemaRef": "schema/targets/C4Container.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.c4_container.SPEC",
+      "testIds": [
+        "test_c4_container.test_minimal",
+        "test_c4_container.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "element.containerQueue",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/element/containerQueue",
+      "presence": "optional",
+      "schemaRef": "schema/targets/C4Container.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.c4_container.SPEC",
+      "testIds": [
+        "test_c4_container.test_minimal",
+        "test_c4_container.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "element.external",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/element/external",
+      "presence": "optional",
+      "schemaRef": "schema/targets/C4Container.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.c4_container.SPEC",
+      "testIds": [
+        "test_c4_container.test_minimal",
+        "test_c4_container.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "boundary.container",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/boundary/container",
+      "presence": "optional",
+      "schemaRef": "schema/targets/C4Container.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.c4_container.SPEC",
+      "testIds": [
+        "test_c4_container.test_minimal",
+        "test_c4_container.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "boundary.generic",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/boundary/generic",
+      "presence": "optional",
+      "schemaRef": "schema/targets/C4Container.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.c4_container.SPEC",
+      "testIds": [
+        "test_c4_container.test_minimal",
+        "test_c4_container.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "relationship.standard",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/relationship/standard",
+      "presence": "optional",
+      "schemaRef": "schema/targets/C4Container.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.c4_container.SPEC",
+      "testIds": [
+        "test_c4_container.test_minimal",
+        "test_c4_container.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "relationship.bidirectional",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/relationship/bidirectional",
+      "presence": "optional",
+      "schemaRef": "schema/targets/C4Container.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.c4_container.SPEC",
+      "testIds": [
+        "test_c4_container.test_minimal",
+        "test_c4_container.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "relationship.directional",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/relationship/directional",
+      "presence": "optional",
+      "schemaRef": "schema/targets/C4Container.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.c4_container.SPEC",
+      "testIds": [
+        "test_c4_container.test_minimal",
+        "test_c4_container.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "relationship.back",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/relationship/back",
+      "presence": "optional",
+      "schemaRef": "schema/targets/C4Container.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.c4_container.SPEC",
+      "testIds": [
+        "test_c4_container.test_minimal",
+        "test_c4_container.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "layout.updateElementStyle",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/layout/updateElementStyle",
+      "presence": "optional",
+      "schemaRef": "schema/targets/C4Container.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.c4_container.SPEC",
+      "testIds": [
+        "test_c4_container.test_minimal",
+        "test_c4_container.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "layout.updateRelStyle",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/layout/updateRelStyle",
+      "presence": "optional",
+      "schemaRef": "schema/targets/C4Container.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.c4_container.SPEC",
+      "testIds": [
+        "test_c4_container.test_minimal",
+        "test_c4_container.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "layout.updateLayoutConfig",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/layout/updateLayoutConfig",
+      "presence": "optional",
+      "schemaRef": "schema/targets/C4Container.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.c4_container.SPEC",
+      "testIds": [
+        "test_c4_container.test_minimal",
+        "test_c4_container.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "accessibility.title",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/accessibility/title",
+      "presence": "optional",
+      "schemaRef": "schema/targets/C4Container.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.c4_container.SPEC",
+      "testIds": [
+        "test_c4_container.test_minimal",
+        "test_c4_container.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "accessibility.description",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/accessibility/description",
+      "presence": "optional",
+      "schemaRef": "schema/targets/C4Container.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.c4_container.SPEC",
+      "testIds": [
+        "test_c4_container.test_minimal",
+        "test_c4_container.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "config.c4.wrap",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/config/c4/wrap",
+      "presence": "optional",
+      "schemaRef": "schema/targets/C4Container.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.c4_container.SPEC",
+      "testIds": [
+        "test_c4_container.test_minimal",
+        "test_c4_container.test_deterministic"
+      ]
+    }
+  ],
+  "mermaidVersion": "11.16.1",
+  "target": "C4Container"
+}

@@ -1,0 +1,21 @@
+{
+  "accessibility": {
+    "description": "Deterministic maximal envelope",
+    "title": "requirementDiagram example"
+  },
+  "content": {
+    "elements": [],
+    "links": [],
+    "requirements": []
+  },
+  "diagram": "requirement-links",
+  "renderer": {
+    "deterministic": true,
+    "mermaidVersion": "11.16.1"
+  },
+  "schemaVersion": "1.0.0",
+  "source": {
+    "title": "requirementDiagram source"
+  },
+  "target": "requirementDiagram"
+}

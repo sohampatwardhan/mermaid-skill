@@ -1,0 +1,270 @@
+{
+  "entries": [
+    {
+      "constructId": "direction",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/direction",
+      "presence": "optional",
+      "schemaRef": "schema/targets/stateDiagram-v2.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.state_diagram_v2.SPEC",
+      "testIds": [
+        "test_state_diagram_v2.test_minimal",
+        "test_state_diagram_v2.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "state.id",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/state/id",
+      "presence": "optional",
+      "schemaRef": "schema/targets/stateDiagram-v2.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.state_diagram_v2.SPEC",
+      "testIds": [
+        "test_state_diagram_v2.test_minimal",
+        "test_state_diagram_v2.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "state.label",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/state/label",
+      "presence": "optional",
+      "schemaRef": "schema/targets/stateDiagram-v2.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.state_diagram_v2.SPEC",
+      "testIds": [
+        "test_state_diagram_v2.test_minimal",
+        "test_state_diagram_v2.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "state.composite",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/state/composite",
+      "presence": "optional",
+      "schemaRef": "schema/targets/stateDiagram-v2.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.state_diagram_v2.SPEC",
+      "testIds": [
+        "test_state_diagram_v2.test_minimal",
+        "test_state_diagram_v2.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "state.choice",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/state/choice",
+      "presence": "optional",
+      "schemaRef": "schema/targets/stateDiagram-v2.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.state_diagram_v2.SPEC",
+      "testIds": [
+        "test_state_diagram_v2.test_minimal",
+        "test_state_diagram_v2.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "state.fork",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/state/fork",
+      "presence": "optional",
+      "schemaRef": "schema/targets/stateDiagram-v2.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.state_diagram_v2.SPEC",
+      "testIds": [
+        "test_state_diagram_v2.test_minimal",
+        "test_state_diagram_v2.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "state.join",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/state/join",
+      "presence": "optional",
+      "schemaRef": "schema/targets/stateDiagram-v2.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.state_diagram_v2.SPEC",
+      "testIds": [
+        "test_state_diagram_v2.test_minimal",
+        "test_state_diagram_v2.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "state.concurrent",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/state/concurrent",
+      "presence": "optional",
+      "schemaRef": "schema/targets/stateDiagram-v2.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.state_diagram_v2.SPEC",
+      "testIds": [
+        "test_state_diagram_v2.test_minimal",
+        "test_state_diagram_v2.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "transition.from",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/transition/from",
+      "presence": "optional",
+      "schemaRef": "schema/targets/stateDiagram-v2.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.state_diagram_v2.SPEC",
+      "testIds": [
+        "test_state_diagram_v2.test_minimal",
+        "test_state_diagram_v2.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "transition.to",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/transition/to",
+      "presence": "optional",
+      "schemaRef": "schema/targets/stateDiagram-v2.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.state_diagram_v2.SPEC",
+      "testIds": [
+        "test_state_diagram_v2.test_minimal",
+        "test_state_diagram_v2.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "transition.label",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/transition/label",
+      "presence": "optional",
+      "schemaRef": "schema/targets/stateDiagram-v2.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.state_diagram_v2.SPEC",
+      "testIds": [
+        "test_state_diagram_v2.test_minimal",
+        "test_state_diagram_v2.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "initial",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/initial",
+      "presence": "optional",
+      "schemaRef": "schema/targets/stateDiagram-v2.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.state_diagram_v2.SPEC",
+      "testIds": [
+        "test_state_diagram_v2.test_minimal",
+        "test_state_diagram_v2.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "final",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/final",
+      "presence": "optional",
+      "schemaRef": "schema/targets/stateDiagram-v2.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.state_diagram_v2.SPEC",
+      "testIds": [
+        "test_state_diagram_v2.test_minimal",
+        "test_state_diagram_v2.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "note.state",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/note/state",
+      "presence": "optional",
+      "schemaRef": "schema/targets/stateDiagram-v2.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.state_diagram_v2.SPEC",
+      "testIds": [
+        "test_state_diagram_v2.test_minimal",
+        "test_state_diagram_v2.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "note.side",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/note/side",
+      "presence": "optional",
+      "schemaRef": "schema/targets/stateDiagram-v2.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.state_diagram_v2.SPEC",
+      "testIds": [
+        "test_state_diagram_v2.test_minimal",
+        "test_state_diagram_v2.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "note.text",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/note/text",
+      "presence": "optional",
+      "schemaRef": "schema/targets/stateDiagram-v2.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.state_diagram_v2.SPEC",
+      "testIds": [
+        "test_state_diagram_v2.test_minimal",
+        "test_state_diagram_v2.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "style.classDef",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/style/classDef",
+      "presence": "optional",
+      "schemaRef": "schema/targets/stateDiagram-v2.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.state_diagram_v2.SPEC",
+      "testIds": [
+        "test_state_diagram_v2.test_minimal",
+        "test_state_diagram_v2.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "style.classAssignment",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/style/classAssignment",
+      "presence": "optional",
+      "schemaRef": "schema/targets/stateDiagram-v2.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.state_diagram_v2.SPEC",
+      "testIds": [
+        "test_state_diagram_v2.test_minimal",
+        "test_state_diagram_v2.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "comments",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/comments",
+      "presence": "optional",
+      "schemaRef": "schema/targets/stateDiagram-v2.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.state_diagram_v2.SPEC",
+      "testIds": [
+        "test_state_diagram_v2.test_minimal",
+        "test_state_diagram_v2.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "accessibility.title",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/accessibility/title",
+      "presence": "optional",
+      "schemaRef": "schema/targets/stateDiagram-v2.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.state_diagram_v2.SPEC",
+      "testIds": [
+        "test_state_diagram_v2.test_minimal",
+        "test_state_diagram_v2.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "accessibility.description",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/accessibility/description",
+      "presence": "optional",
+      "schemaRef": "schema/targets/stateDiagram-v2.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.state_diagram_v2.SPEC",
+      "testIds": [
+        "test_state_diagram_v2.test_minimal",
+        "test_state_diagram_v2.test_deterministic"
+      ]
+    },
+    {
+      "constructId": "source.title",
+      "defaultPolicy": "schema-or-none",
+      "jsonPointer": "/source/title",
+      "presence": "optional",
+      "schemaRef": "schema/targets/stateDiagram-v2.schema.json",
+      "serializerSymbol": "mermaid_ir.targets.state_diagram_v2.SPEC",
+      "testIds": [
+        "test_state_diagram_v2.test_minimal",
+        "test_state_diagram_v2.test_deterministic"
+      ]
+    }
+  ],
+  "mermaidVersion": "11.16.1",
+  "target": "stateDiagram-v2"
+}
