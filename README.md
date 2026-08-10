@@ -1,0 +1,38 @@
+# Mermaid Skill
+
+An [Agent Skills](https://agentskills.io/specification)-compatible skill for authoring,
+validating, and deterministically generating [Mermaid](https://mermaid.js.org/) diagrams. Built
+for Claude Code, and portable to any tool that reads the open `SKILL.md` format.
+
+- **Always current.** Authors against cached per-type syntax references with live-documentation
+  escalation on evidence of staleness — never stale training data.
+- **Never presented unverified.** Every diagram is render-validated (via an MCP render tool or
+  the bundled `scripts/check.sh`) before it's shown, including detection of Mermaid's silent
+  error-placeholder SVG.
+- **Deterministic generation from structured data.** When a diagram's content is already
+  structured data on disk (a dependency graph, a timing ledger, a state machine, a sequence, a
+  requirement-traceability table), `scripts/render.py` generates the exact Mermaid source from a
+  small JSON intermediate representation (IR) instead of hand-authoring it — see
+  [`reference/ir.md`](reference/ir.md) for the schema. Five IR families cover
+  `flowchart`/`mindmap`/`block`/`C4Context`/`C4Container`/`architecture-beta`/`erDiagram`/
+  `classDiagram` (the `graph` family), `gantt` (`timeline`), `stateDiagram-v2`, `sequenceDiagram`,
+  and `requirementDiagram`.
+
+## Install
+
+Copy this repository's contents into your tool's Agent Skills directory as a `mermaid/` folder
+(e.g. `~/.claude/skills/mermaid/`, `~/.agents/skills/mermaid/` — see the
+[Agent Skills spec](https://agentskills.io/specification) for every supported tool's path).
+
+## Testing
+
+```bash
+python3 -m pytest tests/ -q
+```
+
+Every positive-case test in `tests/test_render.py` is a real render through `scripts/check.sh`
+(via `npx @mermaid-js/mermaid-cli` or an installed `mmdc`), not just a string match.
+
+## License
+
+MIT — see [LICENSE](LICENSE).
