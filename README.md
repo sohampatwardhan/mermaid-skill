@@ -11,23 +11,25 @@ for Claude Code, and portable to any tool that reads the open `SKILL.md` format.
   error-placeholder SVG.
 - **Deterministic generation from structured data.** When a diagram's content is already
   structured data on disk (a dependency graph, a timing ledger, a state machine, a sequence, a
-  requirement-traceability table), `scripts/render.py` generates the exact Mermaid source from a
-  small JSON intermediate representation (IR) instead of hand-authoring it — see
-  [`reference/ir.md`](reference/ir.md) for the schema. Five IR families cover
+  requirement-traceability table), `mermaid/scripts/render.py` generates the exact Mermaid source
+  from a small JSON intermediate representation (IR) instead of hand-authoring it — see
+  [`mermaid/reference/ir.md`](mermaid/reference/ir.md) for the schema. Five IR families cover
   `flowchart`/`mindmap`/`block`/`C4Context`/`C4Container`/`architecture-beta`/`erDiagram`/
   `classDiagram` (the `graph` family), `gantt` (`timeline`), `stateDiagram-v2`, `sequenceDiagram`,
   and `requirementDiagram`.
 
 ## Install
 
-Copy this repository's contents into your tool's Agent Skills directory as a `mermaid/` folder
-(e.g. `~/.claude/skills/mermaid/`, `~/.agents/skills/mermaid/` — see the
-[Agent Skills spec](https://agentskills.io/specification) for every supported tool's path).
+The [`mermaid/`](mermaid/) folder in this repository *is* the Agent Skill package — copy it
+as-is into your tool's Agent Skills directory (e.g. `~/.claude/skills/mermaid/`,
+`~/.agents/skills/mermaid/` — see the [Agent Skills spec](https://agentskills.io/specification)
+for every supported tool's path). Nothing outside `mermaid/` (this README, the license, CI) is
+part of the installed skill.
 
 ## Testing
 
 ```bash
-python3 -m pytest tests/ -q
+cd mermaid && python3 -m pytest tests/ -q
 ```
 
 Every positive-case test in `tests/test_render.py` is a real render through `scripts/check.sh`

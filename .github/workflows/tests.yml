@@ -16,3 +16,4 @@ jobs:
           node-version: "20"
       - run: pip install pytest
       - run: python3 -m pytest tests/ -q
+        working-directory: mermaid
