@@ -4,8 +4,10 @@ An [Agent Skills](https://agentskills.io/specification)-compatible skill for aut
 validating, and deterministically generating [Mermaid](https://mermaid.js.org/) diagrams. Built
 for Claude Code, and portable to any tool that reads the open `SKILL.md` format.
 
-- **Always current.** Authors against cached per-type syntax references with live-documentation
-  escalation on evidence of staleness — never stale training data.
+- **Cached syntax, checked against the renderer.** Per-type syntax lives in
+  `mermaid/reference/syntax/` (version stamp in `mermaid/reference/diagram-types.md`).
+  `scripts/check.sh` uses the installed Mermaid CLI, which may be newer than that stamp.
+  Escalate to live docs or `scripts/refresh.sh` when a type is missing from the cache.
 - **Never presented unverified.** Every diagram is render-validated (via an MCP render tool or
   the bundled `scripts/check.sh`) before it's shown, including detection of Mermaid's silent
   error-placeholder SVG.
@@ -13,10 +15,10 @@ for Claude Code, and portable to any tool that reads the open `SKILL.md` format.
   structured data on disk (a dependency graph, a timing ledger, a state machine, a sequence, a
   requirement-traceability table), `mermaid/scripts/render.py` generates the exact Mermaid source
   from a small JSON intermediate representation (IR) instead of hand-authoring it — see
-  [`mermaid/reference/ir.md`](mermaid/reference/ir.md) for the schema. Five IR families cover
-  `flowchart`/`mindmap`/`block`/`C4Context`/`C4Container`/`architecture-beta`/`erDiagram`/
-  `classDiagram` (the `graph` family), `gantt` (`timeline`), `stateDiagram-v2`, `sequenceDiagram`,
-  and `requirementDiagram`.
+  [`mermaid/reference/ir.md`](mermaid/reference/ir.md) and
+  [`mermaid/reference/ir-catalog.md`](mermaid/reference/ir-catalog.md). The matrix of every
+  open-source diagram type, its IR, its tests, and remaining gaps is
+  [`mermaid/reference/coverage.md`](mermaid/reference/coverage.md).
 
 ## Install
 
@@ -33,7 +35,8 @@ cd mermaid && python3 -m pytest tests/ -q
 ```
 
 Every positive-case test in `tests/test_render.py` is a real render through `scripts/check.sh`
-(via `npx @mermaid-js/mermaid-cli` or an installed `mmdc`), not just a string match.
+(an installed `mmdc`, otherwise `npx -y @mermaid-js/mermaid-cli@12.0.0`), not just a string match.
+GitHub Actions installs that same pin on Node 22. Mermaid 11 does not register `agentflow-beta`.
 
 ## License
 

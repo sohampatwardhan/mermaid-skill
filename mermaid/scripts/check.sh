@@ -45,12 +45,16 @@ fi
 
 [ -s "${SRC}" ] || { echo "ERROR: empty diagram."; exit 2; }
 
-# Find a mermaid CLI: prefer an installed mmdc, else fall back to npx.
+# Find a mermaid CLI: prefer an installed mmdc, else a pinned npx package.
+# Keep this pin in sync with .github/workflows/tests.yml. Mermaid 11 CLIs do not
+# register agentflow-beta or usecase-beta (UnknownDiagramError). mermaid-cli 12
+# requires Node >= 22.13.
+MERMAID_CLI_PACKAGE="${MERMAID_CLI_PACKAGE:-@mermaid-js/mermaid-cli@12.0.0}"
 if command -v mmdc >/dev/null 2>&1; then
   RUN=(mmdc)
 elif command -v npx >/dev/null 2>&1; then
-  echo "note: mmdc not installed; using 'npx @mermaid-js/mermaid-cli' (first run downloads it)."
-  RUN=(npx -y @mermaid-js/mermaid-cli)
+  echo "note: mmdc not installed; using 'npx ${MERMAID_CLI_PACKAGE}' (first run downloads it)."
+  RUN=(npx -y "${MERMAID_CLI_PACKAGE}")
 else
   echo "ERROR: need either 'mmdc' or 'npx' on PATH."
   echo "Install once with: npm install -g @mermaid-js/mermaid-cli"

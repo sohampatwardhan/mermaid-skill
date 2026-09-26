@@ -1,55 +1,33 @@
 # Diagram IR — generating Mermaid from structured data
 
-`scripts/render.py` turns a small JSON document (the **IR**) into Mermaid source
-deterministically: same JSON in, same text out, every time, with no model judgment in the
-rendering step. Content and rendering are separate on purpose — the JSON is the durable,
-backend-agnostic representation of *what the diagram says*; Mermaid is one renderer of it.
-A future backend (TikZ, for example) adds sibling serializer functions that consume the same
-IR files; nothing that produces or stores the JSON has to change.
+`scripts/render.py` turns a JSON document (the **IR**) into Mermaid source.
+Same JSON in, same text out. The script does not render; run `scripts/check.sh` on the
+output before use. Every branch below is covered by a real render in `tests/test_render.py`.
 
-Generated source still goes through the skill's normal render-validation
-(`scripts/check.sh` or `validate_and_render_mermaid_diagram`) — generation changes how the
-source is authored, not whether it's verified before use. Every branch documented below is
-covered by a real render in `tests/test_render.py`, not just parsed as text.
+Use the IR when the diagram is already structured data (a graph, a timing table, a state
+table, a sequence, a traceability table). Hand-author when there is no such source yet.
 
-## When to generate instead of hand-author
-
-Generate from IR when the diagram's content is already fully determined by structured data
-you have on disk — a dependency graph, a timing/interval table, a state-transition table, a
-requirement-traceability table. Hand-author Mermaid directly (following the rest of this
-skill) when the diagram synthesizes judgment that has no structured source yet — an
-architecture sketch, a discovery mind map comparing alternatives, a hypothesized sequence in a
-debugging writeup. Either way, capturing the *decision* as IR JSON first (nodes/edges/labels)
-rather than typing Mermaid text directly is still preferable when you expect the diagram to be
-re-rendered, audited field-by-field, or read by a script — hand-authored Mermaid text has none
-of the three.
-
-## Scope: content, not presentation
-
-Feature parity here means parity for the **structural/semantic** vocabulary of each diagram
-type — everything that changes what the diagram *says*. Purely presentational Mermaid
-features (`classDef`/`style` coloring, `click` link handlers, custom icons, font/theme
-config) are deliberately out of scope: they carry no information the IR would need to
-represent faithfully, and a caller that wants them can post-process the generated source.
-This is a documented boundary, not an oversight.
+Presentational Mermaid (`classDef` / `style` coloring, `click` handlers, theme config) is
+out of scope, except flowchart `status` colors below, which are fixed data. Post-process
+the generated source if you need anything else. Icons are in scope only for
+`architecture-beta` (`icon`).
 
 ## Families
 
-Every IR document has a top-level `"diagram"` (the family) and `"target"` (the specific
-Mermaid diagram type; can be overridden with `--target`). Five families cover every diagram
-type used across the spec-\* skills today:
+Every document has `"diagram"` (family) and `"target"` (override with `--target`).
+Any other pair is an error. Field-level schemas for the targets below live in this file.
+Every other target (the `timeline` keyword, charts, kanban, packet, git, journey, the other
+C4 diagrams, swimlane, agentflow, wardley, tree, cynefin, event model, railroad, use case,
+zenuml, `info`) is specified in [ir-catalog.md](ir-catalog.md). The matrix is
+[coverage.md](coverage.md).
 
-| Family | Targets implemented | Targets addable (same IR shape, new serializer) |
-|---|---|---|
-| `graph` | `flowchart`, `mindmap`, `block`, `C4Context`, `C4Container`, `architecture-beta`, `erDiagram`, `classDiagram` | — |
-| `timeline` | `gantt` | `timeline` |
-| `state-machine` | `stateDiagram-v2` | — |
-| `sequence` | `sequenceDiagram` | — |
-| `requirement-links` | `requirementDiagram` | — |
-
-Adding a target within an existing family means writing one new `render_<family>_<target>`
-function and registering it in `SERIALIZERS`; the IR shape and validation for that family
-already exist.
+| Family | Targets in this file |
+|---|---|
+| `graph` | `flowchart`, `mindmap`, `block`, `C4Context`, `C4Container`, `architecture-beta`, `erDiagram`, `classDiagram` |
+| `timeline` | `gantt` (the `timeline` keyword is a different target; see ir-catalog) |
+| `state-machine` | `stateDiagram-v2` |
+| `sequence` | `sequenceDiagram` (`zenuml` is in ir-catalog) |
+| `requirement-links` | `requirementDiagram` |
 
 ### `graph` — nodes, edges, optional grouping
 
@@ -73,13 +51,7 @@ already exist.
   `decision` (diamond), `io` (lean-r/parallelogram), `subprocess` (subproc), `document` (doc),
   `store` (cylinder), `connector` (circle).
 - Node `status` (flowchart only, optional): `done`/`ready`/`blocked`/`pending`, each a fixed
-  color via a generated `classDef` — only the statuses actually used get a `classDef`. This is
-  progress *data*, not decoration: it's meant to be derived deterministically from something
-  like `04_tasks.json`'s `checked`/`concurrency.blocked`/`concurrency.ready` fields (done =
-  checked, ready/blocked = in those sets, pending = neither yet), not chosen per node by hand.
-  Regenerating the same source data with updated status produces an updated diagram — that's the
-  point: a Stage-and-Dependency-Overview flowchart re-rendered from the current `04_tasks.json`
-  shows current progress, not a snapshot frozen at authoring time.
+  color via a generated `classDef`. Only statuses that appear get a `classDef`.
 - Node `kind` (mindmap): `root` (auto-applied to the declared root), `circle`, `square`,
   `bang`, `cloud`, or omit for the default plain-text shape.
 - Edge `kind` (flowchart): `normal`/`dependency` (`-->`), `conditional`/`weak` (`-.->`),
@@ -90,9 +62,9 @@ already exist.
   version-independent since `<br/>` inside the typed `@{shape: ...}` label syntax depends on
   HTML labels being enabled. Use `sequence` notes/messages (which do support `<br/>`) for
   multi-line prose.
-- mindmap requires an explicit `"root"` — it is never inferred from edge direction, so an IR
-  document can't silently pick the wrong node if the graph isn't a clean tree; a cycle is a
-  render error, not a best-effort layout.
+- mindmap requires an explicit `"root"` and a tree. Every node is reachable from that root
+  by one path. A second parent, a cycle, a duplicate id, an unreachable node, or an edge to
+  an undeclared id is an error. Nothing is dropped.
 
 ### `graph` — `block`: nested/grouped composition
 
@@ -118,8 +90,8 @@ way). An optional top-level `"columns"` (positive int) emits the `columns N` dir
   Groups are flat (one level), matching flowchart's grouping — not the composite/nested
   blocks the raw Mermaid grammar also allows.
 - Edges render as a plain arrow (`-->`), optionally with a quoted label
-  (`A-- "label" -->B`); block syntax has no dashed/thick edge variants to select between.
-  Both node and group ids are valid edge endpoints (a group id addresses its boundary).
+  (`A-- "label" -->B`). `kind` may be omitted, `normal`, or `dependency` (all the same
+  arrow). Any other `kind` is an error. Both node and group ids are valid edge endpoints.
 
 ### `graph` — `C4Context` / `C4Container`: actors, systems, containers, boundaries
 
@@ -159,6 +131,8 @@ just `--target`) picks which, since node/boundary kind vocabularies differ betwe
 - Node/group/edge-endpoint `id`s must be bare identifiers (letters/digits/underscore) — C4's
   PlantUML-derived macro syntax doesn't tolerate arbitrary punctuation the way flowchart's
   sanitized ids do.
+- `C4Component`, `C4Dynamic`, and `C4Deployment` reuse this document shape. Their kind lists
+  and `rel_index` are in [ir-catalog.md](ir-catalog.md).
 
 ### `graph` — `architecture-beta`: services, groups, junctions, ports
 
@@ -239,9 +213,7 @@ just `--target`) picks which, since node/boundary kind vocabularies differ betwe
 }
 ```
 
-- Node `"id"` must be a bare identifier (Mermaid's classDiagram grammar accepts unicode/dash
-  class names too, but this IR only takes the conservative bare-identifier subset already
-  used by state-machine/sequence/requirement-links, for the same reason). Optional `"label"`
+- Node `"id"` must be a bare identifier (letters, digits, underscore). Optional `"label"`
   renders a display label (`class Id["Label"]`).
 - Optional node `"kind"` ∈ `interface`, `abstract`, `service`, `enumeration` renders the
   `<<Kind>>` annotation as the class block's first line; omit for a plain class.
@@ -275,12 +247,13 @@ just `--target`) picks which, since node/boundary kind vocabularies differ betwe
 }
 ```
 
-`tags` is a list (not a single value) because real Gantt syntax combines them — a task can be
-both `crit` and `active`/`done` at once. Validated: each tag ∈ `active`/`done`/`crit`/
-`milestone`; no duplicates; `active` and `done` are mutually exclusive; `milestone` cannot
-combine with `active`/`done`. Every bar states an explicit `start`/`end` in `dateFormat` —
-never `after <id>` — so the IR can be built directly from a closed timing-ledger row with no
-cross-referencing; a milestone is a bar whose `start` equals its `end`.
+`tags` is a list because a task can be both `crit` and `active` or `done`. Each tag ∈
+`active`/`done`/`crit`/`milestone`; no duplicates; `active` and `done` are mutually
+exclusive; `milestone` cannot combine with `active`/`done`. Every bar has an explicit
+`start`/`end` in `dateFormat` (a milestone is `start == end`). The label must be non-empty
+and must not contain `:`. Mermaid uses the first colon on the task line to start metadata;
+a colon in the title crashes the renderer (`TypeError`) instead of naming a line. Colons
+inside `start`/`end` values are fine.
 
 ### `state-machine` — states, composite states, pseudostates, notes
 
@@ -305,8 +278,9 @@ cross-referencing; a milestone is a bar whose `start` equals its `end`.
 - A state with a nested `"states"`/`"transitions"`/`"initial"`/`"final"` renders as a
   composite state (`state Outer { ... }`), recursively — a composite can contain another
   composite.
-- State `kind` ∈ `choice`, `fork`, `join` renders the SysML-style `<<choice>>`/`<<fork>>`/
-  `<<join>>` pseudostate declaration; omit `kind` for an ordinary state.
+- State `kind` ∈ `choice`, `fork`, `join` renders `<<choice>>` / `<<fork>>` / `<<join>>`.
+  Omit `kind` for an ordinary state. Any other `kind` is an error, including on a composite.
+  A pseudostate cannot also carry `states`, `transitions`, `initial`, or `final`.
 - `initial`/`final` generate the `[*] --> ...` / `... --> [*]` edges at whatever nesting level
   they appear.
 
@@ -370,8 +344,7 @@ and element `id`s must be bare identifiers (letters/digits/underscore) — Merma
 
 ## Validation philosophy
 
-`render.py` fails closed on anything it can't render deterministically: an edge/link/message to
-an undeclared node or actor, an unknown `kind`/`tag`/`type`/`direction`, a mindmap cycle,
-conflicting gantt tags, an unsupported `--backend`. It never guesses a default shape or
-silently drops a bad reference — the same "no silent defaults" standard the rest of the
-spec-\* family holds artifacts to.
+`render.py` fails closed: an edge, link, or message to an undeclared node or actor, an
+unknown `kind` / `tag` / `type` / `direction`, a mindmap that is not a tree, a gantt label
+containing `:`, conflicting gantt tags, an unsupported `--backend`. It does not guess a
+shape or drop a bad reference.

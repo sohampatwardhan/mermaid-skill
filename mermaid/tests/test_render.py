@@ -124,6 +124,28 @@ class GraphMindmapTests(unittest.TestCase):
         self.assertIn("mindmap", source)
         self.assertIn("((Duplicate detector))", source)
 
+    def test_unreachable_node_is_rejected(self) -> None:
+        ir = {
+            "diagram": "graph", "target": "mindmap", "root": "root",
+            "nodes": [
+                {"id": "root", "label": "Root"},
+                {"id": "a", "label": "A"},
+                {"id": "orphan", "label": "Dropped before"},
+            ],
+            "edges": [{"from": "root", "to": "a"}],
+        }
+        with self.assertRaises(ValueError):
+            render_module.render(ir)
+
+    def test_edge_to_undeclared_node_is_rejected(self) -> None:
+        ir = {
+            "diagram": "graph", "target": "mindmap", "root": "root",
+            "nodes": [{"id": "root", "label": "Root"}],
+            "edges": [{"from": "ghost", "to": "root"}],
+        }
+        with self.assertRaises(ValueError):
+            render_module.render(ir)
+
     def test_cycle_is_rejected(self) -> None:
         ir = {
             "diagram": "graph", "target": "mindmap", "root": "a",
@@ -162,6 +184,16 @@ class TimelineGanttTests(unittest.TestCase):
             "diagram": "timeline", "target": "gantt", "dateFormat": "YYYY-MM-DD",
             "sections": [{"name": "S", "bars": [
                 {"id": "t1", "label": "T1", "start": "2026-01-01", "end": "2026-01-02", "tags": ["urgent"]}
+            ]}],
+        }
+        with self.assertRaises(ValueError):
+            render_module.render(ir)
+
+    def test_colon_in_label_is_rejected(self) -> None:
+        ir = {
+            "diagram": "timeline", "target": "gantt", "dateFormat": "YYYY-MM-DD",
+            "sections": [{"name": "S", "bars": [
+                {"id": "t1", "label": "Review: security", "start": "2026-01-01", "end": "2026-01-02"}
             ]}],
         }
         with self.assertRaises(ValueError):
@@ -219,6 +251,24 @@ class StateMachineTests(unittest.TestCase):
         ir = {
             "diagram": "state-machine", "target": "stateDiagram-v2",
             "states": [{"id": "s1", "kind": "wat"}], "transitions": [],
+        }
+        with self.assertRaises(ValueError):
+            render_module.render(ir)
+
+    def test_unknown_kind_on_a_composite_is_rejected(self) -> None:
+        ir = {
+            "diagram": "state-machine", "target": "stateDiagram-v2",
+            "states": [{"id": "Outer", "kind": "wat", "states": [{"id": "Inner"}]}],
+            "transitions": [],
+        }
+        with self.assertRaises(ValueError):
+            render_module.render(ir)
+
+    def test_pseudostate_with_nested_body_is_rejected(self) -> None:
+        ir = {
+            "diagram": "state-machine", "target": "stateDiagram-v2",
+            "states": [{"id": "gate", "kind": "choice", "states": [{"id": "Inner"}]}],
+            "transitions": [],
         }
         with self.assertRaises(ValueError):
             render_module.render(ir)
@@ -362,7 +412,7 @@ class GraphBlockTests(unittest.TestCase):
             ],
             "edges": [
                 {"from": "a", "to": "b", "label": "next"},
-                {"from": "grp-1", "to": "f"},
+                {"from": "grp-1", "to": "f", "kind": "dependency"},
             ],
         }
         source = render_validated(ir)
@@ -375,6 +425,15 @@ class GraphBlockTests(unittest.TestCase):
         ir = {
             "diagram": "graph", "target": "block",
             "nodes": [{"id": "a", "label": "A", "kind": "wat"}], "edges": [],
+        }
+        with self.assertRaises(ValueError):
+            render_module.render(ir)
+
+    def test_unknown_edge_kind_is_rejected(self) -> None:
+        ir = {
+            "diagram": "graph", "target": "block",
+            "nodes": [{"id": "a", "label": "A"}, {"id": "b", "label": "B"}],
+            "edges": [{"from": "a", "to": "b", "kind": "strong"}],
         }
         with self.assertRaises(ValueError):
             render_module.render(ir)
@@ -603,6 +662,212 @@ class DispatchTests(unittest.TestCase):
     def test_unknown_family_target_pair_is_rejected(self) -> None:
         with self.assertRaises(ValueError):
             render_module.render({"diagram": "graph", "target": "packet", "nodes": [], "edges": []})
+
+    def test_component_and_deployment_render(self) -> None:
+        component = {
+            "diagram": "graph", "target": "C4Component", "title": "API",
+            "groups": [{"id": "api", "label": "API", "kind": "container_boundary"}],
+            "nodes": [{
+                "id": "sign", "label": "Sign In", "kind": "component",
+                "technology": "MVC", "description": "Auth", "group": "api",
+            }],
+            "edges": [],
+        }
+        source = render_validated(component)
+        self.assertIn("C4Component", source)
+        self.assertIn("Component(sign, \"Sign In\", \"MVC\", \"Auth\")", source)
+        dynamic = {
+            "diagram": "graph", "target": "C4Dynamic",
+            "nodes": [
+                {"id": "c1", "label": "SPA", "kind": "container", "technology": "JS", "description": "UI"},
+                {"id": "c2", "label": "Auth", "kind": "component", "technology": "Spring", "description": "Checks"},
+            ],
+            "edges": [{"from": "c1", "to": "c2", "label": "Calls", "kind": "rel_index", "index": 1}],
+        }
+        source = render_validated(dynamic)
+        self.assertIn("RelIndex(1, c1, c2,", source)
+        deployment = {
+            "diagram": "graph", "target": "C4Deployment", "title": "Live",
+            "groups": [{
+                "id": "mob", "label": "Phone", "kind": "deployment_node", "technology": "iOS",
+            }],
+            "nodes": [{
+                "id": "app", "label": "App", "kind": "container", "technology": "Xamarin",
+                "description": "Mobile", "group": "mob",
+            }],
+            "edges": [],
+        }
+        source = render_validated(deployment)
+        self.assertIn("Deployment_Node(mob, \"Phone\", \"iOS\")", source)
+
+
+class CatalogRenderTests(unittest.TestCase):
+    def test_data_diagrams_render(self) -> None:
+        cases = [
+            ({"diagram": "timeline", "target": "timeline", "title": "History",
+              "sections": [{"name": "Early", "events": [
+                  {"period": "2002", "text": ["LinkedIn"]},
+                  {"period": "2004", "text": ["Facebook", "Google"]},
+              ]}]}, "timeline", "2004 : Facebook : Google"),
+            ({"diagram": "chart", "target": "pie", "title": "Pets", "showData": True,
+              "slices": [{"label": "Dogs", "value": 40}, {"label": "Cats", "value": 20}]},
+             "pie showData", '"Dogs"'),
+            ({"diagram": "chart", "target": "xychart", "title": "Sales",
+              "xAxis": ["jan", "feb", "mar"],
+              "yAxis": {"label": "Revenue", "min": 4000, "max": 11000},
+              "bar": [5000, 6000, 7500]}, "xychart", "bar ["),
+            ({"diagram": "chart", "target": "sankey",
+              "links": [{"from": "A", "to": "B", "value": 10}]}, "sankey", "A,B,"),
+            ({"diagram": "chart", "target": "quadrantChart", "title": "Reach",
+              "xAxis": {"left": "Low", "right": "High"},
+              "yAxis": {"bottom": "Low", "top": "High"},
+              "quadrants": {"1": "Expand", "2": "Promote", "3": "Re", "4": "Improve"},
+              "points": [{"label": "A", "x": 0.3, "y": 0.6}]}, "quadrantChart", "quadrant-1 Expand"),
+            ({"diagram": "chart", "target": "radar-beta",
+              "axes": [{"id": "a", "label": "Math"}, {"id": "b", "label": "Science"}],
+              "curves": [{"id": "alice", "label": "Alice", "values": [85, 90]}]},
+             "radar-beta", "curve alice"),
+            ({"diagram": "chart", "target": "treemap-beta",
+              "nodes": [{"label": "Category A", "children": [{"label": "Item A1", "value": 10}]}]},
+             "treemap-beta", '"Item A1"'),
+            ({"diagram": "chart", "target": "venn-beta", "title": "Overlap",
+              "sets": ["Frontend", {"id": "Backend", "label": "Server"}],
+              "unions": [{"sets": ["Frontend", "Backend"], "label": "APIs"}]},
+             "venn-beta", "union Frontend,Backend"),
+            ({"diagram": "packet", "target": "packet",
+              "fields": [{"start": 0, "end": 15, "label": "Source Port"},
+                         {"start": 16, "end": 31, "label": "Destination Port"}]},
+             "packet", "0-15:"),
+            ({"diagram": "board", "target": "kanban",
+              "columns": [{"id": "todo", "label": "To Do",
+                           "cards": [{"id": "t1", "label": "Write spec", "priority": "High"}]}]},
+             "kanban", "priority:"),
+            ({"diagram": "journey", "target": "journey", "title": "My day",
+              "sections": [{"name": "Work", "tasks": [
+                  {"name": "Make tea", "score": 5, "actors": ["Me"]}]}]},
+             "journey", "Make tea: 5: Me"),
+            ({"diagram": "git", "target": "gitGraph",
+              "ops": [{"type": "commit"}, {"type": "branch", "name": "develop"},
+                      {"type": "checkout", "name": "develop"}, {"type": "commit"},
+                      {"type": "checkout", "name": "main"}, {"type": "merge", "name": "develop"}]},
+             "gitGraph", "merge develop"),
+            ({"diagram": "tree", "target": "treeView-beta",
+              "nodes": [{"name": "src", "children": [{"name": "index.ts"}]}, {"name": "README.md"}]},
+             "treeView-beta", "index.ts"),
+            ({"diagram": "tree", "target": "ishikawa-beta", "effect": "Blurry Photo",
+              "causes": [{"label": "Process", "children": [{"label": "Out of focus"}]}]},
+             "ishikawa-beta", "Out of focus"),
+            ({"diagram": "cynefin", "target": "cynefin-beta", "title": "Incident",
+              "domains": {"complex": ["Investigate"], "complicated": ["Analyze"]},
+              "transitions": [{"from": "complex", "to": "complicated", "label": "Pattern"}]},
+             "cynefin-beta", "complex --> complicated"),
+            ({"diagram": "eventmodeling", "target": "eventmodeling",
+              "frames": [{"n": 1, "kind": "ui", "name": "CartUI"},
+                         {"n": 2, "kind": "cmd", "name": "AddItem"}]},
+             "eventmodeling", "tf 02 cmd AddItem"),
+            ({"diagram": "grammar", "target": "railroad-ebnf-beta", "title": "Digit",
+              "rules": ['digit = "0" | "1" ;']}, "railroad-ebnf-beta", 'digit = "0" | "1" ;'),
+            ({"diagram": "info", "target": "info"}, "info", "info"),
+        ]
+        for ir, keyword, snippet in cases:
+            with self.subTest(target=ir["target"]):
+                source = render_validated(ir)
+                self.assertIn(keyword, source)
+                self.assertIn(snippet, source)
+
+    def test_spatial_and_sequence_variants_render(self) -> None:
+        swim = {
+            "diagram": "graph", "target": "swimlane-beta", "direction": "LR",
+            "groups": [{"id": "customer", "label": "Customer"}, {"id": "support", "label": "Support"}],
+            "nodes": [
+                {"id": "request", "label": "Request", "kind": "terminator", "group": "customer"},
+                {"id": "triage", "label": "Triage", "group": "support"},
+            ],
+            "edges": [{"from": "request", "to": "triage", "label": "handoff"}],
+        }
+        source = render_validated(swim)
+        self.assertIn("swimlane-beta LR", source)
+        agent = {
+            "diagram": "graph", "target": "agentflow-beta", "direction": "LR",
+            "groups": [{"id": "main", "label": "Main"}, {"id": "review", "label": "Review"}],
+            "nodes": [
+                {"id": "research", "label": "Research", "kind": "task", "group": "main"},
+                {"id": "write", "label": "Write", "kind": "action", "group": "review"},
+            ],
+            "edges": [{"from": "research", "to": "write", "kind": "sequence", "label": "then"},
+                      {"from": "main", "to": "review", "kind": "sequence"}],
+        }
+        source = render_validated(agent)
+        self.assertIn("agentflow-beta LR", source)
+        self.assertIn("shape: task", source)
+        self.assertIn("main --> review", source)
+        wardley = {
+            "diagram": "graph", "target": "wardley-beta", "title": "Tea",
+            "nodes": [
+                {"id": "Business", "kind": "anchor", "visibility": 0.95, "evolution": 0.63},
+                {"id": "CupOfTea", "kind": "component", "visibility": 0.79, "evolution": 0.61},
+            ],
+            "edges": [{"from": "Business", "to": "CupOfTea"}],
+        }
+        source = render_validated(wardley)
+        self.assertIn("wardley-beta", source)
+        self.assertIn("Business -> CupOfTea", source)
+        usecase = {
+            "diagram": "usecase", "target": "usecase-beta", "direction": "LR",
+            "actors": [{"id": "User", "label": "Customer"}],
+            "usecases": [
+                {"id": "Login", "label": "Sign in", "group": "bank"},
+                {"id": "Audit", "label": "Audit trail"},
+            ],
+            "groups": [{"id": "bank", "label": "Bank"}],
+            "edges": [
+                {"from": "User", "to": "Login", "label": "uses"},
+                {"from": "Login", "to": "Audit", "kind": "include"},
+            ],
+        }
+        source = render_validated(usecase)
+        self.assertIn("usecase-beta", source)
+        self.assertIn("..> : include", source)
+        zenuml = {
+            "diagram": "sequence", "target": "zenuml", "title": "Demo",
+            "actors": [{"id": "Alice", "kind": "actor"}, {"id": "John"}],
+            "steps": [{"type": "message", "from": "Alice", "to": "John", "label": "Hello"}],
+        }
+        source = render_validated(zenuml)
+        self.assertIn("@Actor Alice", source)
+        self.assertIn("Alice->John: Hello", source)
+
+    def test_closed_failures(self) -> None:
+        with self.assertRaises(ValueError):
+            render_module.render({
+                "diagram": "chart", "target": "pie",
+                "slices": [{"label": "Dogs", "value": 0}],
+            })
+        with self.assertRaises(ValueError):
+            render_module.render({
+                "diagram": "timeline", "target": "timeline",
+                "events": [{"period": "2004", "text": ["A: B"]}],
+            })
+        with self.assertRaises(ValueError):
+            render_module.render({
+                "diagram": "sequence", "target": "zenuml",
+                "actors": [{"id": "A"}],
+                "steps": [{"type": "loop", "label": "retry", "steps": []}],
+            })
+        with self.assertRaises(ValueError):
+            render_module.render({
+                "diagram": "packet", "target": "packet",
+                "fields": [
+                    {"start": 0, "end": 7, "label": "A"},
+                    {"start": 16, "end": 31, "label": "B"},
+                ],
+            })
+        with self.assertRaises(ValueError):
+            render_module.render({
+                "diagram": "packet", "target": "packet",
+                "fields": [{"start": 8, "end": 15, "label": "A"}],
+            })
+
 
     def test_unsupported_backend_is_rejected(self) -> None:
         with self.assertRaises(ValueError):

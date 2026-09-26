@@ -1,28 +1,11 @@
 #!/usr/bin/env python3
 """Deterministically render a diagram IR (JSON) to Mermaid source.
 
-Five IR families cover every diagram type the spec-* skills embed; other callers can
-reuse them for any diagram whose content is already structured data. Rendering is a pure
-function of the IR: same JSON in, same Mermaid text out, every time. Nothing here talks to
-a network or a renderer — pipe the output to `scripts/check.sh` (or the
-validate_and_render_mermaid_diagram MCP tool) to render-validate it, exactly as a
-hand-authored diagram would be.
+Same JSON in, same Mermaid text out. This module does not render. Pipe the output
+through `scripts/check.sh` before inserting it into Markdown. `--backend` accepts
+only `mermaid`.
 
-The `--backend` flag defaults to (and today only supports) `mermaid`. It exists so a future
-backend (e.g. TikZ) can add sibling serializer functions consuming the same IR files without
-changing this dispatcher or any caller's JSON.
-
-Families and their Mermaid targets:
-  graph             -> flowchart, mindmap, block, C4Context, C4Container,
-                       architecture-beta, erDiagram, classDiagram
-                                                  (nodes/edges/groups; shared IR shape)
-  timeline          -> gantt                     (sectioned bars, tags, milestones, excludes)
-  state-machine     -> stateDiagram-v2            (states/transitions, composite, choice/fork/join)
-  sequence          -> sequenceDiagram             (actors/steps: messages, activation, notes,
-                                                     loop/opt/break/rect/alt/par/critical blocks)
-  requirement-links -> requirementDiagram          (requirements/elements/links)
-
-Schema details: ../reference/ir.md
+Targets are the keys of SERIALIZERS. Schemas: ../reference/ir.md and ../reference/ir-catalog.md.
 
 Usage:
     scripts/render.py diagram.json
@@ -118,10 +101,7 @@ _MINDMAP_SHAPES = {
     "bang": ("))", "(("),
     "cloud": (")", "("),
 }
-# Deterministic status -> color mapping. This is content, not decoration: `status` is real
-# progress data (typically derived from 04_tasks.json's `checked`/`concurrency.blocked`/`ready`),
-# and the color is a fixed function of that value, never an arbitrary per-node choice — the same
-# "rules based, not a per-call aesthetic decision" standard the rest of this family holds to.
+# Fixed status -> color. `status` is data; only statuses that appear are emitted.
 _FLOWCHART_STATUS_STYLES = {
     "done": "fill:#9f9,stroke:#393,color:#000",
     "ready": "fill:#9cf,stroke:#369,color:#000",
@@ -188,12 +168,19 @@ def render_graph_flowchart(ir: dict) -> str:
 
 def render_graph_mindmap(ir: dict) -> str:
     _require(ir, ("nodes", "edges", "root"), "graph/mindmap")
-    nodes = {node["id"]: node for node in ir["nodes"]}
+    nodes: dict[str, dict] = {}
+    for node in ir["nodes"]:
+        _require(node, ("id", "label"), "graph/mindmap node")
+        if node["id"] in nodes:
+            raise IRError(f"graph/mindmap has duplicate node id {node['id']!r}")
+        nodes[node["id"]] = node
     if ir["root"] not in nodes:
         raise IRError(f"graph/mindmap root {ir['root']!r} is not a declared node")
     children: dict[str, list[str]] = {}
     for edge in ir["edges"]:
         _require(edge, ("from", "to"), "graph/mindmap edge")
+        if edge["from"] not in nodes or edge["to"] not in nodes:
+            raise IRError(f"graph/mindmap edge references undeclared node: {edge}")
         children.setdefault(edge["from"], []).append(edge["to"])
 
     lines = ["mindmap"]
@@ -201,7 +188,9 @@ def render_graph_mindmap(ir: dict) -> str:
 
     def emit(node_id: str, depth: int) -> None:
         if node_id in visited:
-            raise IRError(f"graph/mindmap edges form a cycle at {node_id!r}; mindmap requires a tree")
+            raise IRError(
+                f"graph/mindmap node {node_id!r} is reached more than once; mindmap requires a tree"
+            )
         visited.add(node_id)
         node = nodes.get(node_id)
         if node is None:
@@ -219,6 +208,11 @@ def render_graph_mindmap(ir: dict) -> str:
             emit(child, depth + 1)
 
     emit(ir["root"], 0)
+    unreachable = [node_id for node_id in nodes if node_id not in visited]
+    if unreachable:
+        raise IRError(
+            f"graph/mindmap node(s) are not reachable from root {ir['root']!r}: {unreachable}"
+        )
     return "\n".join(lines) + "\n"
 
 
@@ -270,6 +264,11 @@ def render_graph_block(ir: dict) -> str:
 
     for edge in ir["edges"]:
         _require(edge, ("from", "to"), "graph/block edge")
+        kind = edge.get("kind", "normal")
+        if kind not in ("normal", "dependency"):
+            raise IRError(
+                f"graph/block edge has unknown kind {kind!r}; block edges are plain arrows only"
+            )
         if edge["from"] not in ids or edge["to"] not in ids:
             raise IRError(f"graph/block edge references undeclared node/group: {edge}")
         if edge.get("label"):
@@ -297,20 +296,42 @@ _C4_CONTAINER_KINDS = {
     "container_db_ext": "ContainerDb_Ext",
     "container_queue_ext": "ContainerQueue_Ext",
 }
-_C4_NODE_KINDS = {**_C4_PERSON_SYSTEM_KINDS, **_C4_CONTAINER_KINDS}
+_C4_COMPONENT_KINDS = {
+    "component": "Component",
+    "component_db": "ComponentDb",
+    "component_queue": "ComponentQueue",
+    "component_ext": "Component_Ext",
+    "component_db_ext": "ComponentDb_Ext",
+    "component_queue_ext": "ComponentQueue_Ext",
+}
+_C4_NODE_KINDS = {**_C4_PERSON_SYSTEM_KINDS, **_C4_CONTAINER_KINDS, **_C4_COMPONENT_KINDS}
+_C4_TECH_KINDS = set(_C4_CONTAINER_KINDS) | set(_C4_COMPONENT_KINDS)
+_C4_DEPLOYMENT_KINDS = {
+    "deployment_node": "Deployment_Node",
+    "node": "Node",
+    "node_left": "Node_L",
+    "node_right": "Node_R",
+}
 _C4_TARGET_NODE_KINDS = {
     "C4Context": set(_C4_PERSON_SYSTEM_KINDS),
-    "C4Container": set(_C4_NODE_KINDS),
+    "C4Container": set(_C4_PERSON_SYSTEM_KINDS) | set(_C4_CONTAINER_KINDS),
+    "C4Component": set(_C4_NODE_KINDS),
+    "C4Dynamic": set(_C4_NODE_KINDS),
+    "C4Deployment": set(_C4_PERSON_SYSTEM_KINDS) | set(_C4_CONTAINER_KINDS),
 }
 _C4_BOUNDARY_KINDS = {
     "enterprise_boundary": "Enterprise_Boundary",
     "system_boundary": "System_Boundary",
     "container_boundary": "Container_Boundary",
     "boundary": "Boundary",
+    **_C4_DEPLOYMENT_KINDS,
 }
 _C4_TARGET_BOUNDARY_KINDS = {
     "C4Context": {"enterprise_boundary", "system_boundary", "boundary"},
     "C4Container": {"container_boundary", "boundary"},
+    "C4Component": {"container_boundary", "boundary"},
+    "C4Dynamic": {"container_boundary", "boundary"},
+    "C4Deployment": set(_C4_DEPLOYMENT_KINDS),
 }
 _C4_REL_KINDS = {
     "rel": "Rel",
@@ -320,13 +341,16 @@ _C4_REL_KINDS = {
     "rel_left": "Rel_L",
     "rel_right": "Rel_R",
     "rel_back": "Rel_Back",
+    "rel_index": "RelIndex",
 }
 
 
 def render_graph_c4(ir: dict) -> str:
     target = ir.get("target")
-    if target not in ("C4Context", "C4Container"):
-        raise IRError(f"graph/c4 requires ir['target'] to be 'C4Context' or 'C4Container' (got {target!r})")
+    if target not in _C4_TARGET_NODE_KINDS:
+        raise IRError(
+            f"graph/c4 requires ir['target'] to be one of {sorted(_C4_TARGET_NODE_KINDS)} (got {target!r})"
+        )
     _require(ir, ("nodes", "edges"), f"graph/{target}")
     allowed_node_kinds = _C4_TARGET_NODE_KINDS[target]
     allowed_boundary_kinds = _C4_TARGET_BOUNDARY_KINDS[target]
@@ -350,13 +374,13 @@ def render_graph_c4(ir: dict) -> str:
         args = [node_id, _quote(node["label"])]
         technology = node.get("technology")
         description = node.get("description")
-        if kind in _C4_CONTAINER_KINDS:
+        if kind in _C4_TECH_KINDS:
             if technology is not None:
                 args.append(_quote(technology))
             elif description is not None:
                 raise IRError(
                     f"graph/{target} node {node['id']!r} has 'description' but no 'technology'; "
-                    "container macros take technology before description"
+                    "this macro takes technology before description"
                 )
         elif technology is not None:
             raise IRError(f"graph/{target} node {node['id']!r} kind {kind!r} does not accept 'technology'")
@@ -385,6 +409,18 @@ def render_graph_c4(ir: dict) -> str:
             raise IRError(
                 f"graph/{target} group {group['id']!r} kind {group['kind']!r} does not accept 'boundary_type'"
             )
+        if group["kind"] in _C4_DEPLOYMENT_KINDS:
+            technology = group.get("technology")
+            description = group.get("description")
+            if technology is not None:
+                args.append(_quote(technology))
+            elif description is not None:
+                raise IRError(
+                    f"graph/{target} group {group['id']!r} has 'description' but no 'technology'; "
+                    "deployment nodes take type before description"
+                )
+            if description is not None:
+                args.append(_quote(description))
         lines.append(f'{indent}{macro}({", ".join(args)}) {{')
         for node in by_group.pop(group["id"], []):
             emit_node(node, indent + "    ")
@@ -410,9 +446,18 @@ def render_graph_c4(ir: dict) -> str:
         macro = _C4_REL_KINDS.get(kind)
         if macro is None:
             raise IRError(f"graph/{target} edge has unknown kind {kind!r}")
+        if kind == "rel_index" and target != "C4Dynamic":
+            raise IRError("graph/c4 edge kind 'rel_index' is only valid on C4Dynamic")
         if edge["from"] not in known or edge["to"] not in known:
             raise IRError(f"graph/{target} edge references undeclared node: {edge}")
         args = [edge["from"], edge["to"], _quote(edge["label"])]
+        if kind == "rel_index":
+            if edge.get("technology"):
+                raise IRError("graph/C4Dynamic rel_index does not take 'technology'")
+            index = edge.get("index")
+            if isinstance(index, bool) or not isinstance(index, int):
+                raise IRError(f"graph/C4Dynamic rel_index edge requires an integer 'index': {edge}")
+            args.insert(0, str(index))
         if edge.get("technology"):
             args.append(_quote(edge["technology"]))
         lines.append(f'    {macro}({", ".join(args)})')
@@ -657,9 +702,16 @@ def render_timeline_gantt(ir: dict) -> str:
         lines.append(f"    section {section['name']}")
         for bar in section["bars"]:
             _require(bar, ("id", "label", "start", "end"), "timeline/gantt bar")
+            label = str(bar["label"])
+            if not label.strip() or ":" in label:
+                raise IRError(
+                    f"timeline/gantt bar {bar['id']!r} label must be non-empty and must not contain ':'; "
+                    "Mermaid treats the first colon as the start of task metadata "
+                    "(a colon in the title crashes the renderer with TypeError)"
+                )
             bar_id = _identifier(bar["id"], "timeline/gantt bar")
             fields = _gantt_tags(bar) + [bar_id, bar["start"], bar["end"]]
-            lines.append(f"    {bar['label']} :{', '.join(fields)}")
+            lines.append(f"    {label} :{', '.join(fields)}")
     return "\n".join(lines) + "\n"
 
 
@@ -673,9 +725,13 @@ def _emit_state_machine_body(ir: dict, lines: list[str], indent: str) -> None:
     for state in ir.get("states", []):
         _require(state, ("id",), "state-machine state")
         kind = state.get("kind")
-        if kind is not None and kind not in _STATE_PSEUDO_KINDS and "states" not in state:
+        if kind is not None and kind not in _STATE_PSEUDO_KINDS:
             raise IRError(f"state-machine state {state['id']!r} has unknown kind {kind!r}")
         if kind in _STATE_PSEUDO_KINDS:
+            if any(key in state for key in ("states", "transitions", "initial", "final")):
+                raise IRError(
+                    f"state-machine pseudostate {state['id']!r} cannot contain a nested body"
+                )
             lines.append(f'{indent}state {state["id"]} <<{kind}>>')
         elif "states" in state or "transitions" in state:
             lines.append(f'{indent}state {state["id"]} {{')
@@ -852,6 +908,678 @@ def render_requirement_links(ir: dict) -> str:
     return "\n".join(lines) + "\n"
 
 
+# --- remaining Mermaid types ---------------------------------------------------------------
+
+def _positive_number(value: Any, where: str) -> str:
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        raise IRError(f"{where} must be a number, got {value!r}")
+    return str(value)
+
+
+def _no_colon(text: str, where: str) -> str:
+    if not str(text).strip() or ":" in str(text) or "\n" in str(text):
+        raise IRError(f"{where} must be a single line and must not contain ':'")
+    return str(text)
+
+
+def render_graph_swimlane(ir: dict) -> str:
+    direction = _direction(ir, "graph/swimlane-beta", allowed=_FLOWCHART_DIRECTIONS, default="TD")
+    cloned = dict(ir)
+    cloned["direction"] = direction
+    body = render_graph_flowchart(cloned)
+    return f"swimlane-beta {direction}\n" + body.split("\n", 1)[1]
+
+
+_AGENT_SHAPES = {"task", "tool", "input", "decision", "refdoc", "action"}
+_AGENT_ARROWS = {"sequence": "-->", "reference": "-.-", "failure": "--x"}
+
+
+def render_graph_agentflow(ir: dict) -> str:
+    _require(ir, ("nodes", "edges"), "graph/agentflow-beta")
+    direction = _direction(ir, "graph/agentflow-beta", allowed=_FLOWCHART_DIRECTIONS, default="TD")
+    lines = [f"agentflow-beta {direction}"]
+    known: set[str] = set()
+    by_group: dict[str | None, list[dict]] = {}
+    for node in ir["nodes"]:
+        _require(node, ("id", "label"), "graph/agentflow-beta node")
+        by_group.setdefault(node.get("group"), []).append(node)
+    children: dict[str | None, list[dict]] = {}
+    for group in ir.get("groups", []):
+        _require(group, ("id", "label"), "graph/agentflow-beta group")
+        children.setdefault(group.get("group"), []).append(group)
+
+    def emit_node(node: dict, indent: str) -> None:
+        node_id = _identifier(node["id"], "graph/agentflow-beta node")
+        kind = node.get("kind")
+        shape = ""
+        if kind is not None:
+            if kind not in _AGENT_SHAPES:
+                raise IRError(f"graph/agentflow-beta node {node['id']!r} has unknown kind {kind!r}")
+            shape = f"@{{ shape: {kind} }}"
+        lines.append(f'{indent}{node_id}[{_quote(node["label"])}]{shape}')
+        known.add(node["id"])
+
+    def emit_flow(group: dict, indent: str) -> None:
+        group_id = _identifier(group["id"], "graph/agentflow-beta group")
+        lines.append(f'{indent}flow {group_id}[{_quote(group["label"])}]')
+        known.add(group["id"])
+        for node in by_group.pop(group["id"], []):
+            emit_node(node, indent + "    ")
+        for child in children.pop(group["id"], []):
+            emit_flow(child, indent + "    ")
+        lines.append(f"{indent}end")
+
+    for group in children.pop(None, []):
+        emit_flow(group, "    ")
+    leftover_groups = [group for group in children if group is not None]
+    if leftover_groups:
+        raise IRError(f"graph/agentflow-beta groups reference undeclared parent group(s): {leftover_groups}")
+    for node in by_group.pop(None, []):
+        emit_node(node, "    ")
+    leftover = [group for group in by_group if group is not None]
+    if leftover:
+        raise IRError(f"graph/agentflow-beta nodes reference undeclared group(s): {leftover}")
+    for edge in ir["edges"]:
+        _require(edge, ("from", "to"), "graph/agentflow-beta edge")
+        if edge["from"] not in known or edge["to"] not in known:
+            raise IRError(f"graph/agentflow-beta edge references undeclared node: {edge}")
+        arrow = _AGENT_ARROWS.get(edge.get("kind", "sequence"))
+        if arrow is None:
+            raise IRError(f"graph/agentflow-beta edge has unknown kind {edge.get('kind')!r}")
+        label = f'|{_quote(edge["label"])}|' if edge.get("label") else ""
+        lines.append(f'    {edge["from"]} {arrow}{label} {edge["to"]}')
+    return "\n".join(lines) + "\n"
+
+
+def render_graph_wardley(ir: dict) -> str:
+    _require(ir, ("nodes", "edges"), "graph/wardley-beta")
+    lines = ["wardley-beta"]
+    if ir.get("title"):
+        lines.append(f"    title {_no_colon(ir['title'], 'graph/wardley-beta title')}")
+    names: dict[str, str] = {}
+    for node in ir["nodes"]:
+        _require(node, ("id", "kind", "visibility", "evolution"), "graph/wardley-beta node")
+        if node["kind"] not in ("anchor", "component"):
+            raise IRError(f"graph/wardley-beta node {node['id']!r} has unknown kind {node['kind']!r}")
+        visibility = float(_positive_number(node["visibility"], "wardley visibility"))
+        evolution = float(_positive_number(node["evolution"], "wardley evolution"))
+        if not 0 <= visibility <= 1 or not 0 <= evolution <= 1:
+            raise IRError(f"graph/wardley-beta node {node['id']!r} coordinates must be between 0 and 1")
+        label = _quote(node["id"]) if not re.fullmatch(r"[A-Za-z0-9_]+", str(node["id"])) else str(node["id"])
+        names[node["id"]] = label
+        lines.append(f"    {node['kind']} {label} [{visibility}, {evolution}]")
+    for edge in ir["edges"]:
+        _require(edge, ("from", "to"), "graph/wardley-beta edge")
+        if edge["from"] not in names or edge["to"] not in names:
+            raise IRError(f"graph/wardley-beta edge references undeclared node: {edge}")
+        lines.append(f"    {names[edge['from']]} -> {names[edge['to']]}")
+    return "\n".join(lines) + "\n"
+
+
+def render_timeline_events(ir: dict) -> str:
+    if not ir.get("sections") and not ir.get("events"):
+        raise IRError("timeline/timeline requires 'sections' or 'events'")
+    direction = ir.get("direction")
+    if direction is not None and direction not in ("LR", "TD"):
+        raise IRError(f"timeline/timeline has unknown direction {direction!r}; use LR or TD")
+    lines = [f"timeline {direction}" if direction else "timeline"]
+    if ir.get("title"):
+        lines.append(f"    title {_no_colon(ir['title'], 'timeline/timeline title')}")
+
+    def emit_event(event: dict, indent: str) -> None:
+        _require(event, ("period", "text"), "timeline/timeline event")
+        period = _no_colon(event["period"], "timeline/timeline period")
+        texts = event["text"] if isinstance(event["text"], list) else [event["text"]]
+        if not texts:
+            raise IRError("timeline/timeline event requires at least one text value")
+        rendered = [_no_colon(text, "timeline/timeline event text") for text in texts]
+        lines.append(f"{indent}{period} : " + " : ".join(rendered))
+
+    if ir.get("sections"):
+        for section in ir["sections"]:
+            _require(section, ("name", "events"), "timeline/timeline section")
+            lines.append(f"    section {_no_colon(section['name'], 'timeline/timeline section')}")
+            for event in section["events"]:
+                emit_event(event, "        ")
+    else:
+        for event in ir["events"]:
+            emit_event(event, "    ")
+    return "\n".join(lines) + "\n"
+
+
+def render_chart_pie(ir: dict) -> str:
+    _require(ir, ("slices",), "chart/pie")
+    if not ir["slices"]:
+        raise IRError("chart/pie requires at least one slice")
+    header = "pie showData" if ir.get("showData") else "pie"
+    lines = [header]
+    if ir.get("title"):
+        lines.append(f"    title {_no_colon(ir['title'], 'chart/pie title')}")
+    for slice_ in ir["slices"]:
+        _require(slice_, ("label", "value"), "chart/pie slice")
+        label = _no_colon(slice_["label"], "chart/pie label")
+        value = float(_positive_number(slice_["value"], "chart/pie value"))
+        if value <= 0:
+            raise IRError(f"chart/pie slice {label!r} value must be greater than 0")
+        lines.append(f"    {_quote(label)} : {value}")
+    return "\n".join(lines) + "\n"
+
+
+def _xy_token(value: Any, where: str) -> str:
+    text = str(value)
+    if "," in text or "\n" in text:
+        raise IRError(f"{where} must not contain commas or newlines")
+    if re.fullmatch(r"[A-Za-z0-9_]+", text):
+        return text
+    return _quote(text)
+
+
+def render_chart_xy(ir: dict) -> str:
+    _require(ir, ("xAxis",), "chart/xychart")
+    if not ir.get("bar") and not ir.get("line"):
+        raise IRError("chart/xychart requires 'bar' and/or 'line'")
+    orientation = ir.get("orientation", "vertical")
+    if orientation not in ("vertical", "horizontal"):
+        raise IRError(f"chart/xychart has unknown orientation {orientation!r}")
+    header = "xychart horizontal" if orientation == "horizontal" else "xychart"
+    lines = [header]
+    if ir.get("title"):
+        lines.append(f"    title {_quote(ir['title'])}")
+    categories = [_xy_token(item, "chart/xychart x category") for item in ir["xAxis"]]
+    if not categories:
+        raise IRError("chart/xychart xAxis must not be empty")
+    lines.append(f"    x-axis [{', '.join(categories)}]")
+    y_axis = ir.get("yAxis")
+    if y_axis is not None:
+        _require(y_axis, ("label", "min", "max"), "chart/xychart yAxis")
+        low = float(_positive_number(y_axis["min"], "chart/xychart y min"))
+        high = float(_positive_number(y_axis["max"], "chart/xychart y max"))
+        if low >= high:
+            raise IRError("chart/xychart yAxis min must be less than max")
+        lines.append(f"    y-axis {_quote(y_axis['label'])} {low} --> {high}")
+    for series_name in ("bar", "line"):
+        series = ir.get(series_name)
+        if series is None:
+            continue
+        if len(series) != len(categories):
+            raise IRError(f"chart/xychart {series_name} length must match xAxis")
+        numbers = [_positive_number(item, f"chart/xychart {series_name}") for item in series]
+        lines.append(f"    {series_name} [{', '.join(numbers)}]")
+    return "\n".join(lines) + "\n"
+
+
+def _sankey_cell(value: str) -> str:
+    if "," in value or "\n" in value:
+        return "'" + value.replace("'", "") + "'"
+    return value
+
+
+def render_chart_sankey(ir: dict) -> str:
+    _require(ir, ("links",), "chart/sankey")
+    if not ir["links"]:
+        raise IRError("chart/sankey requires at least one link")
+    lines = ["sankey"]
+    for link in ir["links"]:
+        _require(link, ("from", "to", "value"), "chart/sankey link")
+        amount = float(_positive_number(link["value"], "chart/sankey value"))
+        if amount < 0:
+            raise IRError("chart/sankey value must not be negative")
+        lines.append(f"{_sankey_cell(str(link['from']))},{_sankey_cell(str(link['to']))},{amount}")
+    return "\n".join(lines) + "\n"
+
+
+def render_chart_quadrant(ir: dict) -> str:
+    _require(ir, ("xAxis", "yAxis", "quadrants", "points"), "chart/quadrantChart")
+    _require(ir["xAxis"], ("left", "right"), "chart/quadrantChart xAxis")
+    _require(ir["yAxis"], ("bottom", "top"), "chart/quadrantChart yAxis")
+    lines = ["quadrantChart"]
+    if ir.get("title"):
+        lines.append(f"    title {_no_colon(ir['title'], 'chart/quadrantChart title')}")
+    lines.append(
+        f"    x-axis {_no_colon(ir['xAxis']['left'], 'quadrant x')} --> {_no_colon(ir['xAxis']['right'], 'quadrant x')}"
+    )
+    lines.append(
+        f"    y-axis {_no_colon(ir['yAxis']['bottom'], 'quadrant y')} --> {_no_colon(ir['yAxis']['top'], 'quadrant y')}"
+    )
+    for index in ("1", "2", "3", "4"):
+        if index not in ir["quadrants"] and int(index) not in ir["quadrants"]:
+            raise IRError(f"chart/quadrantChart missing quadrant {index}")
+        label = ir["quadrants"].get(index, ir["quadrants"].get(int(index)))
+        lines.append(f"    quadrant-{index} {_no_colon(label, 'quadrant label')}")
+    for point in ir["points"]:
+        _require(point, ("label", "x", "y"), "chart/quadrantChart point")
+        x_value = float(_positive_number(point["x"], "quadrant x"))
+        y_value = float(_positive_number(point["y"], "quadrant y"))
+        if not 0 <= x_value <= 1 or not 0 <= y_value <= 1:
+            raise IRError(f"chart/quadrantChart point {point['label']!r} must be inside 0..1")
+        lines.append(f"    {_quote(_no_colon(point['label'], 'quadrant point'))}: [{x_value}, {y_value}]")
+    return "\n".join(lines) + "\n"
+
+
+def render_chart_radar(ir: dict) -> str:
+    _require(ir, ("axes", "curves"), "chart/radar-beta")
+    if not ir["axes"] or not ir["curves"]:
+        raise IRError("chart/radar-beta requires axes and curves")
+    lines = ["radar-beta"]
+    if ir.get("title"):
+        lines.append(f"    title {_quote(ir['title'])}")
+    axis_bits = []
+    for axis in ir["axes"]:
+        _require(axis, ("id", "label"), "chart/radar-beta axis")
+        axis_id = _identifier(axis["id"], "chart/radar-beta axis")
+        axis_bits.append(f'{axis_id}[{_quote(axis["label"])}]')
+    lines.append("    axis " + ", ".join(axis_bits))
+    for curve in ir["curves"]:
+        _require(curve, ("id", "label", "values"), "chart/radar-beta curve")
+        if len(curve["values"]) != len(ir["axes"]):
+            raise IRError(f"chart/radar-beta curve {curve['id']!r} value count must match axes")
+        curve_id = _identifier(curve["id"], "chart/radar-beta curve")
+        numbers = [_positive_number(item, "chart/radar-beta value") for item in curve["values"]]
+        lines.append(f"    curve {curve_id}[{_quote(curve['label'])}]{{{', '.join(numbers)}}}")
+    if ir.get("max") is not None:
+        lines.append(f"    max {_positive_number(ir['max'], 'chart/radar-beta max')}")
+    if ir.get("min") is not None:
+        lines.append(f"    min {_positive_number(ir['min'], 'chart/radar-beta min')}")
+    return "\n".join(lines) + "\n"
+
+
+def _emit_treemap(node: dict, lines: list[str], depth: int) -> None:
+    _require(node, ("label",), "chart/treemap node")
+    indent = "    " * (depth + 1)
+    children = node.get("children", [])
+    if children:
+        lines.append(f"{indent}{_quote(node['label'])}")
+        for child in children:
+            _emit_treemap(child, lines, depth + 1)
+        return
+    _require(node, ("value",), "chart/treemap leaf")
+    value = float(_positive_number(node["value"], "chart/treemap value"))
+    if value < 0:
+        raise IRError("chart/treemap leaf value must not be negative")
+    lines.append(f"{indent}{_quote(node['label'])}: {value}")
+
+
+def render_chart_treemap(ir: dict) -> str:
+    _require(ir, ("nodes",), "chart/treemap")
+    if not ir["nodes"]:
+        raise IRError("chart/treemap requires nodes")
+    lines = ["treemap-beta"]
+    for node in ir["nodes"]:
+        _emit_treemap(node, lines, 0)
+    return "\n".join(lines) + "\n"
+
+
+def render_chart_venn(ir: dict) -> str:
+    _require(ir, ("sets",), "chart/venn")
+    lines = ["venn-beta"]
+    if ir.get("title"):
+        lines.append(f"    title {_quote(ir['title'])}")
+    known: set[str] = set()
+    for item in ir["sets"]:
+        if isinstance(item, str):
+            set_id, label = item, None
+        else:
+            _require(item, ("id",), "chart/venn set")
+            set_id, label = item["id"], item.get("label")
+        if not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", str(set_id)):
+            raise IRError(f"chart/venn set id {set_id!r} must be a bare identifier")
+        known.add(str(set_id))
+        suffix = f"[{_quote(label)}]" if label else ""
+        lines.append(f"    set {set_id}{suffix}")
+    for union in ir.get("unions", []):
+        _require(union, ("sets", "label"), "chart/venn union")
+        if len(union["sets"]) < 2:
+            raise IRError("chart/venn union requires at least two sets")
+        unknown = [name for name in union["sets"] if name not in known]
+        if unknown:
+            raise IRError(f"chart/venn union references undeclared set(s): {unknown}")
+        lines.append(f"    union {','.join(union['sets'])}[{_quote(union['label'])}]")
+    return "\n".join(lines) + "\n"
+
+
+def render_packet(ir: dict) -> str:
+    _require(ir, ("fields",), "packet/packet")
+    if not ir["fields"]:
+        raise IRError("packet/packet requires fields")
+    lines = ["packet"]
+    cursor = 0
+    for field in ir["fields"]:
+        _require(field, ("label",), "packet/packet field")
+        label = _quote(field["label"])
+        if "bits" in field:
+            bits = field["bits"]
+            if isinstance(bits, bool) or not isinstance(bits, int) or bits < 1:
+                raise IRError(f"packet/packet field {field['label']!r} bits must be a positive integer")
+            lines.append(f"    +{bits}: {label}")
+            cursor += bits
+            continue
+        _require(field, ("start", "end"), "packet/packet field")
+        start, end = field["start"], field["end"]
+        if isinstance(start, bool) or isinstance(end, bool) or not isinstance(start, int) or not isinstance(end, int):
+            raise IRError(f"packet/packet field {field['label']!r} start and end must be integers")
+        if start < 0 or end < start:
+            raise IRError(f"packet/packet field {field['label']!r} has an invalid range")
+        if start != cursor:
+            raise IRError(
+                f"packet/packet field {field['label']!r} starts at {start}, expected {cursor} for a contiguous layout"
+            )
+        lines.append(f"    {start}: {label}" if start == end else f"    {start}-{end}: {label}")
+        cursor = end + 1
+    return "\n".join(lines) + "\n"
+
+
+_KANBAN_PRIORITIES = {"Very High", "High", "Low", "Very Low"}
+
+
+def render_kanban(ir: dict) -> str:
+    _require(ir, ("columns",), "board/kanban")
+    if not ir["columns"]:
+        raise IRError("board/kanban requires columns")
+    lines = ["kanban"]
+    seen: set[str] = set()
+    for column in ir["columns"]:
+        _require(column, ("id", "label", "cards"), "board/kanban column")
+        column_id = _identifier(column["id"], "board/kanban column")
+        if "]" in str(column["label"]):
+            raise IRError(f"board/kanban column {column_id!r} label must not contain ']'")
+        lines.append(f"    {column_id}[{column['label']}]")
+        seen.add(column_id)
+        for card in column["cards"]:
+            _require(card, ("id", "label"), "board/kanban card")
+            card_id = _identifier(card["id"], "board/kanban card")
+            if card_id in seen:
+                raise IRError(f"board/kanban duplicate id {card_id!r}")
+            seen.add(card_id)
+            if "]" in str(card["label"]):
+                raise IRError(f"board/kanban card {card_id!r} label must not contain ']'")
+            meta = []
+            for key in ("assigned", "ticket"):
+                if card.get(key):
+                    meta.append(f"{key}: {_quote(card[key])}")
+            if card.get("priority"):
+                if card["priority"] not in _KANBAN_PRIORITIES:
+                    raise IRError(f"board/kanban card {card_id!r} has unknown priority {card['priority']!r}")
+                meta.append(f"priority: {_quote(card['priority'])}")
+            suffix = f"@{{ {', '.join(meta)} }}" if meta else ""
+            lines.append(f"        {card_id}[{card['label']}]{suffix}")
+    return "\n".join(lines) + "\n"
+
+
+def render_journey(ir: dict) -> str:
+    _require(ir, ("sections",), "journey/journey")
+    lines = ["journey"]
+    if ir.get("title"):
+        lines.append(f"    title {_no_colon(ir['title'], 'journey/journey title')}")
+    for section in ir["sections"]:
+        _require(section, ("name", "tasks"), "journey/journey section")
+        lines.append(f"    section {_no_colon(section['name'], 'journey/journey section')}")
+        for task in section["tasks"]:
+            _require(task, ("name", "score", "actors"), "journey/journey task")
+            score = task["score"]
+            if isinstance(score, bool) or not isinstance(score, int) or not 1 <= score <= 5:
+                raise IRError(f"journey/journey task {task['name']!r} score must be an integer from 1 to 5")
+            if not task["actors"]:
+                raise IRError(f"journey/journey task {task['name']!r} requires actors")
+            actors = [_no_colon(actor, "journey actor") for actor in task["actors"]]
+            lines.append(
+                f"        {_no_colon(task['name'], 'journey task')}: {score}: {', '.join(actors)}"
+            )
+    return "\n".join(lines) + "\n"
+
+
+def render_git(ir: dict) -> str:
+    _require(ir, ("ops",), "git/gitGraph")
+    if not ir["ops"]:
+        raise IRError("git/gitGraph requires ops")
+    lines: list[str] = []
+    if ir.get("title"):
+        lines.extend(["---", f"title: {_quote(ir['title'])}", "---"])
+    lines.append("gitGraph")
+    for op in ir["ops"]:
+        _require(op, ("type",), "git/gitGraph op")
+        kind = op["type"]
+        if kind == "commit":
+            parts = ["    commit"]
+            if op.get("id"):
+                parts.append(f"id: {_quote(_identifier(op['id'], 'git/gitGraph commit'))}")
+            if op.get("tag"):
+                parts.append(f"tag: {_quote(_no_colon(op['tag'], 'git/gitGraph tag'))}")
+            lines.append(" ".join(parts))
+        elif kind == "branch":
+            _require(op, ("name",), "git/gitGraph branch")
+            lines.append(f"    branch {_identifier(op['name'], 'git/gitGraph branch')}")
+        elif kind in ("checkout", "switch"):
+            _require(op, ("name",), "git/gitGraph checkout")
+            lines.append(f"    checkout {_identifier(op['name'], 'git/gitGraph checkout')}")
+        elif kind == "merge":
+            _require(op, ("name",), "git/gitGraph merge")
+            lines.append(f"    merge {_identifier(op['name'], 'git/gitGraph merge')}")
+        else:
+            raise IRError(f"git/gitGraph op has unknown type {kind!r}")
+    return "\n".join(lines) + "\n"
+
+
+def _tree_token(name: str) -> str:
+    if re.fullmatch(r"[A-Za-z0-9_./-]+", name):
+        return name
+    return _quote(name)
+
+
+def _emit_treeview(node: dict, lines: list[str], depth: int) -> None:
+    _require(node, ("name",), "tree/treeView node")
+    children = node.get("children", [])
+    name = str(node["name"])
+    if children and not name.endswith("/"):
+        name += "/"
+    lines.append(f"{'    ' * (depth + 1)}{_tree_token(name)}")
+    for child in children:
+        _emit_treeview(child, lines, depth + 1)
+
+
+def render_treeview(ir: dict) -> str:
+    _require(ir, ("nodes",), "tree/treeView-beta")
+    if not ir["nodes"]:
+        raise IRError("tree/treeView-beta requires nodes")
+    lines = ["treeView-beta"]
+    for node in ir["nodes"]:
+        _emit_treeview(node, lines, 0)
+    return "\n".join(lines) + "\n"
+
+
+def _emit_ishikawa(node: dict, lines: list[str], depth: int) -> None:
+    _require(node, ("label",), "tree/ishikawa cause")
+    lines.append(f"{'    ' * depth}{_no_colon(node['label'], 'tree/ishikawa label')}")
+    for child in node.get("children", []):
+        _emit_ishikawa(child, lines, depth + 1)
+
+
+def render_ishikawa(ir: dict) -> str:
+    _require(ir, ("effect", "causes"), "tree/ishikawa-beta")
+    lines = ["ishikawa-beta", f"    {_no_colon(ir['effect'], 'tree/ishikawa effect')}"]
+    for cause in ir["causes"]:
+        _emit_ishikawa(cause, lines, 1)
+    return "\n".join(lines) + "\n"
+
+
+_CYNEFIN_DOMAINS = ("clear", "complicated", "complex", "chaotic", "confusion")
+
+
+def render_cynefin(ir: dict) -> str:
+    _require(ir, ("domains",), "cynefin/cynefin-beta")
+    lines = ["cynefin-beta"]
+    if ir.get("title"):
+        lines.append(f"    title {_no_colon(ir['title'], 'cynefin/cynefin-beta title')}")
+    domains = ir["domains"]
+    for name in domains:
+        if name not in _CYNEFIN_DOMAINS:
+            raise IRError(f"cynefin/cynefin-beta has unknown domain {name!r}")
+    for name in _CYNEFIN_DOMAINS:
+        items = domains.get(name)
+        if not items:
+            continue
+        lines.append(f"    {name}")
+        for item in items:
+            lines.append(f"        {_quote(_no_colon(item, 'cynefin item'))}")
+    for transition in ir.get("transitions", []):
+        _require(transition, ("from", "to"), "cynefin/cynefin-beta transition")
+        if transition["from"] not in _CYNEFIN_DOMAINS or transition["to"] not in _CYNEFIN_DOMAINS:
+            raise IRError(f"cynefin/cynefin-beta transition has an unknown domain: {transition}")
+        if transition["from"] == transition["to"]:
+            raise IRError("cynefin/cynefin-beta ignores self-loops; from and to must differ")
+        label = f' : {_quote(transition["label"])}' if transition.get("label") else ""
+        lines.append(f"    {transition['from']} --> {transition['to']}{label}")
+    return "\n".join(lines) + "\n"
+
+
+_EVENT_KINDS = {"ui", "cmd", "evt", "rmo", "pcr"}
+
+
+def render_eventmodeling(ir: dict) -> str:
+    _require(ir, ("frames",), "eventmodeling/eventmodeling")
+    if not ir["frames"]:
+        raise IRError("eventmodeling/eventmodeling requires frames")
+    lines = ["eventmodeling"]
+    seen: set[str] = set()
+    for frame in ir["frames"]:
+        _require(frame, ("n", "kind", "name"), "eventmodeling frame")
+        number = frame["n"]
+        if isinstance(number, bool) or not isinstance(number, int) or number < 0:
+            raise IRError(f"eventmodeling frame number must be a non-negative integer, got {number!r}")
+        key = f"{number:02d}"
+        if key in seen:
+            raise IRError(f"eventmodeling duplicate frame number {key}")
+        seen.add(key)
+        if frame["kind"] not in _EVENT_KINDS:
+            raise IRError(f"eventmodeling frame {key} has unknown kind {frame['kind']!r}")
+        if not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_.]*", str(frame["name"])):
+            raise IRError(f"eventmodeling frame {key} name {frame['name']!r} must be an identifier")
+        lines.append(f"    tf {key} {frame['kind']} {frame['name']}")
+    return "\n".join(lines) + "\n"
+
+
+def render_railroad(ir: dict) -> str:
+    _require(ir, ("rules",), "grammar/railroad-ebnf-beta")
+    if not ir["rules"]:
+        raise IRError("grammar/railroad-ebnf-beta requires rules")
+    lines = ["railroad-ebnf-beta"]
+    if ir.get("title"):
+        lines.append(f"    title {_quote(ir['title'])}")
+    for rule in ir["rules"]:
+        text = str(rule).strip()
+        if "\n" in text or "=" not in text or not text.endswith(";"):
+            raise IRError(f"grammar/railroad-ebnf-beta rule must be one line containing '=' and ending with ';': {rule!r}")
+        lines.append(f"    {text}")
+    return "\n".join(lines) + "\n"
+
+
+def _usecase_id(raw: str, where: str) -> str:
+    if not re.fullmatch(r"[A-Za-z0-9_]+", raw):
+        raise IRError(f"{where} id {raw!r} must be letters, digits, or underscore")
+    return raw
+
+
+def render_usecase(ir: dict) -> str:
+    _require(ir, ("actors", "usecases", "edges"), "usecase/usecase-beta")
+    lines = ["usecase-beta"]
+    direction = _direction(ir, "usecase/usecase-beta", allowed=_CARDINAL_DIRECTIONS)
+    if direction:
+        lines.append(f"    direction {direction}")
+    actors_by_group: dict[str | None, list[dict]] = {}
+    cases_by_group: dict[str | None, list[dict]] = {}
+    for actor in ir["actors"]:
+        _require(actor, ("id",), "usecase/usecase-beta actor")
+        actors_by_group.setdefault(actor.get("group"), []).append(actor)
+    for usecase in ir["usecases"]:
+        _require(usecase, ("id", "label"), "usecase/usecase-beta usecase")
+        cases_by_group.setdefault(usecase.get("group"), []).append(usecase)
+    actor_ids: set[str] = set()
+    case_ids: set[str] = set()
+
+    def emit_actor(actor: dict, indent: str) -> None:
+        actor_id = _usecase_id(actor["id"], "usecase/usecase-beta actor")
+        label = f"({_quote(actor['label'])})" if actor.get("label") else ""
+        lines.append(f"{indent}actor {actor_id}{label}")
+        actor_ids.add(actor_id)
+
+    def emit_case(usecase: dict, indent: str) -> None:
+        case_id = _usecase_id(usecase["id"], "usecase/usecase-beta usecase")
+        lines.append(f"{indent}{case_id}({_quote(usecase['label'])})")
+        case_ids.add(case_id)
+
+    for group in ir.get("groups", []):
+        _require(group, ("id", "label"), "usecase/usecase-beta group")
+        group_id = _usecase_id(group["id"], "usecase/usecase-beta group")
+        lines.append(f"    systemBoundary {group_id}({_quote(group['label'])})")
+        for actor in actors_by_group.pop(group["id"], []):
+            emit_actor(actor, "        ")
+        for usecase in cases_by_group.pop(group["id"], []):
+            emit_case(usecase, "        ")
+        lines.append("    end")
+    for actor in actors_by_group.pop(None, []):
+        emit_actor(actor, "    ")
+    for usecase in cases_by_group.pop(None, []):
+        emit_case(usecase, "    ")
+    leftover = [group for group in {**actors_by_group, **cases_by_group} if group is not None]
+    if leftover:
+        raise IRError(f"usecase/usecase-beta members reference undeclared group(s): {leftover}")
+    known = actor_ids | case_ids
+    for edge in ir["edges"]:
+        _require(edge, ("from", "to"), "usecase/usecase-beta edge")
+        if edge["from"] not in known or edge["to"] not in known:
+            raise IRError(f"usecase/usecase-beta edge references an undeclared actor or use case: {edge}")
+        kind = edge.get("kind", "association")
+        if kind == "association":
+            if edge.get("label"):
+                lines.append(f'    {edge["from"]} -- {_quote(edge["label"])} --> {edge["to"]}')
+            else:
+                lines.append(f'    {edge["from"]} --> {edge["to"]}')
+        elif kind in ("include", "extend"):
+            if edge["from"] not in case_ids or edge["to"] not in case_ids:
+                raise IRError(f"usecase/usecase-beta {kind} endpoints must both be use cases")
+            lines.append(f'    {edge["from"]} ..> : {kind} {edge["to"]}')
+        elif kind == "generalization":
+            same = (edge["from"] in actor_ids and edge["to"] in actor_ids) or (
+                edge["from"] in case_ids and edge["to"] in case_ids
+            )
+            if not same:
+                raise IRError("usecase/usecase-beta generalization must connect two actors or two use cases")
+            lines.append(f'    {edge["from"]} --|> {edge["to"]}')
+        else:
+            raise IRError(f"usecase/usecase-beta edge has unknown kind {kind!r}")
+    return "\n".join(lines) + "\n"
+
+
+def render_sequence_zenuml(ir: dict) -> str:
+    _require(ir, ("actors", "steps"), "sequence/zenuml")
+    lines = ["zenuml"]
+    if ir.get("title"):
+        lines.append(f"    title {_no_colon(ir['title'], 'sequence/zenuml title')}")
+    known: set[str] = set()
+    for actor in ir["actors"]:
+        _require(actor, ("id",), "sequence/zenuml actor")
+        if actor.get("label") not in (None, actor["id"]):
+            raise IRError("sequence/zenuml has no alias; the id is the displayed name")
+        if not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", actor["id"]):
+            raise IRError(f"sequence/zenuml actor id {actor['id']!r} must be a bare identifier")
+        prefix = "@Actor " if actor.get("kind") == "actor" else ""
+        if actor.get("kind") not in (None, "actor", "participant"):
+            raise IRError(f"sequence/zenuml actor {actor['id']!r} has unknown kind {actor['kind']!r}")
+        lines.append(f"    {prefix}{actor['id']}")
+        known.add(actor["id"])
+    for step in ir["steps"]:
+        if step.get("type", "message") != "message":
+            raise IRError("sequence/zenuml only emits messages; hand-author if/while/try blocks")
+        _require(step, ("from", "to", "label"), "sequence/zenuml message")
+        if step["from"] not in known or step["to"] not in known:
+            raise IRError(f"sequence/zenuml message references an undeclared participant: {step}")
+        lines.append(f'    {step["from"]}->{step["to"]}: {_sequence_text(step["label"])}')
+    return "\n".join(lines) + "\n"
+
+
+def render_info(_ir: dict) -> str:
+    return "info\n"
+
+
 # --- dispatch ------------------------------------------------------------------------------
 
 SERIALIZERS: dict[tuple[str, str], Callable[[dict], str]] = {
@@ -863,10 +1591,36 @@ SERIALIZERS: dict[tuple[str, str], Callable[[dict], str]] = {
     ("graph", "architecture-beta"): render_graph_architecture,
     ("graph", "erDiagram"): render_graph_er,
     ("graph", "classDiagram"): render_graph_class,
+    ("graph", "swimlane-beta"): render_graph_swimlane,
+    ("graph", "agentflow-beta"): render_graph_agentflow,
+    ("graph", "wardley-beta"): render_graph_wardley,
+    ("graph", "C4Component"): render_graph_c4,
+    ("graph", "C4Dynamic"): render_graph_c4,
+    ("graph", "C4Deployment"): render_graph_c4,
     ("timeline", "gantt"): render_timeline_gantt,
+    ("timeline", "timeline"): render_timeline_events,
     ("state-machine", "stateDiagram-v2"): render_state_machine,
     ("sequence", "sequenceDiagram"): render_sequence,
+    ("sequence", "zenuml"): render_sequence_zenuml,
     ("requirement-links", "requirementDiagram"): render_requirement_links,
+    ("chart", "pie"): render_chart_pie,
+    ("chart", "xychart"): render_chart_xy,
+    ("chart", "sankey"): render_chart_sankey,
+    ("chart", "quadrantChart"): render_chart_quadrant,
+    ("chart", "radar-beta"): render_chart_radar,
+    ("chart", "treemap-beta"): render_chart_treemap,
+    ("chart", "venn-beta"): render_chart_venn,
+    ("packet", "packet"): render_packet,
+    ("board", "kanban"): render_kanban,
+    ("journey", "journey"): render_journey,
+    ("git", "gitGraph"): render_git,
+    ("tree", "treeView-beta"): render_treeview,
+    ("tree", "ishikawa-beta"): render_ishikawa,
+    ("cynefin", "cynefin-beta"): render_cynefin,
+    ("eventmodeling", "eventmodeling"): render_eventmodeling,
+    ("grammar", "railroad-ebnf-beta"): render_railroad,
+    ("usecase", "usecase-beta"): render_usecase,
+    ("info", "info"): render_info,
 }
 
 
