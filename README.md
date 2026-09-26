@@ -15,10 +15,10 @@ for Claude Code, and portable to any tool that reads the open `SKILL.md` format.
   structured data on disk (a dependency graph, a timing ledger, a state machine, a sequence, a
   requirement-traceability table), `mermaid/scripts/render.py` generates the exact Mermaid source
   from a small JSON intermediate representation (IR) instead of hand-authoring it — see
-  [`mermaid/reference/ir.md`](mermaid/reference/ir.md) for the schema. Five IR families cover
-  `flowchart`/`mindmap`/`block`/`C4Context`/`C4Container`/`architecture-beta`/`erDiagram`/
-  `classDiagram` (the `graph` family), `gantt` (`timeline`), `stateDiagram-v2`, `sequenceDiagram`,
-  and `requirementDiagram`.
+  [`mermaid/reference/ir.md`](mermaid/reference/ir.md) and
+  [`mermaid/reference/ir-catalog.md`](mermaid/reference/ir-catalog.md). The matrix of every
+  open-source diagram type, its IR, its tests, and remaining gaps is
+  [`mermaid/reference/coverage.md`](mermaid/reference/coverage.md).
 
 ## Install
 

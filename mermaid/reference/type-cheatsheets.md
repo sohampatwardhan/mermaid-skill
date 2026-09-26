@@ -8,9 +8,10 @@ When sources disagree, prefer live official Mermaid syntax, then
 sheet lacks the construct or the keyword is `-beta`. Validate with `scripts/check.sh`
 (it rejects Mermaid's error-placeholder SVG).
 
-This sheet and the syntax cache were taken at Mermaid 11.16.1. `agentflow-beta` and
-`usecase-beta` shipped in Mermaid 12 and are not here — refresh or read live docs
-before authoring them.
+This sheet and most of `reference/syntax/` were taken at Mermaid 11.16.1.
+`agentflow-beta` and `usecase-beta` are Mermaid 12; their skeletons are below and in
+`reference/syntax/agentflow.md` and `reference/syntax/usecase.md`. Which types the IR
+emits, and what it still leaves out, is [coverage.md](coverage.md).
 
 ---
 
@@ -66,6 +67,36 @@ sequenceDiagram
 - Arrows: `->>` solid+arrow, `-->>` dashed, `-)` async. Blocks: `alt/else/end`,
   `loop/end`, `opt/end`, `par/and/end`. `activate/deactivate` or `->>+`/`->>-`.
 - Pitfall: every `alt/loop/opt/par` needs a matching `end`.
+
+### agentflow  (`agentflow-beta`, Mermaid 12)
+```
+agentflow-beta LR
+    flow reviewer["Review Agent"]
+        analyse["Analyse diff"]@{ shape: task }
+        lint["run_linter"]@{ shape: tool }
+        analyse --> lint
+    end
+```
+- Shapes: `task`, `tool`, `input`, `decision`, `refdoc`, `action`.
+- Edges: `-->` sequence, `-.-` reference, `--x` failure. Flow ids are endpoints.
+- IR emits nodes, flows, and those edges. Hand-author `connector`, `global`, metadata
+  (`model`, `instruction`), and `@{ view: "collapsed" }`. See `syntax/agentflow.md`.
+
+### usecase  (`usecase-beta`, Mermaid 12)
+```
+usecase-beta
+    direction LR
+    actor Customer("Customer")
+    systemBoundary orders("Order system")
+        Checkout("Place order")
+        Payment("Pay")
+    end
+    Customer --> Checkout
+    Checkout ..> : include Payment
+```
+- Include/extend: `A ..> : include B` (space before the colon). Generalization: `A --|> B`.
+- An undeclared endpoint becomes a use case. Actors must be declared with `actor`.
+- IR does not emit notes, JSON tables, stereotypes, or actor icons. See `syntax/usecase.md`.
 
 ### zenuml  (alternative sequence renderer)
 ```
@@ -292,7 +323,8 @@ kanban
     doing[In Progress]
         t2[Build feature]
 ```
-- Columns then indented task cards. Metadata: `t1[Task]@{ assigned: "me", priority: high }`.
+- Columns then indented task cards. Metadata: `t1[Task]@{ assigned: 'knsv', ticket: 'MC-1', priority: 'High' }`.
+  Priority is `Very High`, `High`, `Low`, or `Very Low`.
 
 ### mindmap
 ```
@@ -351,7 +383,8 @@ cynefin-beta
     complicated
         "Analyze"
 ```
-- Domains: `clear`, `complicated`, `complex`, `chaotic`, (`confused`). Items indented, quoted.
+- Domains: `clear`, `complicated`, `complex`, `chaotic`, `confusion`. Items indented, quoted.
+  Mermaid ignores a self-loop; do not write `complex --> complex`.
 
 ### ishikawa  (`ishikawa-beta`, fishbone/cause-effect)
 ```

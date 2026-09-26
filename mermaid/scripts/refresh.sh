@@ -53,6 +53,7 @@ SKIP_TYPES='^(common|error)$'
   echo "> Regenerate with \`scripts/refresh.sh\`. Per-type syntax is in \`reference/syntax/\`."
   echo "> \`scripts/check.sh\` uses the installed Mermaid CLI, which may be newer than this stamp."
   echo "> \`common\` and \`error\` are omitted: shared code and the syntax-error renderer."
+  echo "> Authoring coverage (IR, tests, gaps) is \`reference/coverage.md\`, not this list."
   echo
   echo "## Shipped diagram implementations"
   echo
@@ -102,6 +103,7 @@ else
     echo "Auto-downloaded ${TODAY} (Mermaid ${VERSION}) from mermaid-js/mermaid \`${DOCS_PATH}\`."
     echo "Regenerate with \`scripts/refresh.sh\`. One file per diagram type."
     echo "Open a file only when the cheatsheet in \`../type-cheatsheets.md\` is not enough."
+    echo "Which types have an IR is \`../coverage.md\`."
   } > "${SYNTAX_DIR}/README.md"
   echo "Cached ${COUNT} syntax docs into ${SYNTAX_DIR}"
 fi

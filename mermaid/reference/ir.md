@@ -15,15 +15,18 @@ the generated source if you need anything else. Icons are in scope only for
 ## Families
 
 Every document has `"diagram"` (family) and `"target"` (override with `--target`).
-Any other pair is an error. The mermaid `timeline` keyword is not the `timeline` family;
-that family emits `gantt` only.
+Any other pair is an error. Field-level schemas for the targets below live in this file.
+Every other target (the `timeline` keyword, charts, kanban, packet, git, journey, the other
+C4 diagrams, swimlane, agentflow, wardley, tree, cynefin, event model, railroad, use case,
+zenuml, `info`) is specified in [ir-catalog.md](ir-catalog.md). The matrix is
+[coverage.md](coverage.md).
 
-| Family | Targets |
+| Family | Targets in this file |
 |---|---|
 | `graph` | `flowchart`, `mindmap`, `block`, `C4Context`, `C4Container`, `architecture-beta`, `erDiagram`, `classDiagram` |
-| `timeline` | `gantt` |
+| `timeline` | `gantt` (the `timeline` keyword is a different target; see ir-catalog) |
 | `state-machine` | `stateDiagram-v2` |
-| `sequence` | `sequenceDiagram` |
+| `sequence` | `sequenceDiagram` (`zenuml` is in ir-catalog) |
 | `requirement-links` | `requirementDiagram` |
 
 ### `graph` — nodes, edges, optional grouping
@@ -128,6 +131,8 @@ just `--target`) picks which, since node/boundary kind vocabularies differ betwe
 - Node/group/edge-endpoint `id`s must be bare identifiers (letters/digits/underscore) — C4's
   PlantUML-derived macro syntax doesn't tolerate arbitrary punctuation the way flowchart's
   sanitized ids do.
+- `C4Component`, `C4Dynamic`, and `C4Deployment` reuse this document shape. Their kind lists
+  and `rel_index` are in [ir-catalog.md](ir-catalog.md).
 
 ### `graph` — `architecture-beta`: services, groups, junctions, ports
 
