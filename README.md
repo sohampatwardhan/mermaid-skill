@@ -4,8 +4,10 @@ An [Agent Skills](https://agentskills.io/specification)-compatible skill for aut
 validating, and deterministically generating [Mermaid](https://mermaid.js.org/) diagrams. Built
 for Claude Code, and portable to any tool that reads the open `SKILL.md` format.
 
-- **Always current.** Authors against cached per-type syntax references with live-documentation
-  escalation on evidence of staleness — never stale training data.
+- **Cached syntax, checked against the renderer.** Per-type syntax lives in
+  `mermaid/reference/syntax/` (version stamp in `mermaid/reference/diagram-types.md`).
+  `scripts/check.sh` uses the installed Mermaid CLI, which may be newer than that stamp.
+  Escalate to live docs or `scripts/refresh.sh` when a type is missing from the cache.
 - **Never presented unverified.** Every diagram is render-validated (via an MCP render tool or
   the bundled `scripts/check.sh`) before it's shown, including detection of Mermaid's silent
   error-placeholder SVG.

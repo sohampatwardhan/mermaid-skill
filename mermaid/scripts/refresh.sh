@@ -43,22 +43,28 @@ VERSION="$(curl -fsSL "https://registry.npmjs.org/mermaid/latest" 2>/dev/null \
 [ -z "${VERSION}" ] && VERSION="unknown"
 TODAY="$(date +%Y-%m-%d)"
 
+# Not authorable diagrams: shared helpers, and the renderer Mermaid uses for syntax errors.
+SKIP_TYPES='^(common|error)$'
 {
   echo "# Mermaid diagram types (auto-generated)"
   echo
   echo "> Last refreshed: ${TODAY} · Mermaid latest: ${VERSION}"
   echo "> Source of truth: \`${DIAGRAMS_PATH}\` in mermaid-js/mermaid."
-  echo "> Regenerate with \`scripts/refresh.sh\`. Full per-type expectations are"
-  echo "> cached in \`reference/syntax/\`; live authoritative syntax is also"
-  echo "> available via the MCP tool \`get_mermaid_syntax_document\`."
+  echo "> Regenerate with \`scripts/refresh.sh\`. Per-type syntax is in \`reference/syntax/\`."
+  echo "> \`scripts/check.sh\` uses the installed Mermaid CLI, which may be newer than this stamp."
+  echo "> \`common\` and \`error\` are omitted: shared code and the syntax-error renderer."
   echo
   echo "## Shipped diagram implementations"
   echo
   echo "The opening keyword may differ from the directory name (e.g."
   echo "\`flowchart\`/\`graph\`, \`stateDiagram-v2\`, \`architecture-beta\`)."
-  echo "See \`reference/type-cheatsheets.md\` for keyword + skeleton + top pitfalls."
+  echo "Keyword, skeleton, and pitfalls: \`reference/type-cheatsheets.md\`."
   echo
-  while IFS= read -r t; do [ -n "$t" ] && echo "- \`$t\`"; done <<< "${TYPES}"
+  while IFS= read -r t; do
+    [ -n "$t" ] || continue
+    printf '%s\n' "$t" | grep -Eq "${SKIP_TYPES}" && continue
+    echo "- \`$t\`"
+  done <<< "${TYPES}"
 } > "${OUT}"
 echo "Wrote ${OUT}"
 
@@ -94,8 +100,8 @@ else
     echo "# Cached Mermaid syntax docs"
     echo
     echo "Auto-downloaded ${TODAY} (Mermaid ${VERSION}) from mermaid-js/mermaid \`${DOCS_PATH}\`."
-    echo "Regenerate with \`scripts/refresh.sh\`. One \`.md\` per diagram type — the"
-    echo "official, complete expectations. Read the relevant file before authoring."
+    echo "Regenerate with \`scripts/refresh.sh\`. One file per diagram type."
+    echo "Open a file only when the cheatsheet in \`../type-cheatsheets.md\` is not enough."
   } > "${SYNTAX_DIR}/README.md"
   echo "Cached ${COUNT} syntax docs into ${SYNTAX_DIR}"
 fi

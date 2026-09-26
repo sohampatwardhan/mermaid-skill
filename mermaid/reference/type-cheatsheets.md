@@ -3,14 +3,14 @@
 Quick index of **opening keyword + minimal valid skeleton + top pitfalls** for every
 Mermaid diagram type. This is a fast lookup, not the full spec.
 
-**Authority order when they disagree:** the MCP tool `get_mermaid_syntax_document`
-(live) > `reference/syntax/<type>.md` (cached official docs) > this cheat-sheet.
-Keywords marked `-beta` are experimental and change between releases — always read
-the cached/live doc before authoring those.
+When sources disagree, prefer live official Mermaid syntax, then
+`reference/syntax/<type>.md`, then this file. Read one syntax file only when this
+sheet lacks the construct or the keyword is `-beta`. Validate with `scripts/check.sh`
+(it rejects Mermaid's error-placeholder SVG).
 
-Regenerate the cached docs and catalog with `scripts/refresh.sh`. Validate any
-diagram with the MCP `validate_and_render_mermaid_diagram`, or locally via
-`scripts/check.sh`.
+This sheet and the syntax cache were taken at Mermaid 11.16.1. `agentflow-beta` and
+`usecase-beta` shipped in Mermaid 12 and are not here — refresh or read live docs
+before authoring them.
 
 ---
 
@@ -145,7 +145,9 @@ gantt
 ```
 - `dateFormat` is required for dated tasks. Task fields: `:id, start, duration`.
   Tags: `done`, `active`, `crit`, `milestone`. Relative: `after id`.
-- Pitfall: missing `dateFormat`; durations need units (`30d`, `2w`).
+- Pitfall: missing `dateFormat`; durations need units (`30d`, `2w`). A colon inside
+  the task title starts metadata early and crashes the renderer (`TypeError`).
+  `Review: security :done, t1, ...` is invalid; keep the title free of `:`.
 
 ### timeline
 ```
@@ -254,10 +256,13 @@ architecture-beta
     service srv(server)[Server] in api
     db:L -- R:srv
 ```
-- Built-in icons: `cloud database disk internet server`. Others via iconify
-  (`logos:aws-ec2`) — find exact names with `search_mermaid_icons`.
+- Built-in icons: `cloud`, `database`, `disk`, `internet`, `server`. Anything else is
+  `pack:name` (for example `logos:aws-ec2`). A bare unknown name is not an icon.
 - Edges specify sides: `id:L -- R:id2` (`T B L R`), arrows `-->`/`<--`. `junction` for 4-way splits.
-- Pitfall: reference an id only after it's declared; group edges need the `{group}` modifier.
+- Pitfall: declare an id before an edge uses it. Group edges need the `{group}` modifier.
+  A lexer failure is often an error-placeholder SVG while the CLI exits 0; `scripts/check.sh`
+  rejects that SVG. Mermaid 11.16 rejected punctuation in bracket titles
+  (`[ESP32-S3 firmware]`); Mermaid 12 accepts it. Keep the real spelling and validate.
 
 ### block  (older alias: `block-beta`)
 ```

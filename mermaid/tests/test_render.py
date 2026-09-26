@@ -124,6 +124,28 @@ class GraphMindmapTests(unittest.TestCase):
         self.assertIn("mindmap", source)
         self.assertIn("((Duplicate detector))", source)
 
+    def test_unreachable_node_is_rejected(self) -> None:
+        ir = {
+            "diagram": "graph", "target": "mindmap", "root": "root",
+            "nodes": [
+                {"id": "root", "label": "Root"},
+                {"id": "a", "label": "A"},
+                {"id": "orphan", "label": "Dropped before"},
+            ],
+            "edges": [{"from": "root", "to": "a"}],
+        }
+        with self.assertRaises(ValueError):
+            render_module.render(ir)
+
+    def test_edge_to_undeclared_node_is_rejected(self) -> None:
+        ir = {
+            "diagram": "graph", "target": "mindmap", "root": "root",
+            "nodes": [{"id": "root", "label": "Root"}],
+            "edges": [{"from": "ghost", "to": "root"}],
+        }
+        with self.assertRaises(ValueError):
+            render_module.render(ir)
+
     def test_cycle_is_rejected(self) -> None:
         ir = {
             "diagram": "graph", "target": "mindmap", "root": "a",
@@ -162,6 +184,16 @@ class TimelineGanttTests(unittest.TestCase):
             "diagram": "timeline", "target": "gantt", "dateFormat": "YYYY-MM-DD",
             "sections": [{"name": "S", "bars": [
                 {"id": "t1", "label": "T1", "start": "2026-01-01", "end": "2026-01-02", "tags": ["urgent"]}
+            ]}],
+        }
+        with self.assertRaises(ValueError):
+            render_module.render(ir)
+
+    def test_colon_in_label_is_rejected(self) -> None:
+        ir = {
+            "diagram": "timeline", "target": "gantt", "dateFormat": "YYYY-MM-DD",
+            "sections": [{"name": "S", "bars": [
+                {"id": "t1", "label": "Review: security", "start": "2026-01-01", "end": "2026-01-02"}
             ]}],
         }
         with self.assertRaises(ValueError):
@@ -219,6 +251,24 @@ class StateMachineTests(unittest.TestCase):
         ir = {
             "diagram": "state-machine", "target": "stateDiagram-v2",
             "states": [{"id": "s1", "kind": "wat"}], "transitions": [],
+        }
+        with self.assertRaises(ValueError):
+            render_module.render(ir)
+
+    def test_unknown_kind_on_a_composite_is_rejected(self) -> None:
+        ir = {
+            "diagram": "state-machine", "target": "stateDiagram-v2",
+            "states": [{"id": "Outer", "kind": "wat", "states": [{"id": "Inner"}]}],
+            "transitions": [],
+        }
+        with self.assertRaises(ValueError):
+            render_module.render(ir)
+
+    def test_pseudostate_with_nested_body_is_rejected(self) -> None:
+        ir = {
+            "diagram": "state-machine", "target": "stateDiagram-v2",
+            "states": [{"id": "gate", "kind": "choice", "states": [{"id": "Inner"}]}],
+            "transitions": [],
         }
         with self.assertRaises(ValueError):
             render_module.render(ir)
@@ -362,7 +412,7 @@ class GraphBlockTests(unittest.TestCase):
             ],
             "edges": [
                 {"from": "a", "to": "b", "label": "next"},
-                {"from": "grp-1", "to": "f"},
+                {"from": "grp-1", "to": "f", "kind": "dependency"},
             ],
         }
         source = render_validated(ir)
@@ -375,6 +425,15 @@ class GraphBlockTests(unittest.TestCase):
         ir = {
             "diagram": "graph", "target": "block",
             "nodes": [{"id": "a", "label": "A", "kind": "wat"}], "edges": [],
+        }
+        with self.assertRaises(ValueError):
+            render_module.render(ir)
+
+    def test_unknown_edge_kind_is_rejected(self) -> None:
+        ir = {
+            "diagram": "graph", "target": "block",
+            "nodes": [{"id": "a", "label": "A"}, {"id": "b", "label": "B"}],
+            "edges": [{"from": "a", "to": "b", "kind": "strong"}],
         }
         with self.assertRaises(ValueError):
             render_module.render(ir)

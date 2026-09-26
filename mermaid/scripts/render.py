@@ -1,16 +1,9 @@
 #!/usr/bin/env python3
 """Deterministically render a diagram IR (JSON) to Mermaid source.
 
-Five IR families cover every diagram type the spec-* skills embed; other callers can
-reuse them for any diagram whose content is already structured data. Rendering is a pure
-function of the IR: same JSON in, same Mermaid text out, every time. Nothing here talks to
-a network or a renderer — pipe the output to `scripts/check.sh` (or the
-validate_and_render_mermaid_diagram MCP tool) to render-validate it, exactly as a
-hand-authored diagram would be.
-
-The `--backend` flag defaults to (and today only supports) `mermaid`. It exists so a future
-backend (e.g. TikZ) can add sibling serializer functions consuming the same IR files without
-changing this dispatcher or any caller's JSON.
+Same JSON in, same Mermaid text out. This module does not render. Pipe the output
+through `scripts/check.sh` before inserting it into Markdown. `--backend` accepts
+only `mermaid`.
 
 Families and their Mermaid targets:
   graph             -> flowchart, mindmap, block, C4Context, C4Container,
@@ -118,10 +111,7 @@ _MINDMAP_SHAPES = {
     "bang": ("))", "(("),
     "cloud": (")", "("),
 }
-# Deterministic status -> color mapping. This is content, not decoration: `status` is real
-# progress data (typically derived from 04_tasks.json's `checked`/`concurrency.blocked`/`ready`),
-# and the color is a fixed function of that value, never an arbitrary per-node choice — the same
-# "rules based, not a per-call aesthetic decision" standard the rest of this family holds to.
+# Fixed status -> color. `status` is data; only statuses that appear are emitted.
 _FLOWCHART_STATUS_STYLES = {
     "done": "fill:#9f9,stroke:#393,color:#000",
     "ready": "fill:#9cf,stroke:#369,color:#000",
@@ -188,12 +178,19 @@ def render_graph_flowchart(ir: dict) -> str:
 
 def render_graph_mindmap(ir: dict) -> str:
     _require(ir, ("nodes", "edges", "root"), "graph/mindmap")
-    nodes = {node["id"]: node for node in ir["nodes"]}
+    nodes: dict[str, dict] = {}
+    for node in ir["nodes"]:
+        _require(node, ("id", "label"), "graph/mindmap node")
+        if node["id"] in nodes:
+            raise IRError(f"graph/mindmap has duplicate node id {node['id']!r}")
+        nodes[node["id"]] = node
     if ir["root"] not in nodes:
         raise IRError(f"graph/mindmap root {ir['root']!r} is not a declared node")
     children: dict[str, list[str]] = {}
     for edge in ir["edges"]:
         _require(edge, ("from", "to"), "graph/mindmap edge")
+        if edge["from"] not in nodes or edge["to"] not in nodes:
+            raise IRError(f"graph/mindmap edge references undeclared node: {edge}")
         children.setdefault(edge["from"], []).append(edge["to"])
 
     lines = ["mindmap"]
@@ -201,7 +198,9 @@ def render_graph_mindmap(ir: dict) -> str:
 
     def emit(node_id: str, depth: int) -> None:
         if node_id in visited:
-            raise IRError(f"graph/mindmap edges form a cycle at {node_id!r}; mindmap requires a tree")
+            raise IRError(
+                f"graph/mindmap node {node_id!r} is reached more than once; mindmap requires a tree"
+            )
         visited.add(node_id)
         node = nodes.get(node_id)
         if node is None:
@@ -219,6 +218,11 @@ def render_graph_mindmap(ir: dict) -> str:
             emit(child, depth + 1)
 
     emit(ir["root"], 0)
+    unreachable = [node_id for node_id in nodes if node_id not in visited]
+    if unreachable:
+        raise IRError(
+            f"graph/mindmap node(s) are not reachable from root {ir['root']!r}: {unreachable}"
+        )
     return "\n".join(lines) + "\n"
 
 
@@ -270,6 +274,11 @@ def render_graph_block(ir: dict) -> str:
 
     for edge in ir["edges"]:
         _require(edge, ("from", "to"), "graph/block edge")
+        kind = edge.get("kind", "normal")
+        if kind not in ("normal", "dependency"):
+            raise IRError(
+                f"graph/block edge has unknown kind {kind!r}; block edges are plain arrows only"
+            )
         if edge["from"] not in ids or edge["to"] not in ids:
             raise IRError(f"graph/block edge references undeclared node/group: {edge}")
         if edge.get("label"):
@@ -657,9 +666,16 @@ def render_timeline_gantt(ir: dict) -> str:
         lines.append(f"    section {section['name']}")
         for bar in section["bars"]:
             _require(bar, ("id", "label", "start", "end"), "timeline/gantt bar")
+            label = str(bar["label"])
+            if not label.strip() or ":" in label:
+                raise IRError(
+                    f"timeline/gantt bar {bar['id']!r} label must be non-empty and must not contain ':'; "
+                    "Mermaid treats the first colon as the start of task metadata "
+                    "(a colon in the title crashes the renderer with TypeError)"
+                )
             bar_id = _identifier(bar["id"], "timeline/gantt bar")
             fields = _gantt_tags(bar) + [bar_id, bar["start"], bar["end"]]
-            lines.append(f"    {bar['label']} :{', '.join(fields)}")
+            lines.append(f"    {label} :{', '.join(fields)}")
     return "\n".join(lines) + "\n"
 
 
@@ -673,9 +689,13 @@ def _emit_state_machine_body(ir: dict, lines: list[str], indent: str) -> None:
     for state in ir.get("states", []):
         _require(state, ("id",), "state-machine state")
         kind = state.get("kind")
-        if kind is not None and kind not in _STATE_PSEUDO_KINDS and "states" not in state:
+        if kind is not None and kind not in _STATE_PSEUDO_KINDS:
             raise IRError(f"state-machine state {state['id']!r} has unknown kind {kind!r}")
         if kind in _STATE_PSEUDO_KINDS:
+            if any(key in state for key in ("states", "transitions", "initial", "final")):
+                raise IRError(
+                    f"state-machine pseudostate {state['id']!r} cannot contain a nested body"
+                )
             lines.append(f'{indent}state {state["id"]} <<{kind}>>')
         elif "states" in state or "transitions" in state:
             lines.append(f'{indent}state {state["id"]} {{')

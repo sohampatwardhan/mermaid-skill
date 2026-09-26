@@ -1,25 +1,26 @@
 # Mermaid diagram types (auto-generated)
 
-> Last refreshed: 2026-08-07 · Mermaid latest: 11.16.1
+> Last refreshed: 2026-08-07 · cached against Mermaid 11.16.1
 > Source of truth: `packages/mermaid/src/diagrams` in mermaid-js/mermaid.
-> Regenerate with `scripts/refresh.sh`. Full per-type expectations are
-> cached in `reference/syntax/`; live authoritative syntax is also
-> available via the MCP tool `get_mermaid_syntax_document`.
+> Regenerate with `scripts/refresh.sh`. Per-type syntax is in `reference/syntax/`.
+> `scripts/check.sh` uses the installed Mermaid CLI, which may be newer than this stamp.
+> Mermaid 12 adds `agentflow` (`agentflow-beta`) and `usecase` (`usecase-beta`); those
+> docs are not in this cache. Read live syntax or refresh before authoring them.
+> `common` and `error` are omitted: shared code and the syntax-error renderer, not
+> diagrams you write.
 
 ## Shipped diagram implementations
 
 The opening keyword may differ from the directory name (e.g.
 `flowchart`/`graph`, `stateDiagram-v2`, `architecture-beta`).
-See `reference/type-cheatsheets.md` for keyword + skeleton + top pitfalls.
+Keyword, skeleton, and pitfalls: `reference/type-cheatsheets.md`.
 
 - `architecture`
 - `block`
 - `c4`
 - `class`
-- `common`
 - `cynefin`
 - `er`
-- `error`
 - `eventmodeling`
 - `flowchart`
 - `gantt`
