@@ -23,8 +23,9 @@ jobs:
       - name: Install pinned Mermaid CLI
         run: |
           mkdir -p "$RUNNER_TEMP/mmdc"
-          npm init -y --prefix "$RUNNER_TEMP/mmdc" >/dev/null
-          npm install --prefix "$RUNNER_TEMP/mmdc" --no-fund --no-audit --save-exact \
+          cd "$RUNNER_TEMP/mmdc"
+          npm init -y >/dev/null
+          npm install --no-fund --no-audit --save-exact \
             @mermaid-js/mermaid-cli@12.0.0 \
             mermaid@12.0.0
           echo "$RUNNER_TEMP/mmdc/node_modules/.bin" >> "$GITHUB_PATH"
