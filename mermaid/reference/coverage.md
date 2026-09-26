@@ -15,6 +15,11 @@ Skill docs: [type-cheatsheets.md](type-cheatsheets.md) has a skeleton for every 
 `usecase.md`, which are short Mermaid 12 notes. IR schemas: [ir.md](ir.md) and
 [ir-catalog.md](ir-catalog.md). Tests live in `tests/test_render.py` and call `scripts/check.sh`.
 
+CI and the `npx` fallback pin `@mermaid-js/mermaid-cli@12.0.0` with Mermaid `12.0.0`
+on Node 22. `agentflow-beta` and `usecase-beta` are not registered in Mermaid 11; that
+CLI reports `UnknownDiagramError` and is not the version these tests claim. No type is
+demoted for that reason.
+
 | Type | Skill docs | IR | Tests | Gaps remaining |
 |---|---|---|---|---|
 | `flowchart` (`graph`) | cheatsheet, `syntax/flowchart.md`, ISO 5807 | `graph` / `flowchart` | `GraphFlowchartTests` | Expanded shape names beyond the ISO set; `click` / theme |

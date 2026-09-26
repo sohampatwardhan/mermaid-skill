@@ -21,7 +21,7 @@ scripts/render.py diagram.json -o diagram.mmd   # IR only
 scripts/check.sh diagram.mmd                     # always, on the exact final source
 ```
 
-`check.sh` uses an installed `mmdc`, otherwise `npx @mermaid-js/mermaid-cli`. A clean result is exit 0 **and** an SVG without Mermaid's error placeholder (`aria-roledescription="error"`, `class="error-icon"`, or `Syntax error in text`). The CLI can exit 0 while writing that placeholder; `check.sh` fails the run when it sees one. On failure, change the reported line and re-run. Do not re-render unchanged source.
+`check.sh` uses an installed `mmdc`, otherwise `npx -y @mermaid-js/mermaid-cli@12.0.0` (Node 22 or newer; Mermaid 11 does not register `agentflow-beta` or `usecase-beta`). A clean result is exit 0 **and** an SVG without Mermaid's error placeholder (`aria-roledescription="error"`, `class="error-icon"`, or `Syntax error in text`). The CLI can exit 0 while writing that placeholder; `check.sh` fails the run when it sees one. On failure, change the reported line and re-run. Do not re-render unchanged source.
 
 If `check.sh` cannot run, deliver the source and say once that it is unverified.
 

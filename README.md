@@ -35,7 +35,8 @@ cd mermaid && python3 -m pytest tests/ -q
 ```
 
 Every positive-case test in `tests/test_render.py` is a real render through `scripts/check.sh`
-(via `npx @mermaid-js/mermaid-cli` or an installed `mmdc`), not just a string match.
+(an installed `mmdc`, otherwise `npx -y @mermaid-js/mermaid-cli@12.0.0`), not just a string match.
+GitHub Actions installs that same pin on Node 22. Mermaid 11 does not register `agentflow-beta`.
 
 ## License
 

@@ -2,19 +2,34 @@ name: Tests
 
 on:
   push:
+  pull_request:
 
 jobs:
   mermaid:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.11"
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
-          node-version: "20"
+          # @mermaid-js/mermaid-cli@12 requires Node >= 22.13. Node 20 makes npx
+          # resolve an older CLI that does not register agentflow-beta.
+          node-version: "22"
       - run: pip install pytest
+      # Pin the CLI (and Mermaid) so CI does not float to whatever `npx` latest
+      # resolves. check.sh prefers this mmdc over its npx fallback.
+      - name: Install pinned Mermaid CLI
+        run: |
+          mkdir -p "$RUNNER_TEMP/mmdc"
+          npm init -y --prefix "$RUNNER_TEMP/mmdc" >/dev/null
+          npm install --prefix "$RUNNER_TEMP/mmdc" --no-fund --no-audit --save-exact \
+            @mermaid-js/mermaid-cli@12.0.0 \
+            mermaid@12.0.0
+          echo "$RUNNER_TEMP/mmdc/node_modules/.bin" >> "$GITHUB_PATH"
+          "$RUNNER_TEMP/mmdc/node_modules/.bin/mmdc" --version
+          node -e "const v=require(process.env.RUNNER_TEMP+'/mmdc/node_modules/mermaid/package.json').version; if(v!=='12.0.0'){console.error('expected mermaid 12.0.0, got '+v); process.exit(1)} console.log('mermaid '+v)"
       # GitHub Actions' ubuntu-latest AppArmor policy blocks the unprivileged user namespace
       # Chromium's sandbox needs; this opt-in escape hatch (unset by default, see check.sh) is
       # only needed in a locked-down CI-style environment, not for normal/local use.
