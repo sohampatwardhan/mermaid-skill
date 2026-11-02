@@ -92,3 +92,46 @@ def test_identical_runs_give_identical_output() -> None:
     second = run_check("-c", source)
     assert first.returncode == second.returncode == 1
     assert first.stdout == second.stdout
+
+
+# --- 2.2 line reporting -----------------------------------------------------------------
+
+
+@needs_cli
+def test_parse_error_reports_line_3() -> None:
+    result = run_check("-c", "flowchart TD\n  A --> B\n  B --> --> C\n")
+    assert result.returncode == 1
+    assert "FAIL line 3:   B --> --> C" in result.stdout
+    assert "Parse error on line 3" in result.stdout  # full CLI output follows
+
+
+@needs_cli
+def test_line_counts_frontmatter() -> None:
+    source = "---\nconfig:\n  layout: elk\n---\nflowchart TD\n  A --> B\n  B --> --> C\n"
+    result = run_check("-c", source)
+    assert result.returncode == 1
+    assert "FAIL line 7:   B --> --> C" in result.stdout
+
+
+@needs_cli
+def test_unknown_diagram_reports_line_unknown() -> None:
+    result = run_check("-c", "notadiagram\n  A\n")
+    assert result.returncode == 1
+    first = result.stdout.splitlines()[0]
+    assert first.startswith("FAIL line unknown: ")
+    assert "UnknownDiagramError" in first
+
+
+def test_error_placeholder_svg_exits_1(tmp_path: Path) -> None:
+    fake = tmp_path / "fake"
+    fake.mkdir()
+    write_exe(
+        fake / "mmdc",
+        'if [ "$1" = "--version" ]; then echo 12.0.0; exit 0; fi\n'
+        'while [ $# -gt 0 ]; do if [ "$1" = "-o" ]; then out="$2"; fi; shift; done\n'
+        'echo \'<svg aria-roledescription="error"><text>Syntax error in text</text></svg>\' > "$out"\n',
+    )
+    env = {**os.environ, "PATH": f"{fake}:{tools_dir(tmp_path)}"}
+    result = run_check("-c", "flowchart TD\n  A-->B", env=env)
+    assert result.returncode == 1
+    assert result.stdout.startswith("FAIL line unknown")

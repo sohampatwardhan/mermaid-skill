@@ -94,8 +94,8 @@ flowchart TB
   classDef critical fill:#fde68a,stroke:#b45309,color:#1c1917
   classDef parallel fill:#dbeafe,stroke:#1d4ed8,color:#1e3a8a
   classDef done fill:#dcfce7,stroke:#15803d,color:#14532d
-  class t1,t2_1,ld done
-  class t2_2,t2_3,t4,t6_1,t6_3,t7_1,t8,lc critical
+  class t1,t2_1,t2_2,ld done
+  class t2_3,t4,t6_1,t6_3,t7_1,t8,lc critical
   class t3,t5_1,t5_2,t5_3,t5_4,t5_5,t5_6,t6_2,t7_2,t7_3,t7_4,t7_5,t7_6,lp parallel
 ```
 
@@ -124,7 +124,7 @@ If the 12.0.0 refresh in task 3 adds or removes a syntax page, task 3 adds or re
   - Send the npx download note to stderr
   - Add `mermaid/tests/test_check.py` with a fake `mmdc` on `PATH` that prints `11.16.0`, a run with no CLI on `PATH`, two identical runs giving identical output, and a static check that `check.sh` and `tests.yml` name the same `12.0.0`
   - _Requirements: 3.1, 3.2, 3.3, 3.10_
-- [ ] 2.2 Report the failing line
+- [x] 2.2 Report the failing line
   - Parse `on line N` and `line N` from the CLI output and print `FAIL line N: <source line>`, otherwise `FAIL line unknown` and the first CLI error line, then the full output
   - Print `FAIL line unknown` for the error-placeholder SVG case as well
   - Extend `test_check.py`: a flowchart broken on line 3 reports line 3, an unknown diagram keyword reports `line unknown`, and a source that yields the placeholder exits 1

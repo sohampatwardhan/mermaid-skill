@@ -90,8 +90,46 @@ is_error_svg() {
   grep -Eiq 'aria-roledescription="error"|class="error-icon"|>Syntax error in text<' "$1"
 }
 
+# Mermaid strips YAML frontmatter before parsing, so its line numbers count from the
+# first line after the closing `---`. Print how many source lines the frontmatter uses.
+frontmatter_lines() {
+  awk 'NR == 1 { if ($0 !~ /^---[ \t]*$/) { print 0; exit } ; next }
+       /^---[ \t]*$/ { print NR; exit }' "$1" | head -n 1
+}
+
+# Print the line number in a CLI log (`on line N`, else `line N`), or nothing.
+cli_line() {
+  local n
+  n="$(sed -n -E 's/.*on line ([0-9]+).*/\1/p' "$1" | head -n 1)"
+  [ -n "${n}" ] || n="$(sed -n -E 's/.*[Ll]ine:? ([0-9]+).*/\1/p' "$1" | head -n 1)"
+  printf '%s' "${n}"
+}
+
+# Print the first CLI error line: the first line naming an error, else the first
+# non-empty line that is not a progress message.
+cli_message() {
+  local msg
+  msg="$(grep -m 1 -iE 'error' "$1" || true)"
+  [ -n "${msg}" ] || msg="$(grep -m 1 -vE '^[[:space:]]*$|^Generating |^Found [0-9]+ mermaid' "$1" || true)"
+  printf '%s' "${msg}" | sed "s#${TMPDIR_LOCAL}#<tmp>#g"
+}
+
+# Print the source line number (in SOURCE) that a CLI log points at, or nothing.
+source_line() {
+  local n fm
+  n="$(cli_line "$2")"
+  [ -n "${n}" ] || return 0
+  fm="$(frontmatter_lines "$1")"
+  printf '%s' "$((n + ${fm:-0}))"
+}
+
 if ! run_mmdc "${SRC}" "${VALIDATION_DEST}" >"${ERRLOG}" 2>&1; then
-  echo "FAIL: Mermaid could not render the diagram."
+  LINE="$(source_line "${SRC}" "${ERRLOG}")"
+  if [ -n "${LINE}" ]; then
+    echo "FAIL line ${LINE}: $(sed -n "${LINE}p" "${SRC}")"
+  else
+    echo "FAIL line unknown: $(cli_message "${ERRLOG}")"
+  fi
   show_log "${ERRLOG}"
   exit 1
 fi
@@ -99,7 +137,7 @@ fi
 # Mermaid CLI can exit 0 while writing its syntax-error placeholder SVG. Inspect
 # the artifact itself so an error image is never reported as a successful render.
 if is_error_svg "${VALIDATION_DEST}"; then
-  echo "FAIL: Mermaid emitted an error SVG despite returning exit 0."
+  echo "FAIL line unknown: Mermaid emitted an error SVG despite returning exit 0."
   show_log "${ERRLOG}"
   exit 1
 fi
