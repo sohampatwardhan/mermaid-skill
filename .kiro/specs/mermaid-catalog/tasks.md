@@ -94,9 +94,9 @@ flowchart TB
   classDef critical fill:#fde68a,stroke:#b45309,color:#1c1917
   classDef parallel fill:#dbeafe,stroke:#1d4ed8,color:#1e3a8a
   classDef done fill:#dcfce7,stroke:#15803d,color:#14532d
-  class t1,t2_1,t2_2,t2_3,t3,t4,t5_1,t5_2,t5_3,t5_4,t5_5,ld done
+  class t1,t2_1,t2_2,t2_3,t3,t4,t5_1,t5_2,t5_3,t5_4,t5_5,t5_6,ld done
   class t6_1,t6_3,t7_1,t8,lc critical
-  class t5_6,t6_2,t7_2,t7_3,t7_4,t7_5,t7_6,lp parallel
+  class t6_2,t7_2,t7_3,t7_4,t7_5,t7_6,lp parallel
 ```
 
 Type groups used by tasks 5 and 7:
@@ -150,7 +150,7 @@ If the 12.0.0 refresh in task 3 adds or removes a syntax page, task 3 adds or re
   - Add `mermaid/tests/test_coverage.py`: table parse, keywords equal the `render.py` serializer keys, `builder` rows have Gaps `—`, and `candidate` is accepted only until task 8
   - _Requirements: 1.2, 3.11, 6.1, 6.2, 6.4_
 
-- [ ] 5. Write the catalog files
+- [x] 5. Write the catalog files
 - [x] 5.1 Catalog group 1: core graph types
   - Write `catalog/flowchart.md` (including the ISO 5807 rule from `reference/iso-5807-flowcharts.md`), `sequenceDiagram.md`, `classDiagram.md`, `stateDiagram.md`, `entityRelationshipDiagram.md` from the 12.0.0 syntax pages
   - Each Features table lists every documented option and construct with a snippet; each Complete example uses every coexisting feature and adds one fence per exclusive group; invalid samples use `text` fences
@@ -172,7 +172,7 @@ If the 12.0.0 refresh in task 3 adds or removes a syntax page, task 3 adds or re
   - Write `agentflow.md`, `usecase.md`, `swimlanes.md`, `wardley.md`, `cynefin.md`, `eventmodeling.md` as in 5.1, recording the 12.0.0 lexer limits found while making the examples pass
   - Remove the six types from `PENDING_TYPES`
   - _Requirements: 1.1, 1.3, 1.4, 1.5, 1.6, 1.7_
-- [ ] 5.6 Catalog group 6: remaining types
+- [x] 5.6 Catalog group 6: remaining types
   - Write `ishikawa.md`, `treeView.md`, `railroad.md`, `zenuml.md`, `info.md` as in 5.1
   - Remove the five types from `PENDING_TYPES`, which leaves it empty
   - _Requirements: 1.1, 1.3, 1.4, 1.5, 1.6, 1.7_
