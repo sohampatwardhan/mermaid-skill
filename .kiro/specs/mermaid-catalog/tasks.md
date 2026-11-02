@@ -94,8 +94,8 @@ flowchart TB
   classDef critical fill:#fde68a,stroke:#b45309,color:#1c1917
   classDef parallel fill:#dbeafe,stroke:#1d4ed8,color:#1e3a8a
   classDef done fill:#dcfce7,stroke:#15803d,color:#14532d
-  class t1,t2_1,t2_2,t2_3,t3,t4,t5_1,t5_2,t5_3,t5_4,t5_5,t5_6,t6_1,t6_2,ld done
-  class t6_3,t7_1,t8,lc critical
+  class t1,t2_1,t2_2,t2_3,t3,t4,t5_1,t5_2,t5_3,t5_4,t5_5,t5_6,t6_1,t6_2,t6_3,ld done
+  class t7_1,t8,lc critical
   class t7_2,t7_3,t7_4,t7_5,t7_6,lp parallel
 ```
 
@@ -177,7 +177,7 @@ If the 12.0.0 refresh in task 3 adds or removes a syntax page, task 3 adds or re
   - Remove the five types from `PENDING_TYPES`, which leaves it empty
   - _Requirements: 1.1, 1.3, 1.4, 1.5, 1.6, 1.7_
 
-- [ ] 6. Build the builder reliability harness
+- [x] 6. Build the builder reliability harness
 - [x] 6.1 Add the builder registry and validator
   - In `mermaid/scripts/render.py`, make `IRError` carry `target`, `path`, `reason` with `str()` as `<target>: <path>: <reason>`
   - Add `Validator` (`fields`, `text` with named contexts, `ident`, `number` rejecting `bool`, `enum`, `ref`) and the `Builder` dataclass, `BUILDERS`, `HAND_AUTHOR_ONLY`, and `SERIALIZERS` as a derived view
@@ -188,7 +188,7 @@ If the 12.0.0 refresh in task 3 adds or removes a syntax page, task 3 adds or re
   - `main()` returns 0 on success, 1 on `IRError` with `ERROR: <target>: <path>: <reason>` on stderr, 2 on a missing file, read error, or invalid JSON, and writes `-o` only after `render()` returns
   - Add `mermaid/tests/test_render_cli.py` for all three paths and the absent output file
   - _Requirements: 5.1, 5.2, 5.3_
-- [ ] 6.3 Add the reliability tests
+- [x] 6.3 Add the reliability tests
   - Add `mermaid/tests/corpus.py` with `PLAIN` and `HOSTILE` from the design
   - Add `mermaid/tests/test_builders.py`, parametrized over builders whose `coverage.md` row is `builder`: minimal and maximal fixture renders, feature parity against the catalog Features table, corpus substitution over `text_fields`, determinism, nested and root unknown keys, `true` in a numeric field, an unknown enum, an undeclared reference, and one `check.sh --markdown` batch per type
   - Add a self-test with a toy builder that drops a key, proving the harness fails on it
