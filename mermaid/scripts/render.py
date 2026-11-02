@@ -2206,7 +2206,17 @@ def render(ir: dict, target: str | None = None, backend: str = "mermaid") -> str
         raise
 
 
+EXIT_OK = 0
+EXIT_IR_ERROR = 1  # the IR cannot be represented: fix the reported JSON path
+EXIT_BAD_INPUT = 2  # missing or unreadable file, or not valid JSON
+
+
 def main(argv: list[str] | None = None) -> int:
+    """CLI entry point. Exit 0 on success, 1 on IRError, 2 on a bad input file.
+
+    The output file is written only after the whole document rendered, so a failed run
+    never leaves a partial or stale `-o` file behind.
+    """
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("ir_file", type=Path, help="Path to the diagram IR JSON file.")
     parser.add_argument("--target", default=None, help="Override the IR's 'target' field.")
@@ -2215,17 +2225,30 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     try:
-        ir = json.loads(args.ir_file.read_text(encoding="utf-8"))
+        text = args.ir_file.read_text(encoding="utf-8")
+    except FileNotFoundError:
+        print(f"ERROR: file not found: {args.ir_file}", file=sys.stderr)
+        return EXIT_BAD_INPUT
+    except (OSError, UnicodeDecodeError) as exc:
+        print(f"ERROR: cannot read {args.ir_file}: {exc}", file=sys.stderr)
+        return EXIT_BAD_INPUT
+    try:
+        ir = json.loads(text)
+    except json.JSONDecodeError as exc:
+        print(f"ERROR: {args.ir_file} is not valid JSON: {exc}", file=sys.stderr)
+        return EXIT_BAD_INPUT
+
+    try:
         source = render(ir, target=args.target, backend=args.backend)
-    except (IRError, json.JSONDecodeError, OSError) as exc:
+    except IRError as exc:
         print(f"ERROR: {exc}", file=sys.stderr)
-        return 1
+        return EXIT_IR_ERROR
 
     if args.output:
         args.output.write_text(source, encoding="utf-8")
     else:
         print(source, end="")
-    return 0
+    return EXIT_OK
 
 
 if __name__ == "__main__":

@@ -94,9 +94,9 @@ flowchart TB
   classDef critical fill:#fde68a,stroke:#b45309,color:#1c1917
   classDef parallel fill:#dbeafe,stroke:#1d4ed8,color:#1e3a8a
   classDef done fill:#dcfce7,stroke:#15803d,color:#14532d
-  class t1,t2_1,t2_2,t2_3,t3,t4,t5_1,t5_2,t5_3,t5_4,t5_5,t5_6,t6_1,ld done
+  class t1,t2_1,t2_2,t2_3,t3,t4,t5_1,t5_2,t5_3,t5_4,t5_5,t5_6,t6_1,t6_2,ld done
   class t6_3,t7_1,t8,lc critical
-  class t6_2,t7_2,t7_3,t7_4,t7_5,t7_6,lp parallel
+  class t7_2,t7_3,t7_4,t7_5,t7_6,lp parallel
 ```
 
 Type groups used by tasks 5 and 7:
@@ -184,7 +184,7 @@ If the 12.0.0 refresh in task 3 adds or removes a syntax page, task 3 adds or re
   - Register every current serializer as a `Builder` with empty `text_fields` and `features`; make `render()` raise the hand-author-only `IRError` from `HAND_AUTHOR_ONLY`
   - Unit tests for each `Validator` method and for the hand-author-only path; existing `test_render.py` keeps passing
   - _Requirements: 4.2, 4.3, 4.11, 4.12_
-- [ ] 6.2 Fix `render.py` exit codes
+- [x] 6.2 Fix `render.py` exit codes
   - `main()` returns 0 on success, 1 on `IRError` with `ERROR: <target>: <path>: <reason>` on stderr, 2 on a missing file, read error, or invalid JSON, and writes `-o` only after `render()` returns
   - Add `mermaid/tests/test_render_cli.py` for all three paths and the absent output file
   - _Requirements: 5.1, 5.2, 5.3_
