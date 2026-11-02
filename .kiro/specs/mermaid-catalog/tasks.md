@@ -94,8 +94,8 @@ flowchart TB
   classDef critical fill:#fde68a,stroke:#b45309,color:#1c1917
   classDef parallel fill:#dbeafe,stroke:#1d4ed8,color:#1e3a8a
   classDef done fill:#dcfce7,stroke:#15803d,color:#14532d
-  class t1,t2_1,t2_2,ld done
-  class t2_3,t4,t6_1,t6_3,t7_1,t8,lc critical
+  class t1,t2_1,t2_2,t2_3,ld done
+  class t4,t6_1,t6_3,t7_1,t8,lc critical
   class t3,t5_1,t5_2,t5_3,t5_4,t5_5,t5_6,t6_2,t7_2,t7_3,t7_4,t7_5,t7_6,lp parallel
 ```
 
@@ -118,7 +118,7 @@ If the 12.0.0 refresh in task 3 adds or removes a syntax page, task 3 adds or re
   - `.github/workflows/tests.yml` already runs on push and pull request, installs `@mermaid-js/mermaid-cli@12.0.0` with `mermaid@12.0.0` on Node 22, asserts the core version, and runs `python3 -m pytest tests/ -q` from `mermaid/`. Every check in this plan is a pytest module under `mermaid/tests/`, so the job picks it up with no workflow change
   - Gates every later task: it must pass before task 2 starts
 
-- [ ] 2. Make `check.sh` the deterministic pinned validator
+- [x] 2. Make `check.sh` the deterministic pinned validator
 - [x] 2.1 Select only Mermaid CLI 12.0.0
   - In `mermaid/scripts/check.sh`, run `mmdc --version` and use it only when it prints `12.0.0`, else `npx -y ${MERMAID_CLI_PACKAGE}` (default `@mermaid-js/mermaid-cli@12.0.0`), else exit 3 with `need Mermaid CLI 12.0.0`
   - Send the npx download note to stderr
@@ -129,7 +129,7 @@ If the 12.0.0 refresh in task 3 adds or removes a syntax page, task 3 adds or re
   - Print `FAIL line unknown` for the error-placeholder SVG case as well
   - Extend `test_check.py`: a flowchart broken on line 3 reports line 3, an unknown diagram keyword reports `line unknown`, and a source that yields the placeholder exits 1
   - _Requirements: 3.4, 3.5, 3.6_
-- [ ] 2.3 Add `--markdown` mode
+- [x] 2.3 Add `--markdown` mode
   - Extract column-0 ```` ```mermaid ```` fences with awk and record each fence's first content line, keeping bash 3.2 compatibility
   - Confirm the per-fence SVG naming of `mmdc -i FILE.md` under 12.0.0, render each file once, and fall back to per-fence renders to locate failures as `PATH:LINE: <message>`
   - Print `PATH: no mermaid fences` for files without fences, exit 1 after reporting every failure, else 0

@@ -135,3 +135,72 @@ def test_error_placeholder_svg_exits_1(tmp_path: Path) -> None:
     result = run_check("-c", "flowchart TD\n  A-->B", env=env)
     assert result.returncode == 1
     assert result.stdout.startswith("FAIL line unknown")
+
+
+# --- 2.3 Markdown mode ------------------------------------------------------------------
+
+MIXED_MD = """# Mixed
+
+```mermaid
+flowchart TD
+  A --> B
+```
+
+Some prose.
+
+```text
+flowchart TD
+  not --> --> checked
+```
+
+```mermaid
+pie
+  "a" : 1
+```
+
+```mermaid
+flowchart TD
+  A --> B
+  B --> --> C
+```
+"""
+# The bad fence's content starts on Markdown line 21; its CLI line 3 is Markdown line 23.
+BAD_MD_LINE = 23
+
+
+@needs_cli
+def test_markdown_reports_path_and_markdown_line(tmp_path: Path) -> None:
+    md = tmp_path / "mixed.md"
+    md.write_text(MIXED_MD)
+    assert md.read_text().splitlines()[BAD_MD_LINE - 1] == "  B --> --> C"
+    result = run_check("--markdown", str(md))
+    assert result.returncode == 1
+    failures = [line for line in result.stdout.splitlines() if line.startswith(f"{md}:")]
+    assert len(failures) == 1, result.stdout
+    assert failures[0].startswith(f"{md}:{BAD_MD_LINE}: ")
+    # Same verdict and lines on a second run.
+    again = run_check("--markdown", str(md))
+    assert again.returncode == 1 and again.stdout == result.stdout
+
+
+@needs_cli
+def test_markdown_all_good_passes(tmp_path: Path) -> None:
+    md = tmp_path / "good.md"
+    md.write_text(MIXED_MD.split("```mermaid\nflowchart TD\n  A --> B\n  B -->")[0])
+    result = run_check("--markdown", str(md))
+    assert result.returncode == 0, result.stdout
+    assert f"PASS {md} (2 fences)" in result.stdout
+
+
+@needs_cli
+def test_markdown_without_fences_is_not_a_failure(tmp_path: Path) -> None:
+    md = tmp_path / "plain.md"
+    md.write_text("# Nothing\n\nNo diagrams here.\n")
+    result = run_check("--markdown", str(md))
+    assert result.returncode == 0
+    assert f"{md}: no mermaid fences" in result.stdout
+
+
+def test_markdown_missing_file_exits_2(tmp_path: Path) -> None:
+    result = run_check("--markdown", str(tmp_path / "absent.md"))
+    assert result.returncode == 2
