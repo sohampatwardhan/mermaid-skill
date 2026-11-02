@@ -94,9 +94,9 @@ flowchart TB
   classDef critical fill:#fde68a,stroke:#b45309,color:#1c1917
   classDef parallel fill:#dbeafe,stroke:#1d4ed8,color:#1e3a8a
   classDef done fill:#dcfce7,stroke:#15803d,color:#14532d
-  class t1,t2_1,t2_2,t2_3,ld done
+  class t1,t2_1,t2_2,t2_3,t3,ld done
   class t4,t6_1,t6_3,t7_1,t8,lc critical
-  class t3,t5_1,t5_2,t5_3,t5_4,t5_5,t5_6,t6_2,t7_2,t7_3,t7_4,t7_5,t7_6,lp parallel
+  class t5_1,t5_2,t5_3,t5_4,t5_5,t5_6,t6_2,t7_2,t7_3,t7_4,t7_5,t7_6,lp parallel
 ```
 
 Type groups used by tasks 5 and 7:
@@ -136,7 +136,7 @@ If the 12.0.0 refresh in task 3 adds or removes a syntax page, task 3 adds or re
   - Extend `test_check.py` with a Markdown file holding two good fences and one bad fence at a known line, and a file with no fences
   - _Requirements: 3.7, 3.8, 3.9_
 
-- [ ] 3. Pin the syntax cache to Mermaid 12.0.0
+- [x] 3. Pin the syntax cache to Mermaid 12.0.0
   - Add `MERMAID_REF="${MERMAID_REF:-mermaid@12.0.0}"` to `mermaid/scripts/refresh.sh` and pass `ref=` on every API and raw URL
   - Download into a temp directory and replace `reference/syntax/` and `reference/diagram-types.md` only after every fetch succeeded; stamp `cached against Mermaid 12.0.0`
   - Run it once and commit the refreshed cache; replace the hand-written `agentflow.md` and `usecase.md` notes with the upstream pages when the tag has them

@@ -204,3 +204,41 @@ def test_markdown_without_fences_is_not_a_failure(tmp_path: Path) -> None:
 def test_markdown_missing_file_exits_2(tmp_path: Path) -> None:
     result = run_check("--markdown", str(tmp_path / "absent.md"))
     assert result.returncode == 2
+
+
+# --- 3 pinned syntax cache --------------------------------------------------------------
+
+REFRESH = SKILL_DIR / "scripts" / "refresh.sh"
+
+
+def test_refresh_defaults_to_the_pinned_tag() -> None:
+    script = REFRESH.read_text()
+    assert 'MERMAID_REF="${MERMAID_REF:-mermaid@12.0.0}"' in script
+    assert "?${REF_QS}" in script  # every API listing passes ref=
+    assert "${RAW}/${DOCS_PATH}/" in script  # raw downloads are tag-qualified
+
+
+def test_cache_is_stamped_with_the_pinned_version() -> None:
+    stamp = "cached against Mermaid 12.0.0"
+    assert stamp in (SKILL_DIR / "reference" / "diagram-types.md").read_text()
+    assert stamp in (SKILL_DIR / "reference" / "syntax" / "README.md").read_text()
+
+
+def test_refresh_failure_leaves_the_cache_untouched(tmp_path: Path) -> None:
+    skill = tmp_path / "skill"
+    (skill / "scripts").mkdir(parents=True)
+    (skill / "reference" / "syntax").mkdir(parents=True)
+    shutil.copy(REFRESH, skill / "scripts" / "refresh.sh")
+    (skill / "reference" / "diagram-types.md").write_text("old list\n")
+    (skill / "reference" / "syntax" / "pie.md").write_text("old pie\n")
+    fake = tmp_path / "fake"
+    fake.mkdir()
+    write_exe(fake / "curl", "exit 22\n")
+    env = {**os.environ, "PATH": f"{fake}:{os.environ['PATH']}"}
+    result = subprocess.run(
+        [BASH, str(skill / "scripts" / "refresh.sh")], capture_output=True, text=True, env=env, timeout=60
+    )
+    assert result.returncode == 1
+    assert "Nothing updated" in result.stdout
+    assert (skill / "reference" / "diagram-types.md").read_text() == "old list\n"
+    assert (skill / "reference" / "syntax" / "pie.md").read_text() == "old pie\n"
