@@ -6,6 +6,7 @@ import importlib.util
 import re
 import shutil
 import subprocess
+import sys
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -33,9 +34,13 @@ BUILDER_STATES = ("builder", "hand-author-only")
 
 
 def load_render():
+    """Import scripts/render.py once as module `render` (dataclasses need it in sys.modules)."""
+    if "render" in sys.modules:
+        return sys.modules["render"]
     spec = importlib.util.spec_from_file_location("render", SKILL_DIR / "scripts" / "render.py")
     assert spec is not None and spec.loader is not None
     module = importlib.util.module_from_spec(spec)
+    sys.modules["render"] = module
     spec.loader.exec_module(module)
     return module
 

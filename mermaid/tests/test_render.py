@@ -8,18 +8,13 @@ parity contract for render.py: every branch of every family gets at least one re
 
 from __future__ import annotations
 
-import importlib.util
 import shutil
 import subprocess
 import unittest
-from pathlib import Path
 
-SKILL_DIR = Path(__file__).resolve().parents[1]
-CHECK = SKILL_DIR / "scripts" / "check.sh"
-SPEC = importlib.util.spec_from_file_location("render", SKILL_DIR / "scripts" / "render.py")
-assert SPEC is not None and SPEC.loader is not None
-render_module = importlib.util.module_from_spec(SPEC)
-SPEC.loader.exec_module(render_module)
+from skill_docs import CHECK, load_render
+
+render_module = load_render()
 
 
 def render_validated(ir: dict) -> str:
