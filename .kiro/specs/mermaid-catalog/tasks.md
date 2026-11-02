@@ -94,9 +94,9 @@ flowchart TB
   classDef critical fill:#fde68a,stroke:#b45309,color:#1c1917
   classDef parallel fill:#dbeafe,stroke:#1d4ed8,color:#1e3a8a
   classDef done fill:#dcfce7,stroke:#15803d,color:#14532d
-  class t1,t2_1,t2_2,t2_3,t3,t4,t5_1,t5_2,t5_3,t5_4,ld done
+  class t1,t2_1,t2_2,t2_3,t3,t4,t5_1,t5_2,t5_3,t5_4,t5_5,ld done
   class t6_1,t6_3,t7_1,t8,lc critical
-  class t5_5,t5_6,t6_2,t7_2,t7_3,t7_4,t7_5,t7_6,lp parallel
+  class t5_6,t6_2,t7_2,t7_3,t7_4,t7_5,t7_6,lp parallel
 ```
 
 Type groups used by tasks 5 and 7:
@@ -168,7 +168,7 @@ If the 12.0.0 refresh in task 3 adds or removes a syntax page, task 3 adds or re
   - Write `c4.md` (all five keywords), `architecture.md` (built-in icons and `pack:name`), `block.md`, `packet.md`, `requirementDiagram.md` as in 5.1
   - Remove the five types from `PENDING_TYPES`
   - _Requirements: 1.1, 1.3, 1.4, 1.5, 1.6, 1.7_
-- [ ] 5.5 Catalog group 5: Mermaid 12 and beta types
+- [x] 5.5 Catalog group 5: Mermaid 12 and beta types
   - Write `agentflow.md`, `usecase.md`, `swimlanes.md`, `wardley.md`, `cynefin.md`, `eventmodeling.md` as in 5.1, recording the 12.0.0 lexer limits found while making the examples pass
   - Remove the six types from `PENDING_TYPES`
   - _Requirements: 1.1, 1.3, 1.4, 1.5, 1.6, 1.7_

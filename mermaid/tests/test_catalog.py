@@ -18,8 +18,7 @@ from skill_docs import (
 
 # Types whose catalog file is not written yet. Emptied by task 5.6, removed by task 8.
 PENDING_TYPES: set[str] = {
-                    "agentflow", "usecase", "swimlanes", "wardley", "cynefin", "eventmodeling",
-    "ishikawa", "treeView", "railroad", "zenuml", "info",
+                        "ishikawa", "treeView", "railroad", "zenuml", "info",
 }
 
 
