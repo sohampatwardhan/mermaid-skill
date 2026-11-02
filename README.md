@@ -22,6 +22,23 @@ for Claude Code, and portable to any tool that reads the open `SKILL.md` format.
 
 ## Install
 
+### With the `skills` CLI
+
+Install with the [`skills` CLI](https://github.com/vercel-labs/skills) (Node.js 22.20 or later). It records the source, so `npx skills update` keeps the skill current:
+
+```bash
+# Global install for every agent the CLI detects
+npx skills add sohampatwardhan/mermaid-skill -g
+
+# Or only for chosen agents
+npx skills add sohampatwardhan/mermaid-skill -g -a claude-code -a codex
+
+# Update later
+npx skills update -g
+```
+
+### By hand
+
 The [`mermaid/`](mermaid/) folder in this repository *is* the Agent Skill package — copy it
 as-is into your tool's Agent Skills directory (e.g. `~/.claude/skills/mermaid/`,
 `~/.agents/skills/mermaid/` — see the [Agent Skills spec](https://agentskills.io/specification)
