@@ -1,64 +1,53 @@
 # Mermaid type coverage
 
-Catalog of diagram types an agent can author with this skill. The type list is the Mermaid
-open-source syntax set (`docs/syntax` on mermaid-js, published at
-[mermaid.ai/open-source](https://mermaid.ai/open-source/)) plus `info`, which ships in
-`packages/mermaid/src/diagrams` and has no syntax page. `common` and `error` are not types.
-`examples.md` is a sample index, not a type.
+One row per diagram type in Mermaid 12.0.0: the cached syntax pages in [syntax/](syntax/)
+(except `README.md` and `examples.md`) plus `info`, which has no syntax page. The type id is
+the page's file stem and the catalog file's stem. `tests/test_coverage.py` parses this table.
 
-Keyword in the first column is what `render.py` emits when an IR exists. Older aliases that
-still render (`graph`, `xychart-beta`, `sankey-beta`, `packet-beta`, `block-beta`,
-`stateDiagram`, `treemap` without `-beta`) are noted in the cheatsheet, not as extra rows.
+- **Keywords** are the IR `target` values `render.py` accepts for the type (its `BUILDERS`
+  and `HAND_AUTHOR_ONLY` keys). Other aliases are listed in the catalog file.
+- **Builder** is `builder` (a kept, fully tested IR builder) or `hand-author-only`. A
+  `builder` row always has Gaps `—`. `candidate` is transitional: the builder exists but has
+  not been through the reliability bar yet.
+- **Tests** names the test that covers the type.
 
-Skill docs: [type-cheatsheets.md](type-cheatsheets.md) has a skeleton for every row.
-[syntax/](syntax/) is the cached full page (Mermaid 11.16.1) except `agentflow.md` and
-`usecase.md`, which are short Mermaid 12 notes. IR schemas: [ir.md](ir.md) and
-[ir-catalog.md](ir-catalog.md). Tests live in `tests/test_render.py` and call `scripts/check.sh`.
+CI pins `@mermaid-js/mermaid-cli@12.0.0` with Mermaid `12.0.0` on Node 22.
 
-CI and the `npx` fallback pin `@mermaid-js/mermaid-cli@12.0.0` with Mermaid `12.0.0`
-on Node 22. `agentflow-beta` and `usecase-beta` are not registered in Mermaid 11; that
-CLI reports `UnknownDiagramError` and is not the version these tests claim. No type is
-demoted for that reason.
+| Type | Keywords | Catalog | Builder | Tests | Gaps |
+|---|---|---|---|---|---|
+| `flowchart` | `flowchart` | [flowchart.md](catalog/flowchart.md) | candidate | `test_render.py` | Expanded shape names beyond the ISO set; `click` / theme |
+| `sequenceDiagram` | `sequenceDiagram` | [sequenceDiagram.md](catalog/sequenceDiagram.md) | candidate | `test_render.py` | Actor boxes, menus, creation/destruction, sequence numbers; ids are not aliased |
+| `classDiagram` | `classDiagram` | [classDiagram.md](catalog/classDiagram.md) | candidate | `test_render.py` | Namespaces, cardinality on relations, `cssClass` |
+| `stateDiagram` | `stateDiagram-v2` | [stateDiagram.md](catalog/stateDiagram.md) | candidate | `test_render.py` | Legacy `stateDiagram`; concurrency (`--`) |
+| `entityRelationshipDiagram` | `erDiagram` | [entityRelationshipDiagram.md](catalog/entityRelationshipDiagram.md) | candidate | `test_render.py` | Attributes as keys beyond the emitted forms |
+| `gantt` | `gantt` | [gantt.md](catalog/gantt.md) | candidate | `test_render.py` | `until`, `excludes` weekends only as emitted, tick intervals |
+| `timeline` | `timeline` | [timeline.md](catalog/timeline.md) | candidate | `test_render.py` | — |
+| `userJourney` | `journey` | [userJourney.md](catalog/userJourney.md) | candidate | `test_render.py` | — |
+| `gitgraph` | `gitGraph` | [gitgraph.md](catalog/gitgraph.md) | candidate | `test_render.py` | `cherry-pick`; branch order options |
+| `kanban` | `kanban` | [kanban.md](catalog/kanban.md) | candidate | `test_render.py` | `ticketBaseUrl` frontmatter |
+| `mindmap` | `mindmap` | [mindmap.md](catalog/mindmap.md) | candidate | `test_render.py` | `::icon()` decorations |
+| `pie` | `pie` | [pie.md](catalog/pie.md) | candidate | `test_render.py` | Donut / highlight / legend are frontmatter, not IR |
+| `quadrantChart` | `quadrantChart` | [quadrantChart.md](catalog/quadrantChart.md) | candidate | `test_render.py` | Point styling |
+| `xyChart` | `xychart` | [xyChart.md](catalog/xyChart.md) | candidate | `test_render.py` | `line` and `bar` together are supported; chart config is not |
+| `sankey` | `sankey` | [sankey.md](catalog/sankey.md) | candidate | `test_render.py` | — |
+| `radar` | `radar-beta` | [radar.md](catalog/radar.md) | candidate | `test_render.py` | Per-axis range, curve options beyond min/max |
+| `treemap` | `treemap-beta` | [treemap.md](catalog/treemap.md) | candidate | `test_render.py` | Class styles on leaves |
+| `venn` | `venn-beta` | [venn.md](catalog/venn.md) | candidate | `test_render.py` | — |
+| `c4` | `C4Context`, `C4Container`, `C4Component`, `C4Dynamic`, `C4Deployment` | [c4.md](catalog/c4.md) | candidate | `test_render.py` | Sprites, tags, `UpdateElementStyle`, `UpdateRelStyle` |
+| `architecture` | `architecture-beta` | [architecture.md](catalog/architecture.md) | candidate | `test_render.py` | Group-edge `{group}` modifier, edge labels |
+| `block` | `block` | [block.md](catalog/block.md) | candidate | `test_render.py` | Nested `block` groups, `blockArrow`, columns only as a top-level int |
+| `packet` | `packet` | [packet.md](catalog/packet.md) | candidate | `test_render.py` | Byte-vs-bit display config |
+| `requirementDiagram` | `requirementDiagram` | [requirementDiagram.md](catalog/requirementDiagram.md) | candidate | `test_render.py` | — |
+| `agentflow` | `agentflow-beta` | [agentflow.md](catalog/agentflow.md) | candidate | `test_render.py` | Metadata, `connector`, `global`, collapsed `view` |
+| `usecase` | `usecase-beta` | [usecase.md](catalog/usecase.md) | candidate | `test_render.py` | Notes, JSON tables, stereotypes, actor type/icon, package boundaries |
+| `swimlanes` | `swimlane-beta` | [swimlanes.md](catalog/swimlanes.md) | candidate | `test_render.py` | Lane-only features beyond flowchart subgraphs |
+| `wardley` | `wardley-beta` | [wardley.md](catalog/wardley.md) | candidate | `test_render.py` | Evolution axis, `size`, label offsets, `(build)`/`(buy)`/`(inertia)` |
+| `cynefin` | `cynefin-beta` | [cynefin.md](catalog/cynefin.md) | candidate | `test_render.py` | Self-loops are rejected because Mermaid ignores them |
+| `eventmodeling` | `eventmodeling` | [eventmodeling.md](catalog/eventmodeling.md) | candidate | `test_render.py` | `rf` rows, long kind names, data blocks, link chains |
+| `ishikawa` | `ishikawa-beta` | [ishikawa.md](catalog/ishikawa.md) | candidate | `test_render.py` | — |
+| `treeView` | `treeView-beta` | [treeView.md](catalog/treeView.md) | candidate | `test_render.py` | Box-drawing input, `icon()`, `##` annotations, `:::` classes |
+| `railroad` | `railroad-ebnf-beta` | [railroad.md](catalog/railroad.md) | candidate | `test_render.py` | Rules are verbatim strings, not a grammar AST |
+| `zenuml` | `zenuml` | [zenuml.md](catalog/zenuml.md) | candidate | `test_render.py` | `if` / `while` / `try` / `par` / `opt` / `new` / aliases. External diagram; `mmdc` loads it |
+| `info` | `info` | [info.md](catalog/info.md) | candidate | `test_render.py` | — |
 
-| Type | Skill docs | IR | Tests | Gaps remaining |
-|---|---|---|---|---|
-| `flowchart` (`graph`) | cheatsheet, `syntax/flowchart.md`, ISO 5807 | `graph` / `flowchart` | `GraphFlowchartTests` | Expanded shape names beyond the ISO set; `click` / theme |
-| `sequenceDiagram` | cheatsheet, `syntax/sequenceDiagram.md` | `sequence` / `sequenceDiagram` | `SequenceTests` | Actor boxes, menus, creation/destruction, sequence numbers; ids are not aliased |
-| `classDiagram` | cheatsheet, `syntax/classDiagram.md` | `graph` / `classDiagram` | `GraphClassTests` | Namespaces, cardinality on relations, `cssClass` |
-| `stateDiagram-v2` | cheatsheet, `syntax/stateDiagram.md` | `state-machine` / `stateDiagram-v2` | `StateMachineTests` | Legacy `stateDiagram`; concurrency (`--`) |
-| `erDiagram` | cheatsheet, `syntax/entityRelationshipDiagram.md` | `graph` / `erDiagram` | `GraphErTests` | Attributes as keys beyond the emitted forms |
-| `gantt` | cheatsheet, `syntax/gantt.md` | `timeline` / `gantt` | `TimelineGanttTests` | `until`, `excludes` weekends only as emitted, tick intervals |
-| `journey` | cheatsheet, `syntax/userJourney.md` | `journey` / `journey` | `CatalogRenderTests` | — |
-| `timeline` | cheatsheet, `syntax/timeline.md` | `timeline` / `timeline` | `CatalogRenderTests` | — |
-| `pie` | cheatsheet, `syntax/pie.md` | `chart` / `pie` | `CatalogRenderTests` | Donut / highlight / legend are frontmatter, not IR |
-| `quadrantChart` | cheatsheet, `syntax/quadrantChart.md` | `chart` / `quadrantChart` | `CatalogRenderTests` | Point styling |
-| `xychart` | cheatsheet, `syntax/xyChart.md` | `chart` / `xychart` | `CatalogRenderTests` | `line` and `bar` together are supported; chart config is not |
-| `requirementDiagram` | cheatsheet, `syntax/requirementDiagram.md` | `requirement-links` / `requirementDiagram` | `RequirementLinksTests` | — |
-| `architecture-beta` | cheatsheet, `syntax/architecture.md` | `graph` / `architecture-beta` | `GraphArchitectureTests` | Group-edge `{group}` modifier, edge labels |
-| `mindmap` | cheatsheet, `syntax/mindmap.md` | `graph` / `mindmap` | `GraphMindmapTests` | `::icon()` decorations |
-| `ishikawa-beta` | cheatsheet, `syntax/ishikawa.md` | `tree` / `ishikawa-beta` | `CatalogRenderTests` | — |
-| `kanban` | cheatsheet, `syntax/kanban.md` | `board` / `kanban` | `CatalogRenderTests` | `ticketBaseUrl` frontmatter |
-| `gitGraph` | cheatsheet, `syntax/gitgraph.md` | `git` / `gitGraph` | `CatalogRenderTests` | `cherry-pick`; branch order options |
-| `C4Context` | cheatsheet, `syntax/c4.md` | `graph` / `C4Context` | `GraphC4Tests` | Sprites, tags, `UpdateElementStyle`, `UpdateRelStyle` |
-| `C4Container` | same | `graph` / `C4Container` | `GraphC4Tests` | same |
-| `C4Component` | same | `graph` / `C4Component` | `DispatchTests` | same |
-| `C4Dynamic` | same | `graph` / `C4Dynamic` | `DispatchTests` (`RelIndex`) | same; relationship index only |
-| `C4Deployment` | same | `graph` / `C4Deployment` | `DispatchTests` | same; deployment node type is `technology` |
-| `sankey` | cheatsheet, `syntax/sankey.md` | `chart` / `sankey` | `CatalogRenderTests` | — |
-| `packet` | cheatsheet, `syntax/packet.md` | `packet` / `packet` | `CatalogRenderTests` | Byte-vs-bit display config |
-| `block` | cheatsheet, `syntax/block.md` | `graph` / `block` | `GraphBlockTests` | Nested `block` groups, `blockArrow`, columns only as a top-level int |
-| `eventmodeling` | cheatsheet, `syntax/eventmodeling.md` | `eventmodeling` / `eventmodeling` | `CatalogRenderTests` | `rf` rows, long kind names, data blocks, link chains |
-| `treeView-beta` | cheatsheet, `syntax/treeView.md` | `tree` / `treeView-beta` | `CatalogRenderTests` | Box-drawing input, `icon()`, `##` annotations, `:::` classes |
-| `radar-beta` | cheatsheet, `syntax/radar.md` | `chart` / `radar-beta` | `CatalogRenderTests` | Per-axis range, curve options beyond min/max |
-| `treemap-beta` | cheatsheet, `syntax/treemap.md` | `chart` / `treemap-beta` | `CatalogRenderTests` | Class styles on leaves |
-| `usecase-beta` | cheatsheet, `syntax/usecase.md` | `usecase` / `usecase-beta` | `CatalogRenderTests` | Notes, JSON tables, stereotypes, actor type/icon, package boundaries |
-| `venn-beta` | cheatsheet, `syntax/venn.md` | `chart` / `venn-beta` | `CatalogRenderTests` | — |
-| `wardley-beta` | cheatsheet, `syntax/wardley.md` | `graph` / `wardley-beta` | `CatalogRenderTests` | Evolution axis, `size`, label offsets, `(build)`/`(buy)`/`(inertia)` |
-| `cynefin-beta` | cheatsheet, `syntax/cynefin.md` | `cynefin` / `cynefin-beta` | `CatalogRenderTests` | Self-loops are rejected because Mermaid ignores them |
-| `railroad-ebnf-beta` | cheatsheet, `syntax/railroad.md` | `grammar` / `railroad-ebnf-beta` | `CatalogRenderTests` | Rules are verbatim strings, not a grammar AST |
-| `swimlane-beta` | cheatsheet, `syntax/swimlanes.md` | `graph` / `swimlane-beta` | `CatalogRenderTests` | Lane-only features beyond flowchart subgraphs |
-| `agentflow-beta` | cheatsheet, `syntax/agentflow.md` | `graph` / `agentflow-beta` | `CatalogRenderTests` | Metadata, `connector`, `global`, collapsed `view` |
-| `zenuml` | cheatsheet, `syntax/zenuml.md` | `sequence` / `zenuml` | `CatalogRenderTests` | `if` / `while` / `try` / `par` / `opt` / `new` / aliases. External diagram; `mmdc` loads it |
-| `info` | cheatsheet only (no upstream syntax page) | `info` / `info` | `CatalogRenderTests` | Prints the renderer version; nothing to configure |
-
-Hand-author anything in the gaps column. Prefer IR for every other row when the content is already structured data.
+Hand-author anything a `hand-author-only` row covers, and anything in a `candidate` row's gaps.

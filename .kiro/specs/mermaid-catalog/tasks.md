@@ -94,8 +94,8 @@ flowchart TB
   classDef critical fill:#fde68a,stroke:#b45309,color:#1c1917
   classDef parallel fill:#dbeafe,stroke:#1d4ed8,color:#1e3a8a
   classDef done fill:#dcfce7,stroke:#15803d,color:#14532d
-  class t1,t2_1,t2_2,t2_3,t3,ld done
-  class t4,t6_1,t6_3,t7_1,t8,lc critical
+  class t1,t2_1,t2_2,t2_3,t3,t4,ld done
+  class t6_1,t6_3,t7_1,t8,lc critical
   class t5_1,t5_2,t5_3,t5_4,t5_5,t5_6,t6_2,t7_2,t7_3,t7_4,t7_5,t7_6,lp parallel
 ```
 
@@ -143,7 +143,7 @@ If the 12.0.0 refresh in task 3 adds or removes a syntax page, task 3 adds or re
   - Add static checks to `test_check.py` for the default ref and the stamp
   - _Requirements: 8.1, 8.2_
 
-- [ ] 4. Scaffold the catalog and the coverage matrix
+- [x] 4. Scaffold the catalog and the coverage matrix
   - Create `mermaid/reference/catalog/` and the section template from the design
   - Rewrite `mermaid/reference/coverage.md` to the columns Type, Keywords, Catalog, Builder, Tests, Gaps with one row per type; set every existing builder's Builder column to the transitional value `candidate` and keep today's gaps text
   - Add `mermaid/tests/test_catalog.py`: catalog stems equal syntax stems plus `info` minus a `PENDING_TYPES` set that lists every type without a file yet; section order; Features table with unique ids prefixed by the type id; one `check.sh --markdown` run over every catalog file must pass
