@@ -33,7 +33,7 @@ def main(argv: list[str] | None = None) -> int:
     """Return 0 on success, 1 for IR rejection, or 2 for invocation/I/O failures."""
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("input", type=Path)
+    parser.add_argument("input", type=Path, nargs="?")
     parser.add_argument("-o", "--output", type=Path)
     parser.add_argument("--target")
     parser.add_argument("--backend", default="mermaid")
@@ -41,13 +41,35 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--normalize-out", type=Path)
     parser.add_argument("--initialize-config-out", type=Path)
     parser.add_argument("--allow-nondeterministic", action="store_true")
+    parser.add_argument("--list-targets", action="store_true")
+    parser.add_argument("--example", metavar="TARGET")
+    parser.add_argument("--example-kind", choices=("minimal", "maximal"), default="maximal")
+    parser.add_argument("--diagnostics-format", choices=("text", "json"), default="text")
     args = parser.parse_args(argv)
+    register_all()
+    if args.list_targets:
+        from .registry import TARGETS
+        print("\n".join(sorted(TARGETS)))
+        return 0
+    if args.example:
+        if args.input is not None:
+            parser.error("INPUT and --example are mutually exclusive")
+        example = Path(__file__).resolve().parents[2] / "examples" / args.example / f"{args.example_kind}.json"
+        if not example.is_file():
+            from .registry import TARGETS
+            print(f"ERROR: no example for {args.example!r}; known targets: {', '.join(sorted(TARGETS))}", file=sys.stderr)
+            return 2
+        value = example.read_text(encoding="utf-8")
+        if args.output: _atomic_write(args.output, value)
+        else: sys.stdout.write(value)
+        return 0
+    if args.input is None:
+        parser.error("INPUT is required unless --list-targets or --example is used")
     try:
         document = json.loads(args.input.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as exc:
         print(f"ERROR: {exc}", file=sys.stderr); return 2
     try:
-        register_all()
         result = compile_ir(document, args.target, args.backend,
                             deterministic=not args.allow_nondeterministic)
         if args.normalize_out:
@@ -59,6 +81,13 @@ def main(argv: list[str] | None = None) -> int:
             else: sys.stdout.write(result.source)
         return 0
     except IRError as exc:
-        print(f"ERROR: {exc}", file=sys.stderr); return 1
+        if args.diagnostics_format == "json":
+            print(json.dumps({"ok": False, "diagnostics": [
+                {"code": item.code, "pointer": item.pointer or "/", "message": item.message,
+                 "relatedPointers": list(item.related_pointers)} for item in exc.diagnostics
+            ]}, sort_keys=True), file=sys.stderr)
+        else:
+            print(f"ERROR: {exc}", file=sys.stderr)
+        return 1
     except OSError as exc:
         print(f"ERROR: {exc}", file=sys.stderr); return 2

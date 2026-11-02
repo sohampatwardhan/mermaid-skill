@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "1.0.0",
+  "diagram": "wardley",
+  "target": "wardley-beta",
+  "source": {"title": "Tea Shop Value Chain"},
+  "content": {
+    "anchors": [
+      {"id": "Business", "visibility": 0.95, "evolution": 0.63}
+    ],
+    "components": [
+      {"id": "CupOfTea", "label": "Cup of Tea", "visibility": 0.79, "evolution": 0.61},
+      {"id": "Tea", "visibility": 0.63, "evolution": 0.81},
+      {"id": "HotWater", "label": "Hot Water", "visibility": 0.52, "evolution": 0.80},
+      {"id": "Kettle", "visibility": 0.43, "evolution": 0.35},
+      {"id": "Power", "visibility": 0.10, "evolution": 0.70}
+    ],
+    "links": [
+      {"from": "Business", "to": "CupOfTea"},
+      {"from": "CupOfTea", "to": "Tea"},
+      {"from": "CupOfTea", "to": "HotWater"},
+      {"from": "HotWater", "to": "Kettle"},
+      {"from": "Kettle", "to": "Power"}
+    ],
+    "evolve": [
+      {"id": "Kettle", "target": 0.62},
+      {"id": "Power", "target": 0.89}
+    ],
+    "notes": [
+      {"text": "Standardising power allows Kettles to evolve faster", "visibility": 0.30, "evolution": 0.49}
+    ]
+  }
+}

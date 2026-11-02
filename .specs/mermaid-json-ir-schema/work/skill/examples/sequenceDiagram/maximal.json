@@ -1,20 +1,50 @@
 {
-  "accessibility": {
-    "description": "Deterministic maximal envelope",
-    "title": "sequenceDiagram example"
-  },
   "content": {
-    "actors": [],
-    "steps": []
+    "actors": [
+      {
+        "id": "User"
+      },
+      {
+        "id": "API"
+      },
+      {
+        "id": "DB",
+        "kind": "actor"
+      }
+    ],
+    "steps": [
+      {
+        "from": "User",
+        "kind": "sync",
+        "label": "request",
+        "to": "API",
+        "type": "message"
+      },
+      {
+        "from": "API",
+        "kind": "sync",
+        "label": "query",
+        "to": "DB",
+        "type": "message"
+      },
+      {
+        "from": "DB",
+        "kind": "reply",
+        "label": "result",
+        "to": "API",
+        "type": "message"
+      }
+    ]
   },
   "diagram": "sequence",
   "renderer": {
-    "deterministic": true,
+    "frontmatter": {},
+    "initialize": {
+      "deterministicIDSeed": "d342fc909e767bde7207ded2359b8f047e5835d345daedf6ada65316be79d544",
+      "deterministicIds": true
+    },
     "mermaidVersion": "11.16.1"
   },
   "schemaVersion": "1.0.0",
-  "source": {
-    "title": "sequenceDiagram source"
-  },
   "target": "sequenceDiagram"
 }

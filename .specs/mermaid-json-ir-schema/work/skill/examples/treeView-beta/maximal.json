@@ -1,0 +1,22 @@
+{
+  "schemaVersion": "1.0.0",
+  "diagram": "treeView",
+  "target": "treeView-beta",
+  "content": {
+    "tree": [
+      {
+        "label": "my-project", "directory": true,
+        "children": [
+          {
+            "label": "src", "directory": true,
+            "children": [
+              {"label": "index.js", "description": "app entry point"}
+            ]
+          },
+          {"label": "package.json", "description": "project manifest"},
+          {"label": "README.md"}
+        ]
+      }
+    ]
+  }
+}

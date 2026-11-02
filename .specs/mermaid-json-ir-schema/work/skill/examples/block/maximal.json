@@ -1,20 +1,72 @@
 {
-  "accessibility": {
-    "description": "Deterministic maximal envelope",
-    "title": "block example"
-  },
   "content": {
-    "edges": [],
-    "nodes": []
+    "columns": 3,
+    "edges": [
+      {
+        "from": "a",
+        "label": "next",
+        "to": "b"
+      },
+      {
+        "from": "grp-1",
+        "to": "f"
+      }
+    ],
+    "groups": [
+      {
+        "id": "grp-1",
+        "label": "Group One"
+      }
+    ],
+    "nodes": [
+      {
+        "id": "a",
+        "kind": "process",
+        "label": "process"
+      },
+      {
+        "id": "b",
+        "kind": "terminator",
+        "label": "terminator"
+      },
+      {
+        "id": "c",
+        "kind": "decision",
+        "label": "decision"
+      },
+      {
+        "group": "grp-1",
+        "id": "d",
+        "kind": "subprocess",
+        "label": "subprocess"
+      },
+      {
+        "group": "grp-1",
+        "id": "e",
+        "kind": "store",
+        "label": "store"
+      },
+      {
+        "id": "f",
+        "kind": "connector",
+        "label": "connector"
+      },
+      {
+        "id": "g",
+        "kind": "io",
+        "label": "io"
+      }
+    ]
   },
   "diagram": "graph",
   "renderer": {
-    "deterministic": true,
+    "frontmatter": {},
+    "initialize": {
+      "deterministicIDSeed": "f719dde22d842861670c8fddca90c184874edd63c4c6dc0accefe9fd9df651f1",
+      "deterministicIds": true
+    },
     "mermaidVersion": "11.16.1"
   },
   "schemaVersion": "1.0.0",
-  "source": {
-    "title": "block source"
-  },
   "target": "block"
 }

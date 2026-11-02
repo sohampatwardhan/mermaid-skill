@@ -1,0 +1,41 @@
+{
+  "diagram": "graph",
+  "target": "erDiagram",
+  "direction": "LR",
+  "nodes": [
+    {
+      "id": "CUSTOMER",
+      "members": [
+        "string name PK",
+        "string sector"
+      ]
+    },
+    {
+      "id": "ORDER",
+      "members": [
+        "int orderNumber PK \"the order number\""
+      ]
+    },
+    {
+      "id": "p",
+      "label": "Customer Account"
+    }
+  ],
+  "edges": [
+    {
+      "from": "CUSTOMER",
+      "to": "ORDER",
+      "label": "places",
+      "left": "exactly_one",
+      "right": "zero_or_more"
+    },
+    {
+      "from": "CUSTOMER",
+      "to": "p",
+      "label": "links",
+      "left": "zero_or_more",
+      "right": "zero_or_more",
+      "identifying": false
+    }
+  ]
+}

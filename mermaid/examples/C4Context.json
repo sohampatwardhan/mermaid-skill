@@ -1,0 +1,52 @@
+{
+  "diagram": "graph",
+  "target": "C4Context",
+  "title": "Banking System",
+  "groups": [
+    {
+      "id": "b0",
+      "label": "Bank Boundary",
+      "kind": "enterprise_boundary"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "customerA",
+      "label": "Customer A",
+      "kind": "person",
+      "description": "A bank customer",
+      "group": "b0"
+    },
+    {
+      "id": "customerC",
+      "label": "Customer C",
+      "kind": "person_ext",
+      "group": "b0"
+    },
+    {
+      "id": "sysAA",
+      "label": "Banking System",
+      "kind": "system",
+      "description": "Core system"
+    },
+    {
+      "id": "sysDb",
+      "label": "Mainframe",
+      "kind": "system_db_ext"
+    }
+  ],
+  "edges": [
+    {
+      "from": "customerA",
+      "to": "sysAA",
+      "label": "Uses",
+      "kind": "birel"
+    },
+    {
+      "from": "sysAA",
+      "to": "sysDb",
+      "label": "Reads",
+      "technology": "SOAP"
+    }
+  ]
+}

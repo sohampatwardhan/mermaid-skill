@@ -72,7 +72,7 @@ already exist.
 - Node `kind` (flowchart, ISO 5807 shapes): `terminator` (stadium), `process` (rect, default),
   `decision` (diamond), `io` (lean-r/parallelogram), `subprocess` (subproc), `document` (doc),
   `store` (cylinder), `connector` (circle).
-- Node `status` (flowchart only, optional): `done`/`ready`/`blocked`/`pending`, each a fixed
+- Node `status` (flowchart only, optional): `done`/`in_progress`/`failed`/`pending`, each a fixed
   color via a generated `classDef` — only the statuses actually used get a `classDef`. This is
   progress *data*, not decoration: it's meant to be derived deterministically from something
   like `04_tasks.json`'s `checked`/`concurrency.blocked`/`concurrency.ready` fields (done =
@@ -80,6 +80,8 @@ already exist.
   Regenerating the same source data with updated status produces an updated diagram — that's the
   point: a Stage-and-Dependency-Overview flowchart re-rendered from the current `04_tasks.json`
   shows current progress, not a snapshot frozen at authoring time.
+  The fixed palette is green/orange/red/gray respectively. Legacy `ready` and `blocked` values
+  remain accepted but render gray; new producers should normalize both to `pending`.
 - Node `kind` (mindmap): `root` (auto-applied to the declared root), `circle`, `square`,
   `bang`, `cloud`, or omit for the default plain-text shape.
 - Edge `kind` (flowchart): `normal`/`dependency` (`-->`), `conditional`/`weak` (`-.->`),

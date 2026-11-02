@@ -1,0 +1,45 @@
+{
+  "diagram": "timeline",
+  "target": "gantt",
+  "dateFormat": "YYYY-MM-DDTHH:mm:ss",
+  "axisFormat": "%m-%d %H:%M",
+  "title": "Execution",
+  "excludes": [
+    "weekends"
+  ],
+  "sections": [
+    {
+      "name": "Stage 1",
+      "bars": [
+        {
+          "id": "t1_1",
+          "label": "1.1 (verified)",
+          "start": "2026-08-09T10:00:00",
+          "end": "2026-08-09T10:14:00",
+          "tags": [
+            "done"
+          ]
+        },
+        {
+          "id": "t1_2",
+          "label": "1.2 (critical, active)",
+          "start": "2026-08-09T10:14:00",
+          "end": "2026-08-09T10:20:00",
+          "tags": [
+            "crit",
+            "active"
+          ]
+        },
+        {
+          "id": "t1_3",
+          "label": "Checkpoint reached",
+          "start": "2026-08-09T10:20:00",
+          "end": "2026-08-09T10:20:00",
+          "tags": [
+            "milestone"
+          ]
+        }
+      ]
+    }
+  ]
+}

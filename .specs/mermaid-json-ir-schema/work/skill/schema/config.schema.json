@@ -10,7 +10,31 @@
         "deterministic": {"type": "boolean", "default": true},
         "frontmatter": {
           "type": "object",
-          "properties": {"config": {"type": "object"}},
+          "properties": {
+            "config": {
+              "type": "object",
+              "properties": {
+                "layout": {"type": "string", "enum": ["dagre", "elk"]},
+                "elk": {
+                  "type": "object",
+                  "properties": {
+                    "mergeEdges": {"type": "boolean"},
+                    "nodePlacementStrategy": {
+                      "type": "string",
+                      "enum": ["SIMPLE", "NETWORK_SIMPLEX", "LINEAR_SEGMENTS", "BRANDES_KOEPF"]
+                    },
+                    "nodePlacementAlignment": {
+                      "type": "string",
+                      "enum": ["NONE", "LEFTUP", "LEFTDOWN", "RIGHTUP", "RIGHTDOWN", "BALANCED"]
+                    },
+                    "forceNodeModelOrder": {"type": "boolean"},
+                    "considerModelOrder": {"type": "boolean"},
+                    "keepEntryNodeOnTop": {"type": "boolean"}
+                  }
+                }
+              }
+            }
+          },
           "additionalProperties": false
         },
         "initialize": {"type": "object"}

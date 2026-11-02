@@ -1,52 +1,19 @@
 {
   "concurrency": {
-    "active_stage": 5,
+    "active_stage": 9,
     "blocked": {},
-    "parallel_candidates": [
-      "5.1",
-      "5.2",
-      "5.3",
-      "5.4",
-      "5.5",
-      "5.6",
-      "5.7",
-      "5.8",
-      "5.9",
-      "5.10",
-      "5.11",
-      "5.12"
-    ],
+    "parallel_candidates": [],
     "ready": [
-      "5.1",
-      "5.2",
-      "5.3",
-      "5.4",
-      "5.5",
-      "5.6",
-      "5.7",
-      "5.8",
-      "5.9",
-      "5.10",
-      "5.11",
-      "5.12"
+      "8.1"
     ],
-    "serial_candidates": [],
+    "serial_candidates": [
+      "8.1"
+    ],
     "waves": [
       {
-        "mode": "parallel",
+        "mode": "serial",
         "tasks": [
-          "5.1",
-          "5.2",
-          "5.3",
-          "5.4",
-          "5.5",
-          "5.6",
-          "5.7",
-          "5.8",
-          "5.9",
-          "5.10",
-          "5.11",
-          "5.12"
+          "8.1"
         ],
         "wave": 1
       }
@@ -54,7 +21,7 @@
   },
   "generated_from": {
     "file": "04_tasks.md",
-    "sha256": "7ac793427cd2727d39479a7cedab1b07981b9d584e4b99ae30cab6d371ea3fd1"
+    "sha256": "33c52e48abd67c30597a23a63c236d76e0d579e290d9f13cb71eef31944669c3"
   },
   "requirement_count": 74,
   "schema_version": 1,
@@ -100,7 +67,7 @@
   },
   "tasks": [
     {
-      "capability_tier": "high-reasoning",
+      "capability_tier": "frontier",
       "checked": true,
       "delegation": "controller",
       "dependency_delivery": "none",
@@ -117,6 +84,7 @@
       "id": "1.1",
       "interfaces": "Consumes: planning digest `b82d695a14f4ab0e6867808cd40d798cea55c4a39470a62d00cf16c532f8af22`, current live skill, official Mermaid 11.16.1 evidence, `render(ir, target, backend) -> str`, and existing tests; Produces: immutable `baseline/skill`, separate working `skill`, canonical baseline/inventory manifests, independent per-target inventory, and legacy input/source/error corpus",
       "optional": false,
+      "reasoning_level": "high",
       "requirements": [
         "3.1",
         "3.2",
@@ -124,7 +92,7 @@
         "3.5",
         "7.1"
       ],
-      "resolved_model": "claude-opus-4.8",
+      "resolved_model": "claude-opus-5",
       "risk": "medium; an incomplete baseline could hide migration regressions, so rollback is discarding the staging tree",
       "stage": 1,
       "task_category": "code_analysis",
@@ -132,7 +100,7 @@
       "verification": "`python -m unittest discover -s work/mermaid-json-ir-schema/skill/tests -v`; verify baseline/working manifests, inventory provenance and uniqueness, all legacy goldens, C4 override permutations, and unmapped-field failures"
     },
     {
-      "capability_tier": "high-reasoning",
+      "capability_tier": "frontier",
       "checked": true,
       "delegation": "sequential subagent",
       "dependency_delivery": "none",
@@ -154,6 +122,7 @@
       "id": "2.1",
       "interfaces": "Consumes: staged skill and approved canonical envelope; Produces: `Diagnostic`, `CompileResult`, `IRError`, RFC 6901 helpers, `SchemaRegistry`, `validate_schema(instance, schema_ref) -> tuple[Diagnostic, ...]`, strict shared schemas, and explicit validation-keyword versus annotation policy",
       "optional": false,
+      "reasoning_level": "extra_high",
       "requirements": [
         "1.1",
         "1.2",
@@ -166,7 +135,7 @@
         "9.8",
         "10.1"
       ],
-      "resolved_model": "claude-opus-4.8",
+      "resolved_model": "claude-opus-5",
       "risk": "high; a validator bug can accept malformed documents, so rollback retains the legacy facade and removes the new package",
       "stage": 2,
       "task_category": "heavy_reasoning",
@@ -174,7 +143,7 @@
       "verification": "`python -m unittest work/mermaid-json-ir-schema/skill/tests/test_schema_runtime.py work/mermaid-json-ir-schema/skill/tests/test_diagnostics.py -v`; review public documentation"
     },
     {
-      "capability_tier": "high-reasoning",
+      "capability_tier": "frontier",
       "checked": true,
       "delegation": "sequential subagent",
       "dependency_delivery": "none",
@@ -193,6 +162,7 @@
       "id": "3.1",
       "interfaces": "Consumes: `SchemaRegistry`, diagnostic/result models, shared schemas, legacy corpus, and private fixture `TargetSpec`; Produces: registry-dispatched `migrate_legacy(ir, target_override) -> dict[str, Any]`, `normalize(ir, target_override=None) -> dict[str, Any]`, and target-agnostic `compile_ir(ir, target=None, backend=\"mermaid\", *, deterministic=True) -> CompileResult` scaffolding",
       "optional": false,
+      "reasoning_level": "extra_high",
       "requirements": [
         "2.1",
         "2.2",
@@ -208,7 +178,7 @@
         "6.7",
         "10.2"
       ],
-      "resolved_model": "claude-opus-4.8",
+      "resolved_model": "claude-opus-5",
       "risk": "high; migration drift can change existing diagrams, so rollback restores the staged baseline [work/mermaid-json-ir-schema/skill/scripts/render.py](../../work/mermaid-json-ir-schema/skill/scripts/render.py)",
       "stage": 3,
       "task_category": "heavy_reasoning",
@@ -216,7 +186,7 @@
       "verification": "`python -m unittest work/mermaid-json-ir-schema/skill/tests/test_migration.py work/mermaid-json-ir-schema/skill/tests/test_normalize.py work/mermaid-json-ir-schema/skill/tests/test_compiler.py -v`; verify fixture-target compilation, unmapped-field failures, defaults, and no production-facade change; review public documentation"
     },
     {
-      "capability_tier": "high-reasoning",
+      "capability_tier": "frontier",
       "checked": true,
       "delegation": "sequential subagent",
       "dependency_delivery": "none",
@@ -229,7 +199,9 @@
         "work/mermaid-json-ir-schema/skill/scripts/mermaid_ir/semantic.py",
         "work/mermaid-json-ir-schema/skill/scripts/mermaid_ir/serialization.py",
         "work/mermaid-json-ir-schema/skill/scripts/mermaid_ir/config.py",
+        "work/mermaid-json-ir-schema/skill/scripts/mermaid_ir/legacy_serializers.py",
         "work/mermaid-json-ir-schema/skill/scripts/mermaid_ir/targets/__init__.py",
+        "work/mermaid-json-ir-schema/skill/scripts/mermaid_ir/targets/_base.py",
         "work/mermaid-json-ir-schema/skill/tests/test_registry.py",
         "work/mermaid-json-ir-schema/skill/tests/test_serialization.py",
         "work/mermaid-json-ir-schema/skill/tests/test_config.py"
@@ -237,6 +209,7 @@
       "id": "4.1",
       "interfaces": "Consumes: canonical compiler pipeline and approved serializer/configuration contracts; Produces: `TargetSpec`, `TARGETS`, semantic validation helpers, canonical frontmatter/escaping/ID utilities, and effective source/initialization configuration builders",
       "optional": false,
+      "reasoning_level": "extra_high",
       "requirements": [
         "4.13",
         "4.14",
@@ -261,7 +234,7 @@
         "10.3",
         "11.6"
       ],
-      "resolved_model": "claude-opus-4.8",
+      "resolved_model": "claude-opus-5",
       "risk": "high; shared escaping or configuration mistakes affect every target, so rollback removes the shared layer before target integration",
       "stage": 4,
       "task_category": "heavy_reasoning",
@@ -269,8 +242,8 @@
       "verification": "`python -m unittest work/mermaid-json-ir-schema/skill/tests/test_registry.py work/mermaid-json-ir-schema/skill/tests/test_serialization.py work/mermaid-json-ir-schema/skill/tests/test_config.py -v`; review public documentation"
     },
     {
-      "capability_tier": "high-reasoning",
-      "checked": false,
+      "capability_tier": "frontier",
+      "checked": true,
       "delegation": "parallel-safe",
       "dependency_delivery": "none",
       "dependency_resolution": "none",
@@ -287,6 +260,7 @@
       "id": "5.1",
       "interfaces": "Consumes: `TargetSpec`, shared graph/configuration schemas, semantic helpers, and serializer utilities; Produces: registered `flowchart` schema/validator/serializer, field-level coverage records, and canonical examples",
       "optional": false,
+      "reasoning_level": "extra_high",
       "requirements": [
         "4.1",
         "4.13",
@@ -302,7 +276,7 @@
         "11.3",
         "11.4"
       ],
-      "resolved_model": "claude-opus-4.8",
+      "resolved_model": "claude-opus-5",
       "risk": "high; flowchart grammar breadth may expose inventory gaps, with rollback isolated to this target module",
       "stage": 5,
       "task_category": "heavy_reasoning",
@@ -310,8 +284,8 @@
       "verification": "`python -m unittest work/mermaid-json-ir-schema/skill/tests/targets/test_flowchart.py -v`; render minimal and maximal examples with the exact pinned checker; review documentation"
     },
     {
-      "capability_tier": "high-reasoning",
-      "checked": false,
+      "capability_tier": "frontier",
+      "checked": true,
       "delegation": "parallel-safe",
       "dependency_delivery": "none",
       "dependency_resolution": "none",
@@ -328,6 +302,7 @@
       "id": "5.2",
       "interfaces": "Consumes: shared target contracts and mindmap 11.16.1 inventory; Produces: registered `mindmap` schema/validator/serializer, coverage records, and canonical examples",
       "optional": false,
+      "reasoning_level": "high",
       "requirements": [
         "4.2",
         "4.13",
@@ -343,7 +318,7 @@
         "11.3",
         "11.4"
       ],
-      "resolved_model": "claude-opus-4.8",
+      "resolved_model": "claude-opus-5",
       "risk": "medium; tree invariants and indentation are target-local, with rollback isolated to this module",
       "stage": 5,
       "task_category": "code_analysis",
@@ -351,8 +326,8 @@
       "verification": "`python -m unittest work/mermaid-json-ir-schema/skill/tests/targets/test_mindmap.py -v`; render minimal and maximal examples; review documentation"
     },
     {
-      "capability_tier": "high-reasoning",
-      "checked": false,
+      "capability_tier": "frontier",
+      "checked": true,
       "delegation": "parallel-safe",
       "dependency_delivery": "none",
       "dependency_resolution": "none",
@@ -369,6 +344,7 @@
       "id": "5.3",
       "interfaces": "Consumes: shared target contracts and block 11.16.1 inventory; Produces: registered `block` schema/validator/serializer, coverage records, and canonical examples",
       "optional": false,
+      "reasoning_level": "extra_high",
       "requirements": [
         "4.7",
         "4.13",
@@ -384,7 +360,7 @@
         "11.3",
         "11.4"
       ],
-      "resolved_model": "claude-opus-4.8",
+      "resolved_model": "claude-opus-5",
       "risk": "high; beta grammar and nesting combinations may be version-sensitive, with rollback isolated to this module",
       "stage": 5,
       "task_category": "heavy_reasoning",
@@ -392,8 +368,8 @@
       "verification": "`python -m unittest work/mermaid-json-ir-schema/skill/tests/targets/test_block.py -v`; render minimal and maximal examples; review documentation"
     },
     {
-      "capability_tier": "high-reasoning",
-      "checked": false,
+      "capability_tier": "frontier",
+      "checked": true,
       "delegation": "parallel-safe",
       "dependency_delivery": "none",
       "dependency_resolution": "none",
@@ -410,6 +386,7 @@
       "id": "5.4",
       "interfaces": "Consumes: shared target contracts and C4Context 11.16.1 inventory; Produces: registered `C4Context` schema/validator/serializer, coverage records, and canonical examples",
       "optional": false,
+      "reasoning_level": "extra_high",
       "requirements": [
         "4.8",
         "4.13",
@@ -425,7 +402,7 @@
         "11.3",
         "11.4"
       ],
-      "resolved_model": "claude-opus-4.8",
+      "resolved_model": "claude-opus-5",
       "risk": "high; positional macro compatibility is strict, with rollback isolated to this module",
       "stage": 5,
       "task_category": "heavy_reasoning",
@@ -433,8 +410,8 @@
       "verification": "`python -m unittest work/mermaid-json-ir-schema/skill/tests/targets/test_c4_context.py -v`; render minimal and maximal examples; review documentation"
     },
     {
-      "capability_tier": "high-reasoning",
-      "checked": false,
+      "capability_tier": "frontier",
+      "checked": true,
       "delegation": "parallel-safe",
       "dependency_delivery": "none",
       "dependency_resolution": "none",
@@ -451,6 +428,7 @@
       "id": "5.5",
       "interfaces": "Consumes: shared target contracts and C4Container 11.16.1 inventory; Produces: registered `C4Container` schema/validator/serializer, coverage records, and canonical examples",
       "optional": false,
+      "reasoning_level": "extra_high",
       "requirements": [
         "4.9",
         "4.13",
@@ -466,7 +444,7 @@
         "11.3",
         "11.4"
       ],
-      "resolved_model": "claude-opus-4.8",
+      "resolved_model": "claude-opus-5",
       "risk": "high; nested boundaries and positional arguments are strict, with rollback isolated to this module",
       "stage": 5,
       "task_category": "heavy_reasoning",
@@ -474,8 +452,8 @@
       "verification": "`python -m unittest work/mermaid-json-ir-schema/skill/tests/targets/test_c4_container.py -v`; render minimal and maximal examples; review documentation"
     },
     {
-      "capability_tier": "high-reasoning",
-      "checked": false,
+      "capability_tier": "frontier",
+      "checked": true,
       "delegation": "parallel-safe",
       "dependency_delivery": "none",
       "dependency_resolution": "none",
@@ -492,6 +470,7 @@
       "id": "5.6",
       "interfaces": "Consumes: shared target contracts and architecture 11.16.1 inventory; Produces: registered `architecture-beta` schema/validator/serializer, coverage records, and canonical examples",
       "optional": false,
+      "reasoning_level": "extra_high",
       "requirements": [
         "4.10",
         "4.13",
@@ -507,7 +486,7 @@
         "11.3",
         "11.4"
       ],
-      "resolved_model": "claude-opus-4.8",
+      "resolved_model": "claude-opus-5",
       "risk": "high; beta grammar, icon names, and title punctuation are version-sensitive, with rollback isolated to this module",
       "stage": 5,
       "task_category": "heavy_reasoning",
@@ -515,8 +494,8 @@
       "verification": "`python -m unittest work/mermaid-json-ir-schema/skill/tests/targets/test_architecture.py -v`; render minimal and maximal examples; review documentation"
     },
     {
-      "capability_tier": "high-reasoning",
-      "checked": false,
+      "capability_tier": "frontier",
+      "checked": true,
       "delegation": "parallel-safe",
       "dependency_delivery": "none",
       "dependency_resolution": "none",
@@ -535,6 +514,7 @@
       "id": "5.7",
       "interfaces": "Consumes: shared target contracts, independent ER 11.16.1 inventory, and legacy member corpus; Produces: registered `erDiagram` schema/validator/serializer, `migrate_er_legacy_content()`, coverage records, and canonical examples without raw member syntax",
       "optional": false,
+      "reasoning_level": "extra_high",
       "requirements": [
         "4.11",
         "4.13",
@@ -550,7 +530,7 @@
         "11.3",
         "11.4"
       ],
-      "resolved_model": "claude-opus-4.8",
+      "resolved_model": "claude-opus-5",
       "risk": "medium; identifier quoting and cardinality orientation can drift, with rollback isolated to this module",
       "stage": 5,
       "task_category": "heavy_reasoning",
@@ -558,8 +538,8 @@
       "verification": "`python -m unittest work/mermaid-json-ir-schema/skill/tests/targets/test_er_diagram.py work/mermaid-json-ir-schema/skill/tests/legacy/test_er_diagram.py -v`; golden-migrate key/comment/quoted member forms, assert no raw syntax field, render minimal and maximal examples, and review documentation"
     },
     {
-      "capability_tier": "high-reasoning",
-      "checked": false,
+      "capability_tier": "frontier",
+      "checked": true,
       "delegation": "parallel-safe",
       "dependency_delivery": "none",
       "dependency_resolution": "none",
@@ -578,6 +558,7 @@
       "id": "5.8",
       "interfaces": "Consumes: shared target contracts, independent classDiagram 11.16.1 inventory, and legacy member corpus; Produces: registered `classDiagram` schema/validator/serializer, `migrate_class_legacy_content()`, coverage records, and canonical examples without raw member syntax",
       "optional": false,
+      "reasoning_level": "extra_high",
       "requirements": [
         "4.12",
         "4.13",
@@ -594,7 +575,7 @@
         "11.3",
         "11.4"
       ],
-      "resolved_model": "claude-opus-4.8",
+      "resolved_model": "claude-opus-5",
       "risk": "high; member grammar and relationship direction are extensive, with rollback isolated to this module",
       "stage": 5,
       "task_category": "heavy_reasoning",
@@ -602,8 +583,8 @@
       "verification": "`python -m unittest work/mermaid-json-ir-schema/skill/tests/targets/test_class_diagram.py work/mermaid-json-ir-schema/skill/tests/legacy/test_class_diagram.py -v`; golden-migrate visibility/generic/return-type forms, assert no raw syntax field, render minimal and maximal examples, and review documentation"
     },
     {
-      "capability_tier": "high-reasoning",
-      "checked": false,
+      "capability_tier": "frontier",
+      "checked": true,
       "delegation": "parallel-safe",
       "dependency_delivery": "none",
       "dependency_resolution": "none",
@@ -620,6 +601,7 @@
       "id": "5.9",
       "interfaces": "Consumes: shared target contracts and Gantt 11.16.1 inventory; Produces: registered `gantt` schema/validator/serializer, coverage records, and canonical examples",
       "optional": false,
+      "reasoning_level": "extra_high",
       "requirements": [
         "4.3",
         "4.13",
@@ -635,7 +617,7 @@
         "11.3",
         "11.4"
       ],
-      "resolved_model": "claude-opus-4.8",
+      "resolved_model": "claude-opus-5",
       "risk": "high; date grammar and dependency combinations are complex, with rollback isolated to this module",
       "stage": 5,
       "task_category": "heavy_reasoning",
@@ -643,8 +625,8 @@
       "verification": "`python -m unittest work/mermaid-json-ir-schema/skill/tests/targets/test_gantt.py -v`; render minimal and maximal examples; review documentation"
     },
     {
-      "capability_tier": "high-reasoning",
-      "checked": false,
+      "capability_tier": "frontier",
+      "checked": true,
       "delegation": "parallel-safe",
       "dependency_delivery": "none",
       "dependency_resolution": "none",
@@ -661,6 +643,7 @@
       "id": "5.10",
       "interfaces": "Consumes: shared target contracts and stateDiagram-v2 11.16.1 inventory; Produces: registered `stateDiagram-v2` schema/validator/serializer, coverage records, and canonical examples",
       "optional": false,
+      "reasoning_level": "extra_high",
       "requirements": [
         "4.4",
         "4.13",
@@ -676,7 +659,7 @@
         "11.3",
         "11.4"
       ],
-      "resolved_model": "claude-opus-4.8",
+      "resolved_model": "claude-opus-5",
       "risk": "high; recursive state integrity and concurrency syntax are complex, with rollback isolated to this module",
       "stage": 5,
       "task_category": "heavy_reasoning",
@@ -684,8 +667,8 @@
       "verification": "`python -m unittest work/mermaid-json-ir-schema/skill/tests/targets/test_state_diagram.py -v`; render minimal and maximal examples; review documentation"
     },
     {
-      "capability_tier": "high-reasoning",
-      "checked": false,
+      "capability_tier": "frontier",
+      "checked": true,
       "delegation": "parallel-safe",
       "dependency_delivery": "none",
       "dependency_resolution": "none",
@@ -702,6 +685,7 @@
       "id": "5.11",
       "interfaces": "Consumes: shared target contracts and sequenceDiagram 11.16.1 inventory; Produces: registered `sequenceDiagram` schema/validator/serializer, coverage records, and canonical examples",
       "optional": false,
+      "reasoning_level": "extra_high",
       "requirements": [
         "4.5",
         "4.13",
@@ -718,7 +702,7 @@
         "11.3",
         "11.4"
       ],
-      "resolved_model": "claude-opus-4.8",
+      "resolved_model": "claude-opus-5",
       "risk": "high; deeply nested control blocks and interaction syntax are extensive, with rollback isolated to this module",
       "stage": 5,
       "task_category": "heavy_reasoning",
@@ -726,8 +710,8 @@
       "verification": "`python -m unittest work/mermaid-json-ir-schema/skill/tests/targets/test_sequence_diagram.py -v`; render minimal and maximal examples; review documentation"
     },
     {
-      "capability_tier": "high-reasoning",
-      "checked": false,
+      "capability_tier": "frontier",
+      "checked": true,
       "delegation": "parallel-safe",
       "dependency_delivery": "none",
       "dependency_resolution": "none",
@@ -744,6 +728,7 @@
       "id": "5.12",
       "interfaces": "Consumes: shared target contracts and requirementDiagram 11.16.1 inventory; Produces: registered `requirementDiagram` schema/validator/serializer, coverage records, and canonical examples",
       "optional": false,
+      "reasoning_level": "high",
       "requirements": [
         "4.6",
         "4.13",
@@ -759,7 +744,7 @@
         "11.3",
         "11.4"
       ],
-      "resolved_model": "claude-opus-4.8",
+      "resolved_model": "claude-opus-5",
       "risk": "medium; relationship direction and enum mappings must remain exact, with rollback isolated to this module",
       "stage": 5,
       "task_category": "code_analysis",
@@ -767,8 +752,8 @@
       "verification": "`python -m unittest work/mermaid-json-ir-schema/skill/tests/targets/test_requirement_diagram.py -v`; render minimal and maximal examples; review documentation"
     },
     {
-      "capability_tier": "high-reasoning",
-      "checked": false,
+      "capability_tier": "frontier",
+      "checked": true,
       "delegation": "sequential subagent",
       "dependency_delivery": "none",
       "dependency_resolution": "none",
@@ -799,6 +784,7 @@
       "id": "6.1",
       "interfaces": "Consumes: independent upstream inventory, 12 target-owned `TargetSpec` modules/legacy adapters/schemas/coverage/examples/tests, compiler scaffolding, and legacy corpus; Produces: populated `TARGETS`, strict root schema, aggregate `coverage/mermaid-11.16.1.json`, `check_coverage()`, production compatibility `render()`, and envelope/legacy-stability evidence",
       "optional": false,
+      "reasoning_level": "high",
       "requirements": [
         "1.2",
         "4.1",
@@ -823,7 +809,7 @@
         "9.7",
         "9.8"
       ],
-      "resolved_model": "claude-opus-4.8",
+      "resolved_model": "claude-opus-5",
       "risk": "high; false completeness claims would defeat the feature, so rollback blocks integration rather than weakening the checker",
       "stage": 6,
       "task_category": "review",
@@ -831,8 +817,8 @@
       "verification": "`python -m unittest work/mermaid-json-ir-schema/skill/tests/test_coverage.py work/mermaid-json-ir-schema/skill/tests/test_extensibility.py work/mermaid-json-ir-schema/skill/tests/test_legacy_compatibility.py -v`; mutate inventory/coverage independently to prove bidirectional failure, compare every legacy golden including C4 overrides, and review public documentation"
     },
     {
-      "capability_tier": "high-reasoning",
-      "checked": false,
+      "capability_tier": "frontier",
+      "checked": true,
       "delegation": "sequential subagent",
       "dependency_delivery": "none",
       "dependency_resolution": "none",
@@ -849,6 +835,7 @@
       "id": "6.2",
       "interfaces": "Consumes: populated compiler/target registry, production compatibility facade, pinned renderer contract, and current official Context7 evidence; Produces: deterministic CLI, canonical JSON/config output adapters, exact-source version-asserting render checker, documented ephemeral acquisition/cache boundary, and stable exit statuses 0/1/2/3",
       "optional": false,
+      "reasoning_level": "extra_high",
       "requirements": [
         "3.3",
         "5.4",
@@ -866,7 +853,7 @@
         "10.4",
         "10.5"
       ],
-      "resolved_model": "claude-opus-4.8",
+      "resolved_model": "claude-opus-5",
       "risk": "high; incorrect version or partial-write behavior could corrupt outputs, so rollback restores the baseline CLI/checker",
       "stage": 7,
       "task_category": "heavy_reasoning",
@@ -874,8 +861,8 @@
       "verification": "`python -m unittest work/mermaid-json-ir-schema/skill/tests/test_cli.py work/mermaid-json-ir-schema/skill/tests/test_render_verification.py -v`; run pinned minimal/maximal render matrix and review documentation"
     },
     {
-      "capability_tier": "high-reasoning",
-      "checked": false,
+      "capability_tier": "frontier",
+      "checked": true,
       "delegation": "sequential subagent",
       "dependency_delivery": "none",
       "dependency_resolution": "none",
@@ -891,6 +878,7 @@
       "id": "7.1",
       "interfaces": "Consumes: complete staged compiler, schemas, coverage manifest, CLI, checker, and 24 target examples; Produces: self-sufficient canonical IR documentation, updated skill instructions, documentation checks, and hash-bound `acceptance-report.json`",
       "optional": false,
+      "reasoning_level": "high",
       "requirements": [
         "1.3",
         "1.4",
@@ -926,7 +914,7 @@
         "11.5",
         "11.6"
       ],
-      "resolved_model": "claude-opus-4.8",
+      "resolved_model": "claude-opus-5",
       "risk": "medium; misleading documentation would make a correct schema unusable, so installation is blocked until documentation checks pass",
       "stage": 8,
       "task_category": "review",
@@ -934,7 +922,7 @@
       "verification": "`python -m unittest discover -s work/mermaid-json-ir-schema/skill/tests -v`; run every minimal/maximal example through `scripts/render.py` and the exact pinned `scripts/check.sh`; verify no network access during schema/normalize/compile tests"
     },
     {
-      "capability_tier": "high-reasoning",
+      "capability_tier": "frontier",
       "checked": false,
       "delegation": "controller",
       "dependency_delivery": "none",
@@ -951,6 +939,7 @@
       "id": "8.1",
       "interfaces": "Consumes: hash-bound staged skill, canonical baseline manifest, both live destination trees, and `acceptance-report.json`; Produces: atomically installed Agent skill, byte-identical Codex mirror, separate recoverable pre-install copies, two-destination rollback behavior, and `install-report.json`",
       "optional": false,
+      "reasoning_level": "high",
       "requirements": [
         "3.1",
         "3.2",
@@ -961,7 +950,7 @@
         "10.2",
         "11.5"
       ],
-      "resolved_model": "claude-opus-4.8",
+      "resolved_model": "claude-opus-5",
       "risk": "high; concurrent skill edits could be overwritten, so any hash mismatch stops installation and recovery restores the prior tree",
       "stage": 9,
       "task_category": "review",

@@ -158,6 +158,64 @@ def render_graph_flowchart(ir: dict) -> str:
     return "\n".join(lines) + "\n"
 
 
+_SWIMLANE_SHAPES = {
+    "rect": ("[", "]"),
+    "round": ("(", ")"),
+    "stadium": ("([", "])"),
+    "decision": ("{", "}"),
+    "circle": ("((", "))"),
+}
+_SWIMLANE_EDGES = {
+    "arrow": "-->",
+    "line": "---",
+    "dotted": "-.->",
+    "thick": "==>",
+}
+
+
+def render_graph_swimlane(ir: dict) -> str:
+    """swimlane-beta: lanes are top-level subgraphs; nodes/edges reuse flowchart-style syntax."""
+    _require(ir, ("nodes", "edges"), "graph/swimlane")
+    ids: dict[str, str] = {}
+    lines = [f"swimlane-beta {_direction(ir, 'graph/swimlane', allowed=_FLOWCHART_DIRECTIONS, default='TB')}"]
+    by_group: dict[str | None, list[dict]] = {}
+    for node in ir["nodes"]:
+        _require(node, ("id", "label"), "graph/swimlane node")
+        by_group.setdefault(node.get("group"), []).append(node)
+
+    def emit_node(node: dict, indent: str) -> None:
+        node_id = _safe_id(node["id"], ids)
+        shape = _SWIMLANE_SHAPES.get(node.get("kind", "rect"))
+        if shape is None:
+            raise IRError(f"graph/swimlane node {node['id']!r} has unknown kind {node['kind']!r}")
+        open_, close = shape
+        lines.append(f'{indent}{node_id}{open_}{_quote(node["label"])}{close}')
+
+    for group in ir.get("groups", []):
+        _require(group, ("id", "label"), "graph/swimlane group")
+        group_id = _safe_id(group["id"], ids)
+        lines.append(f'  subgraph {group_id} [{_quote(group["label"])}]')
+        for node in by_group.pop(group["id"], []):
+            emit_node(node, "    ")
+        lines.append("  end")
+    for node in by_group.pop(None, []):
+        emit_node(node, "  ")
+    leftover = [group for group in by_group if group is not None]
+    if leftover:
+        raise IRError(f"graph/swimlane nodes reference undeclared group(s): {leftover}")
+
+    for edge in ir["edges"]:
+        _require(edge, ("from", "to"), "graph/swimlane edge")
+        arrow = _SWIMLANE_EDGES.get(edge.get("kind", "arrow"))
+        if arrow is None:
+            raise IRError(f"graph/swimlane edge has unknown kind {edge['kind']!r}")
+        if edge["from"] not in ids or edge["to"] not in ids:
+            raise IRError(f"graph/swimlane edge references undeclared node: {edge}")
+        label = f'|{_quote(edge["label"])}|' if edge.get("label") else ""
+        lines.append(f'  {ids[edge["from"]]} {arrow}{label} {ids[edge["to"]]}')
+    return "\n".join(lines) + "\n"
+
+
 def render_graph_mindmap(ir: dict) -> str:
     _require(ir, ("nodes", "edges", "root"), "graph/mindmap")
     nodes = {node["id"]: node for node in ir["nodes"]}
@@ -698,7 +756,9 @@ _SEQUENCE_BREAK = "<br/>"
 
 
 def _sequence_text(value: Any) -> str:
-    return str(value).replace("\r\n", _SEQUENCE_BREAK).replace("\n", _SEQUENCE_BREAK)
+    # Mermaid treats semicolons as statement separators even inside message text.
+    # Use its documented entity form so JSON text cannot terminate a statement.
+    return str(value).replace(";", "#59;").replace("\r\n", _SEQUENCE_BREAK).replace("\n", _SEQUENCE_BREAK)
 
 
 def _emit_sequence_steps(steps: list[dict], known: set[str], lines: list[str], indent: str) -> None:
@@ -821,6 +881,283 @@ def render_requirement_links(ir: dict) -> str:
         if link["from"] not in known or link["to"] not in known:
             raise IRError(f"requirement-links link references an undeclared requirement/element: {link}")
         lines.append(f'    {link["from"]} - {link["kind"]} -> {link["to"]}')
+    return "\n".join(lines) + "\n"
+
+
+def _wardley_name(name: str) -> str:
+    return name if re.fullmatch(r"[A-Za-z][A-Za-z0-9 _-]*", name) else _quote(name)
+
+
+def _wardley_point(entry: dict) -> str:
+    return f'[{entry["visibility"]}, {entry["evolution"]}]'
+
+
+_WARDLEY_LINK_ARROWS = {
+    "dependency": "->",
+    "flow": "+>",
+    "flowReverse": "+<",
+    "flowBidirectional": "+<>",
+}
+
+
+def render_wardley(ir: dict) -> str:
+    lines = ["wardley-beta"]
+    if ir.get("size"):
+        width, height = ir["size"]
+        lines.append(f"size [{width}, {height}]")
+    if ir.get("evolutionStages"):
+        stages = []
+        for stage in ir["evolutionStages"]:
+            _require(stage, ("label",), "wardley evolutionStage")
+            text = stage["label"] + (f'/{stage["dualLabel"]}' if stage.get("dualLabel") else "")
+            if stage.get("width") is not None:
+                text += f'@{stage["width"]}'
+            stages.append(text)
+        lines.append("evolution " + " -> ".join(stages))
+    # Wardley's grammar has no separate id/label: a component's Name IS the token every other
+    # statement (links, evolve, pipeline) references. This IR keeps a short internal `id` for
+    # addressability, but every reference must resolve to the exact same rendered name as the
+    # declaration, or the generated source would declare one token and reference another.
+    names: dict[str, str] = {}
+    for anchor in ir.get("anchors", []):
+        _require(anchor, ("id", "visibility", "evolution"), "wardley anchor")
+        names[anchor["id"]] = anchor.get("label", anchor["id"])
+        lines.append(f'anchor {_wardley_name(names[anchor["id"]])} {_wardley_point(anchor)}')
+    for component in ir.get("components", []):
+        _require(component, ("id", "visibility", "evolution"), "wardley component")
+        names[component["id"]] = component.get("label", component["id"])
+        line = f'component {_wardley_name(names[component["id"]])} {_wardley_point(component)}'
+        if component.get("labelOffset"):
+            dx, dy = component["labelOffset"]
+            line += f" label [{dx}, {dy}]"
+        if component.get("sourcing"):
+            line += f' ({component["sourcing"]})'
+        if component.get("inertia"):
+            line += " (inertia)"
+        lines.append(line)
+    for pipeline in ir.get("pipelines", []):
+        _require(pipeline, ("parent", "stages"), "wardley pipeline")
+        if pipeline["parent"] not in names:
+            raise IRError(f"wardley pipeline references undeclared component {pipeline['parent']!r}")
+        lines.append(f'pipeline {_wardley_name(names[pipeline["parent"]])} {{')
+        for stage in pipeline["stages"]:
+            _require(stage, ("label", "evolution"), "wardley pipeline stage")
+            lines.append(f'  component {_quote(stage["label"])} [{stage["evolution"]}]')
+        lines.append("}")
+    for link in ir.get("links", []):
+        _require(link, ("from", "to"), "wardley link")
+        if link["from"] not in names or link["to"] not in names:
+            raise IRError(f"wardley link references undeclared component/anchor: {link}")
+        from_name, to_name = _wardley_name(names[link["from"]]), _wardley_name(names[link["to"]])
+        kind = link.get("kind", "dependency")
+        arrow = _WARDLEY_LINK_ARROWS.get(kind)
+        if arrow is None:
+            raise IRError(f"wardley link has unknown kind {kind!r}")
+        if kind == "dependency":
+            arrow = "-.->" if link.get("dashed") else "->"
+            line = f'{from_name} {arrow} {to_name}'
+            if link.get("label"):
+                line += f'; {link["label"]}'
+        elif kind == "flow" and link.get("label"):
+            line = f'{from_name} +{_quote(link["label"])}> {to_name}'
+        else:
+            line = f'{from_name} {arrow} {to_name}'
+        lines.append(line)
+    for evolve in ir.get("evolve", []):
+        _require(evolve, ("id", "target"), "wardley evolve")
+        if evolve["id"] not in names:
+            raise IRError(f"wardley evolve references undeclared component/anchor {evolve['id']!r}")
+        lines.append(f'evolve {_wardley_name(names[evolve["id"]])} {evolve["target"]}')
+    for note in ir.get("notes", []):
+        _require(note, ("text", "visibility", "evolution"), "wardley note")
+        lines.append(f'note {_quote(note["text"])} {_wardley_point(note)}')
+    for accelerator in ir.get("accelerators", []):
+        _require(accelerator, ("text", "visibility", "evolution"), "wardley accelerator")
+        lines.append(f'accelerator {_quote(accelerator["text"])} {_wardley_point(accelerator)}')
+    for deaccelerator in ir.get("deaccelerators", []):
+        _require(deaccelerator, ("text", "visibility", "evolution"), "wardley deaccelerator")
+        lines.append(f'deaccelerator {_quote(deaccelerator["text"])} {_wardley_point(deaccelerator)}')
+    if ir.get("annotationsPosition"):
+        lines.append(f'annotations {_wardley_point(ir["annotationsPosition"])}')
+    for annotation in ir.get("annotations", []):
+        _require(annotation, ("number", "visibility", "evolution", "text"), "wardley annotation")
+        lines.append(f'annotation {annotation["number"]},{_wardley_point(annotation)} {_quote(annotation["text"])}')
+    return "\n".join(lines) + "\n"
+
+
+def _render_railroad_expr(expr: dict) -> str:
+    kind = expr.get("kind")
+    if kind == "terminal":
+        _require(expr, ("text",), "railroad terminal")
+        return f'terminal({_quote(expr["text"])})'
+    if kind == "nonterminal":
+        _require(expr, ("name",), "railroad nonterminal")
+        return f'nonterminal({_quote(expr["name"])})'
+    if kind == "special":
+        _require(expr, ("text",), "railroad special")
+        return f'special({_quote(expr["text"])})'
+    if kind == "sequence":
+        _require(expr, ("items",), "railroad sequence")
+        return "sequence(" + ", ".join(_render_railroad_expr(item) for item in expr["items"]) + ")"
+    if kind == "choice":
+        _require(expr, ("items",), "railroad choice")
+        return "choice(" + ", ".join(_render_railroad_expr(item) for item in expr["items"]) + ")"
+    if kind == "optional":
+        _require(expr, ("item",), "railroad optional")
+        return f'optional({_render_railroad_expr(expr["item"])})'
+    if kind == "zeroOrMore":
+        _require(expr, ("item",), "railroad zeroOrMore")
+        return f'zeroOrMore({_render_railroad_expr(expr["item"])})'
+    if kind == "oneOrMore":
+        _require(expr, ("item",), "railroad oneOrMore")
+        return f'oneOrMore({_render_railroad_expr(expr["item"])})'
+    raise IRError(f"railroad expression has unknown kind {kind!r}")
+
+
+def render_railroad(ir: dict) -> str:
+    _require(ir, ("rules",), "railroad")
+    lines = ["railroad-beta"]
+    for rule in ir["rules"]:
+        _require(rule, ("name", "expression"), "railroad rule")
+        lines.append(f'{rule["name"]} = {_render_railroad_expr(rule["expression"])} ;')
+    return "\n".join(lines) + "\n"
+
+
+def render_treeview(ir: dict) -> str:
+    _require(ir, ("tree",), "treeView")
+    lines = ["treeView-beta"]
+
+    def emit(nodes: list, depth: int) -> None:
+        for node in nodes:
+            _require(node, ("label",), "treeView node")
+            label = str(node["label"]) + ("/" if node.get("directory") else "")
+            line = "    " * (depth + 1) + f'"{label}"'
+            if node.get("description"):
+                line += f' ## {node["description"]}'
+            lines.append(line)
+            emit(node.get("children", []), depth + 1)
+
+    emit(ir["tree"], 0)
+    return "\n".join(lines) + "\n"
+
+
+def render_ishikawa(ir: dict) -> str:
+    _require(ir, ("problem",), "ishikawa")
+    lines = ["ishikawa-beta", f"    {ir['problem']}"]
+
+    def emit(causes: list, depth: int) -> None:
+        for cause in causes:
+            _require(cause, ("label",), "ishikawa cause")
+            lines.append("    " * (depth + 1) + cause["label"])
+            emit(cause.get("causes", []), depth + 1)
+
+    emit(ir.get("causes", []), 1)
+    return "\n".join(lines) + "\n"
+
+
+def _venn_label_size(entry: dict) -> str:
+    suffix = f'[{_quote(entry["label"])}]' if entry.get("label") else ""
+    if entry.get("size") is not None:
+        suffix += f':{entry["size"]}'
+    return suffix
+
+
+def render_venn(ir: dict) -> str:
+    _require(ir, ("sets",), "venn")
+    lines = ["venn-beta"]
+    known: set[str] = set()
+    for entry in ir["sets"]:
+        _require(entry, ("id",), "venn set")
+        if entry["id"] in known:
+            raise IRError(f"venn set {entry['id']!r} is declared more than once")
+        known.add(entry["id"])
+        lines.append(f'  set {entry["id"]}{_venn_label_size(entry)}')
+        for text in entry.get("texts", []):
+            _require(text, ("id", "label"), "venn text")
+            lines.append(f'    text {text["id"]}[{_quote(text["label"])}]')
+    for entry in ir.get("unions", []):
+        _require(entry, ("ids",), "venn union")
+        missing = [uid for uid in entry["ids"] if uid not in known]
+        if missing:
+            raise IRError(f"venn union references undeclared set(s): {missing}")
+        lines.append(f'  union {",".join(entry["ids"])}{_venn_label_size(entry)}')
+        for text in entry.get("texts", []):
+            _require(text, ("id", "label"), "venn text")
+            lines.append(f'    text {text["id"]}[{_quote(text["label"])}]')
+    return "\n".join(lines) + "\n"
+
+
+_EVENTMODELING_TYPES = {"ui", "pcr", "cmd", "rmo", "evt"}
+
+
+def _render_data_field(field: dict) -> str:
+    _require(field, ("key", "value"), "eventmodeling data field")
+    value = field["value"]
+    if isinstance(value, (int, float)) and not isinstance(value, bool):
+        rendered = str(value)
+    elif field.get("raw"):
+        rendered = str(value)
+    else:
+        rendered = "'" + str(value).replace("'", "\\'") + "'"
+    return f"{field['key']}: {rendered}"
+
+
+def render_eventmodeling(ir: dict) -> str:
+    _require(ir, ("timeframes",), "eventmodeling")
+    lines = ["eventmodeling", ""]
+    for frame in ir["timeframes"]:
+        _require(frame, ("number", "type", "entity"), "eventmodeling timeframe")
+        if frame["type"] not in _EVENTMODELING_TYPES:
+            raise IRError(f"eventmodeling timeframe {frame['number']!r} has unknown type {frame['type']!r}")
+        if frame.get("data") is not None and frame.get("dataRef") is not None:
+            raise IRError(f"eventmodeling timeframe {frame['number']!r} sets both data and dataRef")
+        token = "rf" if frame.get("reset") else "tf"
+        line = f"{token} {frame['number']} {frame['type']} {frame['entity']}"
+        if frame.get("relations"):
+            line += "".join(f" ->> {number}" for number in frame["relations"])
+        if frame.get("data") is not None:
+            fields = "; ".join(_render_data_field(field) for field in frame["data"])
+            prefix = f"`{frame['dataType']}`" if frame.get("dataType") else ""
+            line += f" {prefix}{{ {fields} }}"
+        elif frame.get("dataRef") is not None:
+            line += f" [[{frame['dataRef']}]]"
+        lines.append(line)
+    for block in ir.get("dataBlocks", []):
+        _require(block, ("id", "fields"), "eventmodeling data block")
+        prefix = f"`{block['dataType']}`" if block.get("dataType") else ""
+        lines.append("")
+        lines.append(f"data {block['id']} {prefix}{{")
+        for field in block["fields"]:
+            lines.append(f"  {_render_data_field(field)}")
+        lines.append("}")
+    return "\n".join(lines) + "\n"
+
+
+_CYNEFIN_DOMAINS = {"complex", "complicated", "clear", "chaotic", "confusion"}
+
+
+def render_cynefin(ir: dict) -> str:
+    lines = ["cynefin-beta"]
+    seen: set[str] = set()
+    for entry in ir.get("domains", []):
+        _require(entry, ("domain",), "cynefin domain")
+        domain = entry["domain"]
+        if domain not in _CYNEFIN_DOMAINS:
+            raise IRError(f"cynefin domain has unknown name {domain!r}")
+        if domain in seen:
+            raise IRError(f"cynefin domain {domain!r} is declared more than once")
+        seen.add(domain)
+        lines.append("")
+        lines.append(f"  {domain}")
+        for item in entry.get("items", []):
+            lines.append(f"    {_quote(item)}")
+    for transition in ir.get("transitions", []):
+        _require(transition, ("from", "to"), "cynefin transition")
+        if transition["from"] not in _CYNEFIN_DOMAINS or transition["to"] not in _CYNEFIN_DOMAINS:
+            raise IRError(f"cynefin transition has an unknown domain: {transition}")
+        lines.append("")
+        label = f' : {_quote(transition["label"])}' if transition.get("label") else ""
+        lines.append(f'  {transition["from"]} --> {transition["to"]}{label}')
     return "\n".join(lines) + "\n"
 
 

@@ -1,0 +1,40 @@
+{
+  "diagram": "graph",
+  "target": "mindmap",
+  "root": "root",
+  "nodes": [
+    {
+      "id": "root",
+      "label": "Duplicate detector"
+    },
+    {
+      "id": "a",
+      "label": "Approach A: embeddings",
+      "kind": "square"
+    },
+    {
+      "id": "b",
+      "label": "Approach B: hashing",
+      "kind": "cloud"
+    },
+    {
+      "id": "c",
+      "label": "Risk: false positives",
+      "kind": "bang"
+    }
+  ],
+  "edges": [
+    {
+      "from": "root",
+      "to": "a"
+    },
+    {
+      "from": "root",
+      "to": "b"
+    },
+    {
+      "from": "a",
+      "to": "c"
+    }
+  ]
+}

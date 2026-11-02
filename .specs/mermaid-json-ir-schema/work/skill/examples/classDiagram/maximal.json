@@ -1,20 +1,53 @@
 {
-  "accessibility": {
-    "description": "Deterministic maximal envelope",
-    "title": "classDiagram example"
-  },
   "content": {
-    "edges": [],
-    "nodes": []
+    "edges": [
+      {
+        "from": "Animal",
+        "kind": "inheritance",
+        "label": "implements",
+        "to": "Duck"
+      },
+      {
+        "from": "Customer",
+        "from_card": "1",
+        "kind": "association",
+        "to": "Ticket",
+        "to_card": "*"
+      }
+    ],
+    "nodes": [
+      {
+        "id": "Animal",
+        "members": [
+          "+int age",
+          "+isMammal()"
+        ]
+      },
+      {
+        "id": "Duck",
+        "kind": "interface",
+        "members": [
+          "+String beakColor",
+          "+swim()"
+        ]
+      },
+      {
+        "id": "Customer"
+      },
+      {
+        "id": "Ticket"
+      }
+    ]
   },
   "diagram": "graph",
   "renderer": {
-    "deterministic": true,
+    "frontmatter": {},
+    "initialize": {
+      "deterministicIDSeed": "a60681aa9d49cae5a5688b99ce583290aedbae9369eb90b3c3428352b9e66ef5",
+      "deterministicIds": true
+    },
     "mermaidVersion": "11.16.1"
   },
   "schemaVersion": "1.0.0",
-  "source": {
-    "title": "classDiagram source"
-  },
   "target": "classDiagram"
 }

@@ -1,20 +1,57 @@
 {
-  "accessibility": {
-    "description": "Deterministic maximal envelope",
-    "title": "C4Container example"
-  },
   "content": {
-    "edges": [],
-    "nodes": []
+    "edges": [
+      {
+        "from": "customer",
+        "label": "Uses",
+        "technology": "HTTPS",
+        "to": "spa"
+      },
+      {
+        "from": "spa",
+        "label": "Reads/Writes",
+        "to": "db"
+      }
+    ],
+    "groups": [
+      {
+        "id": "c1",
+        "kind": "container_boundary",
+        "label": "Internet Banking"
+      }
+    ],
+    "nodes": [
+      {
+        "id": "customer",
+        "kind": "person",
+        "label": "Customer"
+      },
+      {
+        "description": "Web UI",
+        "group": "c1",
+        "id": "spa",
+        "kind": "container",
+        "label": "SPA",
+        "technology": "JS"
+      },
+      {
+        "group": "c1",
+        "id": "db",
+        "kind": "container_db",
+        "label": "Database",
+        "technology": "SQL"
+      }
+    ]
   },
   "diagram": "graph",
   "renderer": {
-    "deterministic": true,
+    "frontmatter": {},
+    "initialize": {
+      "deterministicIDSeed": "d222673cf27d636b6a3baccdcef812c97dba5b6d4d227987a3e278e81d03ab68",
+      "deterministicIds": true
+    },
     "mermaidVersion": "11.16.1"
   },
   "schemaVersion": "1.0.0",
-  "source": {
-    "title": "C4Container source"
-  },
   "target": "C4Container"
 }

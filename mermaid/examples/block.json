@@ -1,0 +1,61 @@
+{
+  "diagram": "graph",
+  "target": "block",
+  "columns": 3,
+  "groups": [
+    {
+      "id": "grp-1",
+      "label": "Group One"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "a",
+      "label": "process",
+      "kind": "process"
+    },
+    {
+      "id": "b",
+      "label": "terminator",
+      "kind": "terminator"
+    },
+    {
+      "id": "c",
+      "label": "decision",
+      "kind": "decision"
+    },
+    {
+      "id": "d",
+      "label": "subprocess",
+      "kind": "subprocess",
+      "group": "grp-1"
+    },
+    {
+      "id": "e",
+      "label": "store",
+      "kind": "store",
+      "group": "grp-1"
+    },
+    {
+      "id": "f",
+      "label": "connector",
+      "kind": "connector"
+    },
+    {
+      "id": "g",
+      "label": "io",
+      "kind": "io"
+    }
+  ],
+  "edges": [
+    {
+      "from": "a",
+      "to": "b",
+      "label": "next"
+    },
+    {
+      "from": "grp-1",
+      "to": "f"
+    }
+  ]
+}

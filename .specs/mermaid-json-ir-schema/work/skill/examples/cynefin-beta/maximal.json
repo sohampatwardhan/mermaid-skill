@@ -1,0 +1,25 @@
+{
+  "schemaVersion": "1.0.0",
+  "diagram": "cynefin",
+  "target": "cynefin-beta",
+  "accessibility": {
+    "title": "Cynefin framework for software delivery decisions",
+    "description": "A Cynefin map categorizing software tasks by complexity domain"
+  },
+  "source": {"title": "Incident Response"},
+  "content": {
+    "domains": [
+      {"domain": "complex", "items": ["Investigate root cause", "Run chaos experiment"]},
+      {"domain": "complicated", "items": ["Analyze performance data", "Expert review needed"]},
+      {"domain": "clear", "items": ["Restart service", "Apply known fix"]},
+      {"domain": "chaotic", "items": ["Page on-call immediately"]},
+      {"domain": "confusion", "items": ["Unknown failure mode"]}
+    ],
+    "transitions": [
+      {"from": "complex", "to": "complicated", "label": "Pattern identified"},
+      {"from": "complicated", "to": "clear", "label": "Best practice codified"},
+      {"from": "clear", "to": "chaotic", "label": "Complacency"},
+      {"from": "chaotic", "to": "complex", "label": "Stabilized"}
+    ]
+  }
+}

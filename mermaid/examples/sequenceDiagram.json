@@ -1,0 +1,39 @@
+{
+  "diagram": "sequence",
+  "target": "sequenceDiagram",
+  "actors": [
+    {
+      "id": "User"
+    },
+    {
+      "id": "API"
+    },
+    {
+      "id": "DB",
+      "kind": "actor"
+    }
+  ],
+  "steps": [
+    {
+      "type": "message",
+      "from": "User",
+      "to": "API",
+      "label": "request",
+      "kind": "sync"
+    },
+    {
+      "type": "message",
+      "from": "API",
+      "to": "DB",
+      "label": "query",
+      "kind": "sync"
+    },
+    {
+      "type": "message",
+      "from": "DB",
+      "to": "API",
+      "label": "result",
+      "kind": "reply"
+    }
+  ]
+}

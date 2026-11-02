@@ -1,20 +1,63 @@
 {
-  "accessibility": {
-    "description": "Deterministic maximal envelope",
-    "title": "architecture-beta example"
-  },
   "content": {
-    "edges": [],
-    "nodes": []
+    "edges": [
+      {
+        "from": "db",
+        "from_side": "L",
+        "to": "server",
+        "to_side": "R"
+      },
+      {
+        "arrow": "forward",
+        "from": "disk1",
+        "from_side": "T",
+        "to": "j1",
+        "to_side": "B"
+      }
+    ],
+    "groups": [
+      {
+        "icon": "cloud",
+        "id": "api",
+        "label": "API"
+      }
+    ],
+    "nodes": [
+      {
+        "group": "api",
+        "icon": "database",
+        "id": "db",
+        "kind": "service",
+        "label": "Database"
+      },
+      {
+        "group": "api",
+        "icon": "server",
+        "id": "server",
+        "kind": "service",
+        "label": "Server"
+      },
+      {
+        "icon": "disk",
+        "id": "disk1",
+        "kind": "service",
+        "label": "Storage"
+      },
+      {
+        "id": "j1",
+        "kind": "junction"
+      }
+    ]
   },
   "diagram": "graph",
   "renderer": {
-    "deterministic": true,
+    "frontmatter": {},
+    "initialize": {
+      "deterministicIDSeed": "798e93ed71c7a209bc3f39902c90762d1c2dc3c655fccc6c4089fc95a3ddc71a",
+      "deterministicIds": true
+    },
     "mermaidVersion": "11.16.1"
   },
   "schemaVersion": "1.0.0",
-  "source": {
-    "title": "architecture-beta source"
-  },
   "target": "architecture-beta"
 }

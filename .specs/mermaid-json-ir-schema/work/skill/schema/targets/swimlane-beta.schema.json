@@ -1,0 +1,85 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "swimlane-beta.schema.json",
+  "title": "swimlane-beta canonical envelope",
+  "description": "Mermaid 11.16.0+ swimlane-beta: a process divided into lanes of ownership, using flowchart-style nodes and edges (see reference/syntax/swimlanes.md).",
+  "type": "object",
+  "required": ["schemaVersion", "diagram", "target", "content"],
+  "properties": {
+    "$schema": {"type": "string"},
+    "schemaVersion": {"const": "1.0.0"},
+    "diagram": {"const": "graph"},
+    "target": {"const": "swimlane-beta"},
+    "accessibility": {"$ref": "common.schema.json#/$defs/accessibility"},
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "swimlane-beta's grammar has no top-level `title` statement (confirmed by render: it is parsed as a bare node reference and breaks); unlike most other targets, `source.title` is intentionally not accepted here."
+    },
+    "renderer": {"$ref": "config.schema.json#/$defs/renderer"},
+    "extensions": {"type": "object"},
+    "content": {
+      "type": "object",
+      "required": ["nodes", "edges"],
+      "additionalProperties": false,
+      "properties": {
+        "direction": {"type": "string", "enum": ["TB", "TD", "BT", "LR", "RL"], "default": "TB"},
+        "groups": {
+          "type": "array",
+          "description": "Top-level subgraphs; each one renders as a lane.",
+          "items": {
+            "type": "object",
+            "required": ["id", "label"],
+            "additionalProperties": false,
+            "properties": {
+              "id": {"$ref": "common.schema.json#/$defs/identifier"},
+              "label": {"$ref": "common.schema.json#/$defs/nonEmptyText"}
+            }
+          }
+        },
+        "nodes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["id", "label"],
+            "additionalProperties": false,
+            "properties": {
+              "id": {"$ref": "common.schema.json#/$defs/identifier"},
+              "label": {"$ref": "common.schema.json#/$defs/nonEmptyText"},
+              "kind": {
+                "type": "string",
+                "enum": ["rect", "round", "stadium", "decision", "circle"],
+                "default": "rect",
+                "description": "rect=id[Text], round=id(Text), stadium=id([Text]) start/end, decision=id{Text}, circle=id((Text)) connector/marker."
+              },
+              "group": {
+                "$ref": "common.schema.json#/$defs/identifier",
+                "description": "Id of the lane (content.groups[].id) this node belongs to; omit for an unlaned node."
+              }
+            }
+          }
+        },
+        "edges": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["from", "to"],
+            "additionalProperties": false,
+            "properties": {
+              "from": {"$ref": "common.schema.json#/$defs/identifier"},
+              "to": {"$ref": "common.schema.json#/$defs/identifier"},
+              "label": {"$ref": "common.schema.json#/$defs/nonEmptyText"},
+              "kind": {
+                "type": "string",
+                "enum": ["arrow", "line", "dotted", "thick"],
+                "default": "arrow",
+                "description": "arrow=-->, line=--- (no arrowhead), dotted=-.->, thick===>."
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "additionalProperties": false
+}

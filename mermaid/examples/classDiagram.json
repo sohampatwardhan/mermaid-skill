@@ -1,0 +1,42 @@
+{
+  "diagram": "graph",
+  "target": "classDiagram",
+  "nodes": [
+    {
+      "id": "Animal",
+      "members": [
+        "+int age",
+        "+isMammal()"
+      ]
+    },
+    {
+      "id": "Duck",
+      "kind": "interface",
+      "members": [
+        "+String beakColor",
+        "+swim()"
+      ]
+    },
+    {
+      "id": "Customer"
+    },
+    {
+      "id": "Ticket"
+    }
+  ],
+  "edges": [
+    {
+      "from": "Animal",
+      "to": "Duck",
+      "kind": "inheritance",
+      "label": "implements"
+    },
+    {
+      "from": "Customer",
+      "to": "Ticket",
+      "kind": "association",
+      "from_card": "1",
+      "to_card": "*"
+    }
+  ]
+}

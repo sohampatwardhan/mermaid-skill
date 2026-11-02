@@ -240,6 +240,21 @@ class SequenceTests(unittest.TestCase):
         self.assertIn("Note right of API: done", source)
         self.assertIn("deactivate API", source)
 
+    def test_semicolon_in_structured_text_is_entity_encoded(self) -> None:
+        ir = {
+            "diagram": "sequence", "target": "sequenceDiagram",
+            "actors": [{"id": "App"}],
+            "steps": [
+                {"type": "message", "from": "App", "to": "App",
+                 "label": "setTheme(); setViewMode()"},
+                {"type": "note", "position": "right_of", "actors": ["App"],
+                 "text": "first; second"},
+            ],
+        }
+        source = render_validated(ir)
+        self.assertIn("setTheme()#59; setViewMode()", source)
+        self.assertIn("first#59; second", source)
+
     def test_par_rect_and_critical_blocks_render(self) -> None:
         ir = {
             "diagram": "sequence", "target": "sequenceDiagram",
@@ -271,6 +286,36 @@ class SequenceTests(unittest.TestCase):
         self.assertIn("and log start", source)
         self.assertIn("critical connect to DB", source)
         self.assertIn("option network timeout", source)
+
+    def test_control_blocks_nest_beyond_three_levels(self) -> None:
+        # Regression test: the sequenceDiagram schema used to unroll `steps`/`branches` to a
+        # fixed depth instead of a recursive $ref, so a control block nested inside a branch
+        # nested inside another control block (a realistic 4-level structure) failed schema
+        # validation even though the serializer itself supports arbitrary nesting.
+        ir = {
+            "diagram": "sequence", "target": "sequenceDiagram",
+            "actors": [{"id": "A"}, {"id": "B"}],
+            "steps": [
+                {"type": "critical", "branches": [
+                    {"label": "outer", "steps": [
+                        {"type": "par", "branches": [
+                            {"label": "inner", "steps": [
+                                {"type": "alt", "branches": [
+                                    {"label": "innermost", "steps": [
+                                        {"type": "message", "from": "A", "to": "B", "label": "deep"},
+                                    ]},
+                                ]},
+                            ]},
+                        ]},
+                    ]},
+                ]},
+            ],
+        }
+        source = render_validated(ir)
+        self.assertIn("critical outer", source)
+        self.assertIn("par inner", source)
+        self.assertIn("alt innermost", source)
+        self.assertIn("A->>B: deep", source)
 
     def test_undeclared_actor_is_rejected(self) -> None:
         ir = {

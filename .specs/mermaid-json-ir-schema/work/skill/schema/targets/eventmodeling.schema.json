@@ -1,0 +1,124 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "eventmodeling.schema.json",
+  "title": "eventmodeling canonical envelope",
+  "description": "Mermaid 11.15.0+ eventmodeling: a timeline of Time Frames (UI/processor, command, event, read model) with inferred swimlanes, optional data, and reset points (see reference/syntax/eventmodeling.md). This target always emits the DSL's compact token form (tf/rf, ui/pcr/cmd/rmo/evt) for determinism; the relaxed spelling is a pure input-syntax alternative Mermaid also accepts and this IR does not need to reproduce.",
+  "type": "object",
+  "required": ["schemaVersion", "diagram", "target", "content"],
+  "properties": {
+    "$schema": {"type": "string"},
+    "schemaVersion": {"const": "1.0.0"},
+    "diagram": {"const": "eventmodeling"},
+    "target": {"const": "eventmodeling"},
+    "accessibility": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Confirmed by render (mermaid-cli 11.16.1): accTitle/accDescr produce an error SVG for eventmodeling today, unlike most other diagram types, so this target intentionally does not accept accessibility content."
+    },
+    "source": {"type": "object", "additionalProperties": false},
+    "renderer": {"$ref": "config.schema.json#/$defs/renderer"},
+    "extensions": {"type": "object"},
+    "content": {
+      "type": "object",
+      "required": ["timeframes"],
+      "additionalProperties": false,
+      "properties": {
+        "timeframes": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["number", "type", "entity"],
+            "additionalProperties": false,
+            "properties": {
+              "number": {
+                "type": "string",
+                "pattern": "^[0-9]+$",
+                "description": "Unique Time Frame reference number; order in the array is display order, not numeric order."
+              },
+              "reset": {
+                "type": "boolean",
+                "default": false,
+                "description": "true emits a Reset Frame (rf), breaking automatic inference from the prior frame; false emits a normal Time Frame (tf)."
+              },
+              "type": {
+                "type": "string",
+                "enum": ["ui", "pcr", "cmd", "rmo", "evt"],
+                "description": "ui=UI, pcr=Processor (both UI/Automation swimlane); cmd=Command, rmo=Read Model (Command/Read Model swimlane); evt=Event (Events swimlane)."
+              },
+              "entity": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Entity Identifier, optionally namespaced as 'Namespace.Entity' — each Namespace+type pair forms its own swimlane."
+              },
+              "data": {
+                "type": "array",
+                "description": "Inline data for this Time Frame, e.g. `{ description: string }`. Mutually exclusive with dataRef.",
+                "items": {"$ref": "#/$defs/dataField"}
+              },
+              "dataType": {
+                "type": "string",
+                "enum": ["json", "jsobj", "figma", "salt", "uri", "md", "html", "text"],
+                "description": "Optional backtick-prefixed type tag on inline `data`, e.g. `json`{ ... }."
+              },
+              "dataRef": {
+                "type": "string",
+                "minLength": 1,
+                "description": "References content.dataBlocks[].id via `[[identifier]]` instead of inline data. Mutually exclusive with data."
+              },
+              "relations": {
+                "type": "array",
+                "description": "Explicit `->>` chain of other timeframes' `number`s this frame relates to (e.g. a read model built from multiple events).",
+                "items": {"type": "string", "pattern": "^[0-9]+$"}
+              }
+            }
+          }
+        },
+        "dataBlocks": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["id", "fields"],
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Referenced from a Time Frame's dataRef via [[id]]; suffix repeated entities to keep ids unique."
+              },
+              "dataType": {
+                "type": "string",
+                "enum": ["json", "jsobj", "figma", "salt", "uri", "md", "html", "text"]
+              },
+              "fields": {
+                "type": "array",
+                "minItems": 1,
+                "items": {"$ref": "#/$defs/dataField"}
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "dataField": {
+      "type": "object",
+      "required": ["key", "value"],
+      "additionalProperties": false,
+      "properties": {
+        "key": {"type": "string", "minLength": 1},
+        "value": {
+          "oneOf": [{"type": "string"}, {"type": "number"}],
+          "description": "A JSON number always renders bare (e.g. 20.4). A JSON string renders single-quoted (e.g. 'john') unless raw is true."
+        },
+        "raw": {
+          "type": "boolean",
+          "default": false,
+          "description": "true emits a string value unquoted — used for type declarations like `description: string` rather than literal values."
+        }
+      }
+    }
+  }
+}

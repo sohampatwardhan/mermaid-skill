@@ -1,0 +1,46 @@
+{
+  "diagram": "graph",
+  "target": "C4Container",
+  "nodes": [
+    {
+      "id": "customer",
+      "label": "Customer",
+      "kind": "person"
+    },
+    {
+      "id": "spa",
+      "label": "SPA",
+      "kind": "container",
+      "technology": "JS",
+      "description": "Web UI",
+      "group": "c1"
+    },
+    {
+      "id": "db",
+      "label": "Database",
+      "kind": "container_db",
+      "technology": "SQL",
+      "group": "c1"
+    }
+  ],
+  "groups": [
+    {
+      "id": "c1",
+      "label": "Internet Banking",
+      "kind": "container_boundary"
+    }
+  ],
+  "edges": [
+    {
+      "from": "customer",
+      "to": "spa",
+      "label": "Uses",
+      "technology": "HTTPS"
+    },
+    {
+      "from": "spa",
+      "to": "db",
+      "label": "Reads/Writes"
+    }
+  ]
+}

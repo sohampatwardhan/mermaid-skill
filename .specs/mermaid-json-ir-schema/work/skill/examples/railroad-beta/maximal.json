@@ -1,0 +1,61 @@
+{
+  "schemaVersion": "1.0.0",
+  "diagram": "railroad",
+  "target": "railroad-beta",
+  "source": {"title": "Expression Grammar"},
+  "content": {
+    "rules": [
+      {
+        "name": "expression",
+        "expression": {"kind": "sequence", "items": [
+          {"kind": "nonterminal", "name": "term"},
+          {"kind": "zeroOrMore", "item": {"kind": "sequence", "items": [
+            {"kind": "choice", "items": [
+              {"kind": "terminal", "text": "+"},
+              {"kind": "terminal", "text": "-"}
+            ]},
+            {"kind": "nonterminal", "name": "term"}
+          ]}}
+        ]}
+      },
+      {
+        "name": "term",
+        "expression": {"kind": "sequence", "items": [
+          {"kind": "nonterminal", "name": "factor"},
+          {"kind": "zeroOrMore", "item": {"kind": "sequence", "items": [
+            {"kind": "choice", "items": [
+              {"kind": "terminal", "text": "*"},
+              {"kind": "terminal", "text": "/"}
+            ]},
+            {"kind": "nonterminal", "name": "factor"}
+          ]}}
+        ]}
+      },
+      {
+        "name": "factor",
+        "expression": {"kind": "choice", "items": [
+          {"kind": "nonterminal", "name": "number"},
+          {"kind": "sequence", "items": [
+            {"kind": "terminal", "text": "("},
+            {"kind": "nonterminal", "name": "expression"},
+            {"kind": "terminal", "text": ")"}
+          ]}
+        ]}
+      },
+      {
+        "name": "number",
+        "expression": {"kind": "oneOrMore", "item": {"kind": "nonterminal", "name": "digit"}}
+      },
+      {
+        "name": "digit",
+        "expression": {"kind": "choice", "items": [
+          {"kind": "terminal", "text": "0"}, {"kind": "terminal", "text": "1"},
+          {"kind": "terminal", "text": "2"}, {"kind": "terminal", "text": "3"},
+          {"kind": "terminal", "text": "4"}, {"kind": "terminal", "text": "5"},
+          {"kind": "terminal", "text": "6"}, {"kind": "terminal", "text": "7"},
+          {"kind": "terminal", "text": "8"}, {"kind": "terminal", "text": "9"}
+        ]}
+      }
+    ]
+  }
+}

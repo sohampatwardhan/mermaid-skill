@@ -9,8 +9,10 @@ parity contract for render.py: every branch of every family gets at least one re
 from __future__ import annotations
 
 import importlib.util
+import json
 import shutil
 import subprocess
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -93,10 +95,27 @@ class GraphFlowchartTests(unittest.TestCase):
         self.assertIn("class n_2_1 ready", source)
         self.assertNotIn("class n_3_1", source)
 
+    def test_execution_status_palette_is_stable(self) -> None:
+        ir = {
+            "diagram": "graph", "target": "flowchart",
+            "nodes": [
+                {"id": "done", "label": "Done", "status": "done"},
+                {"id": "active", "label": "Active", "status": "in_progress"},
+                {"id": "failed", "label": "Failed", "status": "failed"},
+                {"id": "queued", "label": "Queued", "status": "pending"},
+            ],
+            "edges": [],
+        }
+        source = render_validated(ir)
+        self.assertIn("classDef done fill:#dcfce7,stroke:#22c55e", source)
+        self.assertIn("classDef in_progress fill:#fef3c7,stroke:#f59e0b", source)
+        self.assertIn("classDef failed fill:#fee2e2,stroke:#ef4444", source)
+        self.assertIn("classDef pending fill:#f1f5f9,stroke:#94a3b8", source)
+
     def test_unknown_status_is_rejected(self) -> None:
         ir = {
             "diagram": "graph", "target": "flowchart",
-            "nodes": [{"id": "A", "label": "A", "status": "in_progress"}],
+            "nodes": [{"id": "A", "label": "A", "status": "paused"}],
             "edges": [],
         }
         with self.assertRaises(ValueError):
@@ -267,6 +286,21 @@ class SequenceTests(unittest.TestCase):
         self.assertIn("else failure", source)
         self.assertIn("Note right of API: done", source)
         self.assertIn("deactivate API", source)
+
+    def test_semicolon_in_structured_text_is_entity_encoded(self) -> None:
+        ir = {
+            "diagram": "sequence", "target": "sequenceDiagram",
+            "actors": [{"id": "App"}],
+            "steps": [
+                {"type": "message", "from": "App", "to": "App",
+                 "label": "setTheme(); setViewMode()"},
+                {"type": "note", "position": "right_of", "actors": ["App"],
+                 "text": "first; second"},
+            ],
+        }
+        source = render_validated(ir)
+        self.assertIn("setTheme()#59; setViewMode()", source)
+        self.assertIn("first#59; second", source)
 
     def test_par_rect_and_critical_blocks_render(self) -> None:
         ir = {
@@ -600,6 +634,15 @@ class GraphClassTests(unittest.TestCase):
 
 
 class DispatchTests(unittest.TestCase):
+    def test_cli_can_materialize_a_tested_example(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            output = Path(temp) / "sequence.json"
+            self.assertEqual(render_module.main(["--example", "sequenceDiagram", "-o", str(output)]), 0)
+            example = json.loads(output.read_text(encoding="utf-8"))
+            self.assertEqual(example["target"], "sequenceDiagram")
+            self.assertTrue(example["actors"])
+            self.assertTrue(example["steps"])
+
     def test_unknown_family_target_pair_is_rejected(self) -> None:
         with self.assertRaises(ValueError):
             render_module.render({"diagram": "graph", "target": "packet", "nodes": [], "edges": []})

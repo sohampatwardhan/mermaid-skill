@@ -1,20 +1,52 @@
 {
-  "accessibility": {
-    "description": "Deterministic maximal envelope",
-    "title": "erDiagram example"
-  },
   "content": {
-    "edges": [],
-    "nodes": []
+    "direction": "LR",
+    "edges": [
+      {
+        "from": "CUSTOMER",
+        "label": "places",
+        "left": "exactly_one",
+        "right": "zero_or_more",
+        "to": "ORDER"
+      },
+      {
+        "from": "CUSTOMER",
+        "identifying": false,
+        "label": "links",
+        "left": "zero_or_more",
+        "right": "zero_or_more",
+        "to": "p"
+      }
+    ],
+    "nodes": [
+      {
+        "id": "CUSTOMER",
+        "members": [
+          "string name PK",
+          "string sector"
+        ]
+      },
+      {
+        "id": "ORDER",
+        "members": [
+          "int orderNumber PK \"the order number\""
+        ]
+      },
+      {
+        "id": "p",
+        "label": "Customer Account"
+      }
+    ]
   },
   "diagram": "graph",
   "renderer": {
-    "deterministic": true,
+    "frontmatter": {},
+    "initialize": {
+      "deterministicIDSeed": "f0f015a267c3d15ccb8375f59c66274b81ba2e779ecf5f55274146612b9f7557",
+      "deterministicIds": true
+    },
     "mermaidVersion": "11.16.1"
   },
   "schemaVersion": "1.0.0",
-  "source": {
-    "title": "erDiagram source"
-  },
   "target": "erDiagram"
 }

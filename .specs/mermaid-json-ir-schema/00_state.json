@@ -7,7 +7,14 @@
     "The user approved rebasing phase one to all 12 targets on 2026-08-09. The planning baseline is",
     "The revised 74-criterion Requirements gate was approved by the user on 2026-08-09; Design may",
     "The user explicitly approved [Design](03_design.md) on 2026-08-09; Tasks may proceed against the",
-    "The user approved [Tasks](04_tasks.md) and authorized execution of all tasks on 2026-08-09."
+    "The user approved [Tasks](04_tasks.md) and authorized execution of all tasks on 2026-08-09.",
+    "On 2026-08-31/09-01, the user asked for a review of newly shipped Mermaid diagram types and",
+    "Added 8 new targets, each with its own schema, deterministic serializer, semantic validation",
+    "Fixed a real `$ref` root-tracking bug in `scripts/mermaid_ir/schema_runtime.py` and",
+    "Rewrote `schema/targets/sequenceDiagram.schema.json`'s step/branch shape to use a single",
+    "Extended `targets/_base.py`'s shared `graph_semantics` validator to check that a node's",
+    "Added ELK layout as an envelope-level, cross-cutting `renderer.frontmatter.config.layout`/",
+    "Refreshed [`mermaid/reference/diagram-types.md`](../../mermaid/reference/diagram-types.md) and `mermaid/reference/syntax/*.md` from the"
   ],
   "gates": {
     "audit": {
@@ -23,7 +30,7 @@
       "status": "approved"
     },
     "execution": {
-      "evidence": "Run `run-20260810T004517Z`; preflight and Stage 1 active",
+      "evidence": "Run `run-20260810T004517Z` completed Stages 1\u20138 (12 targets); a second, user-directed increment on 2026-08-31/09-01 added 8 more targets and 2 engine fixes outside the original 12-target Requirements/Design/Tasks gates \u2014 see Change Control. Task 8.1 (install to `~/.agents/skills/mermaid/` and `~/.codex/skills/mermaid/`) remains not started; the user explicitly held it for a later session.",
       "status": "in_progress"
     },
     "requirements": {
@@ -37,7 +44,7 @@
   },
   "generated_from": {
     "file": "00_state.md",
-    "sha256": "f538d7c944f75ac0b1f7c4f884bd6d5fb74d117c643487db65016a9597cd4b53"
+    "sha256": "6725e97f9703ee35926bd22f7f5b8d1540373b781d42034108cb21abcd4805f8"
   },
   "schema_version": 1
 }

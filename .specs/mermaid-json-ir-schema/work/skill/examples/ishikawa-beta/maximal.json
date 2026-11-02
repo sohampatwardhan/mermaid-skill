@@ -1,0 +1,50 @@
+{
+  "schemaVersion": "1.0.0",
+  "diagram": "ishikawa",
+  "target": "ishikawa-beta",
+  "content": {
+    "problem": "Blurry Photo",
+    "causes": [
+      {
+        "label": "Process",
+        "causes": [
+          {"label": "Out of focus"},
+          {"label": "Shutter speed too slow"},
+          {"label": "Protective film not removed"},
+          {"label": "Beautification filter applied"}
+        ]
+      },
+      {
+        "label": "User",
+        "causes": [{"label": "Shaky hands"}]
+      },
+      {
+        "label": "Equipment",
+        "causes": [
+          {
+            "label": "LENS",
+            "causes": [
+              {"label": "Inappropriate lens"},
+              {"label": "Damaged lens"},
+              {"label": "Dirty lens"}
+            ]
+          },
+          {
+            "label": "SENSOR",
+            "causes": [
+              {"label": "Damaged sensor"},
+              {"label": "Dirty sensor"}
+            ]
+          }
+        ]
+      },
+      {
+        "label": "Environment",
+        "causes": [
+          {"label": "Subject moved too quickly"},
+          {"label": "Too dark"}
+        ]
+      }
+    ]
+  }
+}

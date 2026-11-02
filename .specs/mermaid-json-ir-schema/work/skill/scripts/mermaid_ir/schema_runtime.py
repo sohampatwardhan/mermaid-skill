@@ -138,6 +138,26 @@ class _Validator:
         branch.validate(instance, schema, pointer, base_schema, base_path)
         return not branch.diagnostics
 
+    def descend(
+        self, instance: Any, schema: dict[str, Any] | bool, pointer: str,
+        base_schema: dict[str, Any] | None, base_path: Path | None,
+    ) -> None:
+        """Validate a genuinely new instance value (an object property or array item).
+
+        The `$ref` cycle guard tracks tokens seen without the instance changing, so it can tell a
+        true infinite loop (a ref chain that revisits itself with no properties/items ever
+        inspected) from ordinary recursive data (a step whose branch contains another step, an
+        arbitrary number of times). Once we step into a new property or array element, that data
+        is strictly smaller and finite, so any `$ref` a schema reuses from here on is legitimate
+        recursion, not a cycle — the stack resets rather than being inherited.
+        """
+        saved_stack = self._ref_stack
+        self._ref_stack = []
+        try:
+            self.validate(instance, schema, pointer, base_schema, base_path)
+        finally:
+            self._ref_stack = saved_stack
+
     def validate(
         self, instance: Any, schema: dict[str, Any] | bool, pointer: str = "",
         base_schema: dict[str, Any] | None = None, base_path: Path | None = None,
@@ -148,12 +168,26 @@ class _Validator:
             self.error("schema.false", pointer, "value is rejected by the schema")
             return
         if "$ref" in schema:
-            resolved, resolved_path, token = self.registry.resolve_ref(schema["$ref"], base_schema, base_path)
+            reference = schema["$ref"]
+            resolved, resolved_path, token = self.registry.resolve_ref(reference, base_schema, base_path)
             if token in self._ref_stack:
                 raise SchemaError(f"schema reference cycle detected at {token}")
             self._ref_stack.append(token)
             try:
-                resolved_root = resolved if resolved_path is None else self.registry.load(resolved_path)[0]
+                # A ref with a file part crosses into a different document, whose own top-level
+                # object becomes the new root for any fragment it contains. A local (`#/...`)
+                # fragment ref stays inside the current document, so the root and its path must
+                # stay exactly what they were — including when the caller has no path at all
+                # (e.g. a target schema loaded directly from disk, bypassing the registry cache).
+                # Inferring "crossed a file" from `resolved_path is None` breaks precisely in that
+                # path-less case: it would wrongly re-root every fragment ref at the fragment
+                # itself, and a second-level or recursive local ref would then fail to resolve.
+                file_part = reference.partition("#")[0]
+                if file_part:
+                    resolved_root = self.registry.load(resolved_path)[0]
+                else:
+                    resolved_root = base_schema
+                    resolved_path = base_path
                 self.validate(instance, resolved, pointer, resolved_root, resolved_path)
             finally:
                 self._ref_stack.pop()
@@ -211,17 +245,17 @@ class _Validator:
             matched = False
             if key in properties:
                 matched = True
-                self.validate(value, properties[key], child_pointer, base_schema, base_path)
+                self.descend(value, properties[key], child_pointer, base_schema, base_path)
             for pattern, child_schema in patterns.items():
                 if re.search(pattern, key):
                     matched = True
-                    self.validate(value, child_schema, child_pointer, base_schema, base_path)
+                    self.descend(value, child_schema, child_pointer, base_schema, base_path)
             if not matched and "additionalProperties" in schema:
                 additional = schema["additionalProperties"]
                 if additional is False:
                     self.error("schema.additionalProperties", child_pointer, "unknown field is not allowed")
                 elif isinstance(additional, dict):
-                    self.validate(value, additional, child_pointer, base_schema, base_path)
+                    self.descend(value, additional, child_pointer, base_schema, base_path)
 
     def _validate_array(
         self, instance: list[Any], schema: dict[str, Any], pointer: str,
@@ -237,7 +271,7 @@ class _Validator:
                 self.error("schema.uniqueItems", pointer, "array items must be unique")
         if "items" in schema:
             for index, value in enumerate(instance):
-                self.validate(value, schema["items"], join_pointer(pointer, index), base_schema, base_path)
+                self.descend(value, schema["items"], join_pointer(pointer, index), base_schema, base_path)
 
 
 def _json_type(value: Any) -> str:

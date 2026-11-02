@@ -1,6 +1,6 @@
 # Mermaid diagram types (auto-generated)
 
-> Last refreshed: 2026-08-07 · Mermaid latest: 11.16.1
+> Last refreshed: 2026-09-01 · Mermaid latest: 11.17.2
 > Source of truth: `packages/mermaid/src/diagrams` in mermaid-js/mermaid.
 > Regenerate with `scripts/refresh.sh`. Full per-type expectations are
 > cached in `reference/syntax/`; live authoritative syntax is also
@@ -12,6 +12,7 @@ The opening keyword may differ from the directory name (e.g.
 `flowchart`/`graph`, `stateDiagram-v2`, `architecture-beta`).
 See `reference/type-cheatsheets.md` for keyword + skeleton + top pitfalls.
 
+- `agentflow`
 - `architecture`
 - `block`
 - `c4`
@@ -39,8 +40,9 @@ See `reference/type-cheatsheets.md` for keyword + skeleton + top pitfalls.
 - `state`
 - `swimlanes`
 - `timeline`
-- `treeView`
 - `treemap`
+- `treeView`
+- `usecase`
 - `user-journey`
 - `venn`
 - `wardley`

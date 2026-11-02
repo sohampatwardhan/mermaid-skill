@@ -1,0 +1,52 @@
+{
+  "diagram": "graph",
+  "target": "architecture-beta",
+  "groups": [
+    {
+      "id": "api",
+      "label": "API",
+      "icon": "cloud"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "db",
+      "label": "Database",
+      "kind": "service",
+      "icon": "database",
+      "group": "api"
+    },
+    {
+      "id": "server",
+      "label": "Server",
+      "kind": "service",
+      "icon": "server",
+      "group": "api"
+    },
+    {
+      "id": "disk1",
+      "label": "Storage",
+      "kind": "service",
+      "icon": "disk"
+    },
+    {
+      "id": "j1",
+      "kind": "junction"
+    }
+  ],
+  "edges": [
+    {
+      "from": "db",
+      "to": "server",
+      "from_side": "L",
+      "to_side": "R"
+    },
+    {
+      "from": "disk1",
+      "to": "j1",
+      "from_side": "T",
+      "to_side": "B",
+      "arrow": "forward"
+    }
+  ]
+}

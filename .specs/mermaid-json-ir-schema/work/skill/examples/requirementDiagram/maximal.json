@@ -1,21 +1,38 @@
 {
-  "accessibility": {
-    "description": "Deterministic maximal envelope",
-    "title": "requirementDiagram example"
-  },
   "content": {
-    "elements": [],
-    "links": [],
-    "requirements": []
+    "direction": "LR",
+    "elements": [
+      {
+        "id": "session_module",
+        "type": "component"
+      }
+    ],
+    "links": [
+      {
+        "from": "session_module",
+        "kind": "satisfies",
+        "to": "req_1_1"
+      }
+    ],
+    "requirements": [
+      {
+        "id": "req_1_1",
+        "risk": "high",
+        "text": "the system shall rotate tokens",
+        "type": "functionalRequirement",
+        "verify_method": "test"
+      }
+    ]
   },
   "diagram": "requirement-links",
   "renderer": {
-    "deterministic": true,
+    "frontmatter": {},
+    "initialize": {
+      "deterministicIDSeed": "e91d82a151fb9a02abe09f63886b9e40d9afdb403f8a82e1d83c2c08862560dc",
+      "deterministicIds": true
+    },
     "mermaidVersion": "11.16.1"
   },
   "schemaVersion": "1.0.0",
-  "source": {
-    "title": "requirementDiagram source"
-  },
   "target": "requirementDiagram"
 }

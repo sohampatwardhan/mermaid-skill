@@ -1,20 +1,56 @@
 {
-  "accessibility": {
-    "description": "Deterministic maximal envelope",
-    "title": "gantt example"
-  },
   "content": {
-    "dateFormat": "YYYY-MM-DD",
-    "sections": []
+    "axisFormat": "%m-%d %H:%M",
+    "dateFormat": "YYYY-MM-DDTHH:mm:ss",
+    "excludes": [
+      "weekends"
+    ],
+    "sections": [
+      {
+        "bars": [
+          {
+            "end": "2026-08-09T10:14:00",
+            "id": "t1_1",
+            "label": "1.1 (verified)",
+            "start": "2026-08-09T10:00:00",
+            "tags": [
+              "done"
+            ]
+          },
+          {
+            "end": "2026-08-09T10:20:00",
+            "id": "t1_2",
+            "label": "1.2 (critical, active)",
+            "start": "2026-08-09T10:14:00",
+            "tags": [
+              "crit",
+              "active"
+            ]
+          },
+          {
+            "end": "2026-08-09T10:20:00",
+            "id": "t1_3",
+            "label": "Checkpoint reached",
+            "start": "2026-08-09T10:20:00",
+            "tags": [
+              "milestone"
+            ]
+          }
+        ],
+        "name": "Stage 1"
+      }
+    ],
+    "title": "Execution"
   },
   "diagram": "timeline",
   "renderer": {
-    "deterministic": true,
+    "frontmatter": {},
+    "initialize": {
+      "deterministicIDSeed": "7a1770c9bdee7392e35ea862af21cc33bdec1b4428d474134d57f431b5f36395",
+      "deterministicIds": true
+    },
     "mermaidVersion": "11.16.1"
   },
   "schemaVersion": "1.0.0",
-  "source": {
-    "title": "gantt source"
-  },
   "target": "gantt"
 }

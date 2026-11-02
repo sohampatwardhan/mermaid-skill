@@ -32,7 +32,7 @@ def copy_legacy_fields(fields: frozenset[str]) -> Callable[[dict[str, Any]], dic
 
 
 def graph_semantics(document: dict[str, Any]) -> tuple[Diagnostic, ...]:
-    """Validate duplicate declarations and edge references for graph-shaped targets."""
+    """Validate duplicate declarations, edge references, and node group membership for graph-shaped targets."""
 
     content = document["content"]
     nodes = content.get("nodes", [])
@@ -41,6 +41,8 @@ def graph_semantics(document: dict[str, Any]) -> tuple[Diagnostic, ...]:
     diagnostics.extend(duplicate_id_diagnostics(groups, "/content/groups"))
     known = {item["id"] for item in nodes if "id" in item} | {item["id"] for item in groups if "id" in item}
     diagnostics.extend(reference_diagnostics(content.get("edges", []), known, "/content/edges", ("from", "to")))
+    group_ids = {item["id"] for item in groups if "id" in item}
+    diagnostics.extend(reference_diagnostics(nodes, group_ids, "/content/nodes", ("group",)))
     return tuple(sorted(diagnostics, key=lambda item: (item.pointer, item.code, item.message)))
 
 

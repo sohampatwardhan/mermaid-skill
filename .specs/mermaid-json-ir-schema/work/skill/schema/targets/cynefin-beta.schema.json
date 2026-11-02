@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "cynefin-beta.schema.json",
+  "title": "cynefin-beta canonical envelope",
+  "description": "Mermaid 11.16.0+ cynefin-beta: the Cynefin sense-making framework's five fixed complexity domains, each optionally holding item labels, with optional transitions between domains (see reference/syntax/cynefin.md).",
+  "type": "object",
+  "required": ["schemaVersion", "diagram", "target", "content"],
+  "properties": {
+    "$schema": {"type": "string"},
+    "schemaVersion": {"const": "1.0.0"},
+    "diagram": {"const": "cynefin"},
+    "target": {"const": "cynefin-beta"},
+    "accessibility": {"$ref": "common.schema.json#/$defs/accessibility"},
+    "source": {
+      "type": "object",
+      "properties": {"title": {"$ref": "common.schema.json#/$defs/nonEmptyText"}},
+      "additionalProperties": false
+    },
+    "renderer": {"$ref": "config.schema.json#/$defs/renderer"},
+    "extensions": {"type": "object"},
+    "content": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "domains": {
+          "type": "array",
+          "description": "Only domains you want populated need an entry; an omitted domain still renders, empty.",
+          "maxItems": 5,
+          "items": {
+            "type": "object",
+            "required": ["domain"],
+            "additionalProperties": false,
+            "properties": {
+              "domain": {
+                "type": "string",
+                "enum": ["complex", "complicated", "clear", "chaotic", "confusion"]
+              },
+              "items": {
+                "type": "array",
+                "items": {"$ref": "common.schema.json#/$defs/nonEmptyText"}
+              }
+            }
+          }
+        },
+        "transitions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["from", "to"],
+            "additionalProperties": false,
+            "properties": {
+              "from": {
+                "type": "string",
+                "enum": ["complex", "complicated", "clear", "chaotic", "confusion"]
+              },
+              "to": {
+                "type": "string",
+                "enum": ["complex", "complicated", "clear", "chaotic", "confusion"]
+              },
+              "label": {"$ref": "common.schema.json#/$defs/nonEmptyText"}
+            }
+          }
+        }
+      }
+    }
+  },
+  "additionalProperties": false
+}

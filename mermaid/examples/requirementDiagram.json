@@ -1,0 +1,27 @@
+{
+  "diagram": "requirement-links",
+  "target": "requirementDiagram",
+  "direction": "LR",
+  "requirements": [
+    {
+      "id": "req_1_1",
+      "text": "the system shall rotate tokens",
+      "risk": "high",
+      "verify_method": "test",
+      "type": "functionalRequirement"
+    }
+  ],
+  "elements": [
+    {
+      "id": "session_module",
+      "type": "component"
+    }
+  ],
+  "links": [
+    {
+      "from": "session_module",
+      "to": "req_1_1",
+      "kind": "satisfies"
+    }
+  ]
+}

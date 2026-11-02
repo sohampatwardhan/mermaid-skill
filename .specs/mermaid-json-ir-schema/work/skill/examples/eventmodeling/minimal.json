@@ -1,0 +1,12 @@
+{
+  "schemaVersion": "1.0.0",
+  "diagram": "eventmodeling",
+  "target": "eventmodeling",
+  "content": {
+    "timeframes": [
+      {"number": "01", "type": "ui", "entity": "CartUI"},
+      {"number": "02", "type": "cmd", "entity": "AddItem"},
+      {"number": "03", "type": "evt", "entity": "ItemAdded"}
+    ]
+  }
+}

@@ -38,6 +38,30 @@
     },
     {
       "$ref": "targets/requirementDiagram.schema.json"
+    },
+    {
+      "$ref": "targets/swimlane-beta.schema.json"
+    },
+    {
+      "$ref": "targets/cynefin-beta.schema.json"
+    },
+    {
+      "$ref": "targets/eventmodeling.schema.json"
+    },
+    {
+      "$ref": "targets/venn-beta.schema.json"
+    },
+    {
+      "$ref": "targets/ishikawa-beta.schema.json"
+    },
+    {
+      "$ref": "targets/treeView-beta.schema.json"
+    },
+    {
+      "$ref": "targets/railroad-beta.schema.json"
+    },
+    {
+      "$ref": "targets/wardley-beta.schema.json"
     }
   ]
 }

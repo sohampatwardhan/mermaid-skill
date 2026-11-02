@@ -123,10 +123,14 @@ _MINDMAP_SHAPES = {
 # and the color is a fixed function of that value, never an arbitrary per-node choice — the same
 # "rules based, not a per-call aesthetic decision" standard the rest of this family holds to.
 _FLOWCHART_STATUS_STYLES = {
-    "done": "fill:#9f9,stroke:#393,color:#000",
-    "ready": "fill:#9cf,stroke:#369,color:#000",
-    "blocked": "fill:#f99,stroke:#933,color:#000",
-    "pending": "fill:#eee,stroke:#999,color:#000",
+    "done": "fill:#dcfce7,stroke:#22c55e,stroke-width:1.5px,color:#14532d",
+    "in_progress": "fill:#fef3c7,stroke:#f59e0b,stroke-width:2px,color:#92400e",
+    "failed": "fill:#fee2e2,stroke:#ef4444,stroke-width:2px,color:#991b1b",
+    "pending": "fill:#f1f5f9,stroke:#94a3b8,stroke-width:1.5px,color:#334155",
+    # Backward-compatible inputs. Ready and dependency-blocked tasks are pending
+    # in the execution palette; new producers should emit ``pending``.
+    "ready": "fill:#f1f5f9,stroke:#94a3b8,stroke-width:1.5px,color:#334155",
+    "blocked": "fill:#f1f5f9,stroke:#94a3b8,stroke-width:1.5px,color:#334155",
 }
 
 
@@ -726,7 +730,9 @@ _SEQUENCE_BREAK = "<br/>"
 
 
 def _sequence_text(value: Any) -> str:
-    return str(value).replace("\r\n", _SEQUENCE_BREAK).replace("\n", _SEQUENCE_BREAK)
+    # Mermaid treats semicolons as statement separators even inside message text.
+    # Use its documented entity form so JSON text cannot terminate a statement.
+    return str(value).replace(";", "#59;").replace("\r\n", _SEQUENCE_BREAK).replace("\n", _SEQUENCE_BREAK)
 
 
 def _emit_sequence_steps(steps: list[dict], known: set[str], lines: list[str], indent: str) -> None:
@@ -887,11 +893,33 @@ def render(ir: dict, target: str | None = None, backend: str = "mermaid") -> str
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("ir_file", type=Path, help="Path to the diagram IR JSON file.")
+    parser.add_argument("ir_file", type=Path, nargs="?", help="Path to the diagram IR JSON file.")
     parser.add_argument("--target", default=None, help="Override the IR's 'target' field.")
     parser.add_argument("--backend", default="mermaid", choices=("mermaid",))
     parser.add_argument("-o", "--output", type=Path, default=None, help="Write source here instead of stdout.")
+    parser.add_argument("--list-targets", action="store_true", help="List deterministic IR targets and exit.")
+    parser.add_argument("--example", metavar="TARGET", help="Print a tested, feature-bearing JSON example and exit.")
     args = parser.parse_args(argv)
+
+    if args.list_targets:
+        print("\n".join(sorted(target for _family, target in SERIALIZERS)))
+        return 0
+    if args.example:
+        if args.ir_file is not None:
+            parser.error("IR_FILE and --example are mutually exclusive")
+        example = Path(__file__).resolve().parents[1] / "examples" / f"{args.example}.json"
+        if not example.is_file():
+            known = ", ".join(sorted(target for _family, target in SERIALIZERS))
+            print(f"ERROR: no example for {args.example!r}; known targets: {known}", file=sys.stderr)
+            return 2
+        source = example.read_text(encoding="utf-8")
+        if args.output:
+            args.output.write_text(source, encoding="utf-8")
+        else:
+            print(source, end="")
+        return 0
+    if args.ir_file is None:
+        parser.error("IR_FILE is required unless --list-targets or --example is used")
 
     try:
         ir = json.loads(args.ir_file.read_text(encoding="utf-8"))

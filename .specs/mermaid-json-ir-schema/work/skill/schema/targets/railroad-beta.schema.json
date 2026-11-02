@@ -1,0 +1,110 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "railroad-beta.schema.json",
+  "title": "railroad-beta canonical envelope",
+  "description": "Mermaid 11.16.0+ railroad-beta: grammar rules built from explicit IR-primitive constructors (see reference/syntax/railroad.md). This is the target used for structured JSON generation among the four railroad keywords — the EBNF/ABNF/PEG notations are text grammar dialects Mermaid parses into the same underlying structure, so they add no addressable content this IR needs to represent separately.",
+  "type": "object",
+  "required": ["schemaVersion", "diagram", "target", "content"],
+  "properties": {
+    "$schema": {"type": "string"},
+    "schemaVersion": {"const": "1.0.0"},
+    "diagram": {"const": "railroad"},
+    "target": {"const": "railroad-beta"},
+    "accessibility": {"$ref": "common.schema.json#/$defs/accessibility"},
+    "source": {
+      "type": "object",
+      "properties": {"title": {"$ref": "common.schema.json#/$defs/nonEmptyText"}},
+      "additionalProperties": false
+    },
+    "renderer": {"$ref": "config.schema.json#/$defs/renderer"},
+    "extensions": {"type": "object"},
+    "content": {
+      "type": "object",
+      "required": ["rules"],
+      "additionalProperties": false,
+      "properties": {
+        "rules": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["name", "expression"],
+            "additionalProperties": false,
+            "properties": {
+              "name": {"$ref": "common.schema.json#/$defs/identifier"},
+              "expression": {"$ref": "#/$defs/expression"}
+            }
+          }
+        }
+      }
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "expression": {
+      "allOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "type": "string",
+              "enum": ["terminal", "nonterminal", "sequence", "choice", "optional", "zeroOrMore", "oneOrMore", "special"]
+            },
+            "text": {
+              "type": "string",
+              "description": "Required for kind=terminal (literal string) and kind=special (special-sequence text)."
+            },
+            "name": {
+              "type": "string",
+              "description": "Required for kind=nonterminal; should reference a content.rules[].name."
+            },
+            "items": {
+              "type": "array",
+              "minItems": 1,
+              "description": "Required for kind=sequence|choice.",
+              "items": {"$ref": "#/$defs/expression"}
+            },
+            "item": {
+              "description": "Required for kind=optional|zeroOrMore|oneOrMore.",
+              "$ref": "#/$defs/expression"
+            }
+          }
+        },
+        {"required": ["kind"]},
+        {
+          "if": {"properties": {"kind": {"const": "terminal"}}, "required": ["kind"]},
+          "then": {"required": ["text"]}
+        },
+        {
+          "if": {"properties": {"kind": {"const": "special"}}, "required": ["kind"]},
+          "then": {"required": ["text"]}
+        },
+        {
+          "if": {"properties": {"kind": {"const": "nonterminal"}}, "required": ["kind"]},
+          "then": {"required": ["name"]}
+        },
+        {
+          "if": {"properties": {"kind": {"const": "sequence"}}, "required": ["kind"]},
+          "then": {"required": ["items"]}
+        },
+        {
+          "if": {"properties": {"kind": {"const": "choice"}}, "required": ["kind"]},
+          "then": {"required": ["items"]}
+        },
+        {
+          "if": {"properties": {"kind": {"const": "optional"}}, "required": ["kind"]},
+          "then": {"required": ["item"]}
+        },
+        {
+          "if": {"properties": {"kind": {"const": "zeroOrMore"}}, "required": ["kind"]},
+          "then": {"required": ["item"]}
+        },
+        {
+          "if": {"properties": {"kind": {"const": "oneOrMore"}}, "required": ["kind"]},
+          "then": {"required": ["item"]}
+        }
+      ]
+    }
+  }
+}

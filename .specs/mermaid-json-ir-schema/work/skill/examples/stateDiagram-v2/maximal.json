@@ -1,19 +1,60 @@
 {
-  "accessibility": {
-    "description": "Deterministic maximal envelope",
-    "title": "stateDiagram-v2 example"
-  },
   "content": {
-    "transitions": []
+    "direction": "LR",
+    "final": [],
+    "initial": "Outer",
+    "notes": [
+      {
+        "side": "right",
+        "state": "Outer",
+        "text": "entry point"
+      }
+    ],
+    "states": [
+      {
+        "final": [
+          "Inner"
+        ],
+        "id": "Outer",
+        "initial": "Inner",
+        "states": [
+          {
+            "id": "Inner"
+          }
+        ],
+        "transitions": []
+      },
+      {
+        "id": "choice1",
+        "kind": "choice"
+      }
+    ],
+    "transitions": [
+      {
+        "from": "Outer",
+        "to": "choice1"
+      },
+      {
+        "from": "choice1",
+        "label": "ok",
+        "to": "Done"
+      },
+      {
+        "from": "choice1",
+        "label": "bad",
+        "to": "Failed"
+      }
+    ]
   },
   "diagram": "state-machine",
   "renderer": {
-    "deterministic": true,
+    "frontmatter": {},
+    "initialize": {
+      "deterministicIDSeed": "c0a6ed307a6ba8c28fc035551ac0b4b38ac541f525c24f76b2f77509a0e3336c",
+      "deterministicIds": true
+    },
     "mermaidVersion": "11.16.1"
   },
   "schemaVersion": "1.0.0",
-  "source": {
-    "title": "stateDiagram-v2 source"
-  },
   "target": "stateDiagram-v2"
 }

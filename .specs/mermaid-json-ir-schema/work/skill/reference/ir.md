@@ -19,6 +19,17 @@ declare which content fields are compulsory, optional, or defaulted; unknown ord
 rejected with JSON Pointer diagnostics. Minimal and maximal examples for every target are under
 `examples/<target>/`.
 
+Do not construct a canonical document from the abbreviated family snippets below. Begin with a
+tested complete example and edit its addressed values:
+
+```bash
+scripts/render.py --example flowchart -o diagram.json
+scripts/render.py diagram.json --validate-only --diagnostics-format json
+```
+
+The family snippets below describe the legacy flat field vocabulary retained for migration; the
+corresponding keys live under canonical `content`. New documents always use the envelope.
+
 `renderer.frontmatter` affects the emitted source. `renderer.initialize` is returned separately
 through `--initialize-config-out`, because embedding-host policy must not leak into diagram text.
 When omitted, Mermaid core defaults to `11.16.1` and deterministic IDs receive a content-derived
@@ -62,12 +73,12 @@ closed schema and serializer together when adding a construct.
 ## Families
 
 Every IR document has a top-level `"diagram"` (the family) and `"target"` (the specific
-Mermaid diagram type; can be overridden with `--target`). Five families cover every diagram
-type used across the spec-\* skills today:
+Mermaid diagram type; can be overridden with `--target`). The first twelve targets share five
+families:
 
 | Family | Targets implemented | Targets addable (same IR shape, new serializer) |
 |---|---|---|
-| `graph` | `flowchart`, `mindmap`, `block`, `C4Context`, `C4Container`, `architecture-beta`, `erDiagram`, `classDiagram` | — |
+| `graph` | `flowchart`, `mindmap`, `block`, `C4Context`, `C4Container`, `architecture-beta`, `erDiagram`, `classDiagram`, `swimlane-beta` | — |
 | `timeline` | `gantt` | `timeline` |
 | `state-machine` | `stateDiagram-v2` | — |
 | `sequence` | `sequenceDiagram` | — |
@@ -76,6 +87,27 @@ type used across the spec-\* skills today:
 Adding a target within an existing family means writing one new `render_<family>_<target>`
 function and registering it in `SERIALIZERS`; the IR shape and validation for that family
 already exist.
+
+A later increment added eight more Mermaid diagram types, each new enough that it does not
+share an existing family's IR shape. Each gets its own single-target family instead:
+
+| Family / target | Content shape |
+|---|---|
+| `cynefin` / `cynefin-beta` | Five fixed complexity domains, each optionally holding item labels, plus domain-to-domain transitions. |
+| `eventmodeling` / `eventmodeling` | A Time Frame timeline (ui/processor/command/read-model/event) with inline or referenced data blocks and explicit `->>` relation chains. |
+| `venn` / `venn-beta` | Sets, unions of two or more sets, and optional text labels placed inside either. |
+| `ishikawa` / `ishikawa-beta` | A problem statement plus an arbitrarily deep, purely-nested tree of causes. |
+| `treeView` / `treeView-beta` | A directory/file-style tree of arbitrary depth, with optional `##` descriptions. |
+| `railroad` / `railroad-beta` | Grammar rules built from the IR-primitive constructors (`terminal`, `nonterminal`, `sequence`, `choice`, `optional`, `zeroOrMore`, `oneOrMore`, `special`) — the structured alternative among the four railroad keywords; EBNF/ABNF/PEG are text-grammar dialects Mermaid parses into the same underlying structure. |
+| `wardley` / `wardley-beta` | Components/anchors positioned by `[visibility, evolution]` (OWM order), their dependency/flow links, evolution, pipelines, custom evolution-stage labels, notes, numbered annotations, and accelerator/deaccelerator forces. |
+
+These targets were added directly against each diagram's real render behavior (mermaid-cli
+11.16.1), which surfaced two genuine, narrower-than-usual grammars worth calling out: `swimlane-beta`
+does not accept a top-level `title` statement (it is parsed as a bare flowchart node and breaks
+the diagram), and `eventmodeling` does not currently accept `accTitle`/`accDescr` (both produce an
+error SVG). Both targets' schemas reject those fields outright rather than silently emitting
+Mermaid source that fails to render — see the `description` on each schema's `source`/
+`accessibility` property for the render evidence.
 
 ### `graph` — nodes, edges, optional grouping
 

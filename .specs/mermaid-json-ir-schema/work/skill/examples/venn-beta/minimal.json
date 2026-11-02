@@ -1,0 +1,11 @@
+{
+  "schemaVersion": "1.0.0",
+  "diagram": "venn",
+  "target": "venn-beta",
+  "content": {
+    "sets": [
+      {"id": "A"},
+      {"id": "B"}
+    ]
+  }
+}

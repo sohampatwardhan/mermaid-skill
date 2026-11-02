@@ -12,6 +12,10 @@ from .model import CompileResult, Diagnostic, IRError
 from .normalize import normalize
 from .schema_runtime import SchemaRegistry, validate_schema
 
+# Mermaid documents ELK as supported only for these targets today, "with plans to extend
+# support to all diagram types" — so this allowlist is expected to grow, not shrink.
+ELK_SUPPORTED_TARGETS = frozenset({"flowchart", "stateDiagram-v2"})
+
 
 def _set_target_lookup(provider: Callable[[str], Any | None]) -> None:
     """Bind the target provider used by scaffolding tests and, later, the production registry."""
@@ -49,6 +53,13 @@ def compile_ir(
     renderer = normalized.get("renderer", {})
     if deterministic and renderer.get("deterministic") is False:
         raise IRError(Diagnostic("determinism.conflict", "/renderer/deterministic", "deterministic compilation rejects false"))
+    layout = renderer.get("frontmatter", {}).get("config", {}).get("layout")
+    if layout == "elk" and spec.target not in ELK_SUPPORTED_TARGETS:
+        raise IRError(Diagnostic(
+            "renderer.unsupportedLayout", "/renderer/frontmatter/config/layout",
+            f"target {spec.target!r} does not support layout 'elk'; Mermaid currently supports "
+            f"it only for {sorted(ELK_SUPPORTED_TARGETS)}",
+        ))
     effective = effective_configuration(normalized)
     normalized["renderer"] = {**renderer, "mermaidVersion": effective["mermaidVersion"],
                               "frontmatter": effective["frontmatter"],

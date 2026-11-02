@@ -1,0 +1,66 @@
+{
+  "schemaVersion": "1.0.0",
+  "diagram": "wardley",
+  "target": "wardley-beta",
+  "source": {"title": "Software Platform Strategy"},
+  "content": {
+    "size": [1100, 800],
+    "evolutionStages": [
+      {"label": "Genesis", "width": 0.25},
+      {"label": "Custom", "width": 0.5},
+      {"label": "Product", "width": 0.75},
+      {"label": "Commodity", "width": 1.0}
+    ],
+    "anchors": [
+      {"id": "Customer", "visibility": 0.90, "evolution": 0.95}
+    ],
+    "components": [
+      {"id": "MobileApp", "label": "Mobile App", "visibility": 0.80, "evolution": 0.85, "sourcing": "build"},
+      {"id": "WebApp", "label": "Web App", "visibility": 0.75, "evolution": 0.80, "labelOffset": [-60, 10], "sourcing": "build"},
+      {"id": "ApiGateway", "label": "API Gateway", "visibility": 0.70, "evolution": 0.65, "sourcing": "buy"},
+      {"id": "AuthService", "label": "Auth Service", "visibility": 0.60, "evolution": 0.55, "sourcing": "outsource"},
+      {"id": "Database", "label": "Database", "visibility": 0.50, "evolution": 0.45, "sourcing": "buy", "inertia": true},
+      {"id": "CloudPlatform", "label": "Cloud Platform", "visibility": 0.30, "evolution": 0.95, "sourcing": "market"}
+    ],
+    "links": [
+      {"from": "Customer", "to": "MobileApp"},
+      {"from": "Customer", "to": "WebApp"},
+      {"from": "MobileApp", "to": "ApiGateway"},
+      {"from": "WebApp", "to": "ApiGateway"},
+      {"from": "ApiGateway", "to": "AuthService"},
+      {"from": "ApiGateway", "to": "Database"},
+      {"from": "Database", "to": "CloudPlatform"}
+    ],
+    "evolve": [
+      {"id": "ApiGateway", "target": 0.85},
+      {"id": "Database", "target": 0.75}
+    ],
+    "pipelines": [
+      {
+        "parent": "Database",
+        "stages": [
+          {"label": "File System", "evolution": 0.25},
+          {"label": "SQL DB", "evolution": 0.50},
+          {"label": "NoSQL", "evolution": 0.70},
+          {"label": "Cloud DB", "evolution": 0.85}
+        ]
+      }
+    ],
+    "accelerators": [
+      {"text": "Cloud Native", "visibility": 0.20, "evolution": 0.85}
+    ],
+    "deaccelerators": [
+      {"text": "Legacy Data", "visibility": 0.45, "evolution": 0.35}
+    ],
+    "annotationsPosition": {"visibility": 0.10, "evolution": 0.20},
+    "annotations": [
+      {"number": 1, "visibility": 0.78, "evolution": 0.82, "text": "User touchpoints"},
+      {"number": 2, "visibility": 0.70, "evolution": 0.60, "text": "Integration layer"},
+      {"number": 3, "visibility": 0.50, "evolution": 0.40, "text": "Data persistence"}
+    ],
+    "notes": [
+      {"text": "Build mobile-first experience", "visibility": 0.85, "evolution": 0.90},
+      {"text": "Migrate to cloud-native database", "visibility": 0.60, "evolution": 0.50}
+    ]
+  }
+}

@@ -1,0 +1,198 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "wardley-beta.schema.json",
+  "title": "wardley-beta canonical envelope",
+  "description": "Mermaid 11.14.0+ wardley-beta: a Wardley Map of components/anchors positioned by [visibility, evolution] (the OWM coordinate order), their dependency/flow links, evolution, pipelines, custom evolution stages, notes, numbered annotations, and accelerator/deaccelerator forces (see reference/syntax/wardley.md). Every coordinate field here is named visibility/evolution explicitly instead of x/y so OWM's non-standard axis order can never be ambiguous. Out of scope: trend indicators (`Component -.- (x, y)`, the one construct that uses standard (x, y) order instead) and Mermaid theme/appearance config, which are presentational.",
+  "type": "object",
+  "required": ["schemaVersion", "diagram", "target", "content"],
+  "properties": {
+    "$schema": {"type": "string"},
+    "schemaVersion": {"const": "1.0.0"},
+    "diagram": {"const": "wardley"},
+    "target": {"const": "wardley-beta"},
+    "accessibility": {"$ref": "common.schema.json#/$defs/accessibility"},
+    "source": {
+      "type": "object",
+      "properties": {"title": {"$ref": "common.schema.json#/$defs/nonEmptyText"}},
+      "additionalProperties": false
+    },
+    "renderer": {"$ref": "config.schema.json#/$defs/renderer"},
+    "extensions": {"type": "object"},
+    "content": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "size": {
+          "type": "array", "minItems": 2, "maxItems": 2,
+          "items": {"type": "number", "minimum": 1},
+          "description": "[width, height] in pixels; Mermaid defaults to [1100, 600] when omitted."
+        },
+        "evolutionStages": {
+          "type": "array",
+          "description": "Custom `evolution A -> B -> C` axis labels, in left-to-right order.",
+          "items": {
+            "type": "object",
+            "required": ["label"],
+            "additionalProperties": false,
+            "properties": {
+              "label": {"$ref": "common.schema.json#/$defs/nonEmptyText"},
+              "dualLabel": {"$ref": "common.schema.json#/$defs/nonEmptyText"},
+              "width": {"type": "number", "minimum": 0, "maximum": 1}
+            }
+          }
+        },
+        "anchors": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["id", "visibility", "evolution"],
+            "additionalProperties": false,
+            "properties": {
+              "id": {"$ref": "common.schema.json#/$defs/identifier"},
+              "label": {"$ref": "common.schema.json#/$defs/nonEmptyText"},
+              "visibility": {"type": "number", "minimum": 0, "maximum": 1},
+              "evolution": {"type": "number", "minimum": 0, "maximum": 1}
+            }
+          }
+        },
+        "components": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["id", "visibility", "evolution"],
+            "additionalProperties": false,
+            "properties": {
+              "id": {"$ref": "common.schema.json#/$defs/identifier"},
+              "label": {"$ref": "common.schema.json#/$defs/nonEmptyText"},
+              "visibility": {"type": "number", "minimum": 0, "maximum": 1},
+              "evolution": {"type": "number", "minimum": 0, "maximum": 1},
+              "labelOffset": {
+                "type": "array", "minItems": 2, "maxItems": 2, "items": {"type": "number"}
+              },
+              "inertia": {"type": "boolean", "default": false},
+              "sourcing": {"type": "string", "enum": ["build", "buy", "outsource", "market"]}
+            }
+          }
+        },
+        "pipelines": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["parent", "stages"],
+            "additionalProperties": false,
+            "properties": {
+              "parent": {
+                "$ref": "common.schema.json#/$defs/identifier",
+                "description": "Must reference a component already declared with its own [visibility, evolution]; stages share that visibility."
+              },
+              "stages": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "type": "object",
+                  "required": ["label", "evolution"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "label": {"$ref": "common.schema.json#/$defs/nonEmptyText"},
+                    "evolution": {"type": "number", "minimum": 0, "maximum": 1}
+                  }
+                }
+              }
+            }
+          }
+        },
+        "links": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["from", "to"],
+            "additionalProperties": false,
+            "properties": {
+              "from": {"$ref": "common.schema.json#/$defs/identifier"},
+              "to": {"$ref": "common.schema.json#/$defs/identifier"},
+              "kind": {
+                "type": "string",
+                "enum": ["dependency", "flow", "flowReverse", "flowBidirectional"],
+                "default": "dependency"
+              },
+              "dashed": {
+                "type": "boolean", "default": false,
+                "description": "Only meaningful when kind=dependency."
+              },
+              "label": {
+                "$ref": "common.schema.json#/$defs/nonEmptyText",
+                "description": "Supported for kind=dependency and kind=flow."
+              }
+            }
+          }
+        },
+        "evolve": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["id", "target"],
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "$ref": "common.schema.json#/$defs/identifier",
+                "description": "Must reference a declared component or anchor id."
+              },
+              "target": {"type": "number", "minimum": 0, "maximum": 1}
+            }
+          }
+        },
+        "notes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["text", "visibility", "evolution"],
+            "additionalProperties": false,
+            "properties": {
+              "text": {"$ref": "common.schema.json#/$defs/nonEmptyText"},
+              "visibility": {"type": "number", "minimum": 0, "maximum": 1},
+              "evolution": {"type": "number", "minimum": 0, "maximum": 1}
+            }
+          }
+        },
+        "accelerators": {"type": "array", "items": {"$ref": "#/$defs/textAtPoint"}},
+        "deaccelerators": {"type": "array", "items": {"$ref": "#/$defs/textAtPoint"}},
+        "annotationsPosition": {
+          "type": "object",
+          "required": ["visibility", "evolution"],
+          "additionalProperties": false,
+          "properties": {
+            "visibility": {"type": "number", "minimum": 0, "maximum": 1},
+            "evolution": {"type": "number", "minimum": 0, "maximum": 1}
+          }
+        },
+        "annotations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["number", "visibility", "evolution", "text"],
+            "additionalProperties": false,
+            "properties": {
+              "number": {"type": "integer", "minimum": 1},
+              "visibility": {"type": "number", "minimum": 0, "maximum": 1},
+              "evolution": {"type": "number", "minimum": 0, "maximum": 1},
+              "text": {"$ref": "common.schema.json#/$defs/nonEmptyText"}
+            }
+          }
+        }
+      }
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "textAtPoint": {
+      "type": "object",
+      "required": ["text", "visibility", "evolution"],
+      "additionalProperties": false,
+      "properties": {
+        "text": {"$ref": "common.schema.json#/$defs/nonEmptyText"},
+        "visibility": {"type": "number", "minimum": 0, "maximum": 1},
+        "evolution": {"type": "number", "minimum": 0, "maximum": 1}
+      }
+    }
+  }
+}

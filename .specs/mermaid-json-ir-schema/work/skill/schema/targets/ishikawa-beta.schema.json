@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "ishikawa-beta.schema.json",
+  "title": "ishikawa-beta canonical envelope",
+  "description": "Mermaid 11.12.3+ ishikawa-beta (fishbone/cause-effect): a problem statement with an arbitrarily deep, purely indentation-driven tree of causes (see reference/syntax/ishikawa.md).",
+  "type": "object",
+  "required": ["schemaVersion", "diagram", "target", "content"],
+  "properties": {
+    "$schema": {"type": "string"},
+    "schemaVersion": {"const": "1.0.0"},
+    "diagram": {"const": "ishikawa"},
+    "target": {"const": "ishikawa-beta"},
+    "accessibility": {"$ref": "common.schema.json#/$defs/accessibility"},
+    "source": {"type": "object", "additionalProperties": false},
+    "renderer": {"$ref": "config.schema.json#/$defs/renderer"},
+    "extensions": {"type": "object"},
+    "content": {
+      "type": "object",
+      "required": ["problem"],
+      "additionalProperties": false,
+      "properties": {
+        "problem": {
+          "$ref": "common.schema.json#/$defs/nonEmptyText",
+          "description": "The event/problem at the fish's head; the diagram's first line."
+        },
+        "causes": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/cause"}
+        }
+      }
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "cause": {
+      "type": "object",
+      "required": ["label"],
+      "additionalProperties": false,
+      "properties": {
+        "label": {"$ref": "common.schema.json#/$defs/nonEmptyText"},
+        "causes": {
+          "type": "array",
+          "description": "Nested sub-causes, to any depth.",
+          "items": {"$ref": "#/$defs/cause"}
+        }
+      }
+    }
+  }
+}

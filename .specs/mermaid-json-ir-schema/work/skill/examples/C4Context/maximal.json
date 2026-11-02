@@ -1,20 +1,63 @@
 {
-  "accessibility": {
-    "description": "Deterministic maximal envelope",
-    "title": "C4Context example"
-  },
   "content": {
-    "edges": [],
-    "nodes": []
+    "edges": [
+      {
+        "from": "customerA",
+        "kind": "birel",
+        "label": "Uses",
+        "to": "sysAA"
+      },
+      {
+        "from": "sysAA",
+        "label": "Reads",
+        "technology": "SOAP",
+        "to": "sysDb"
+      }
+    ],
+    "groups": [
+      {
+        "id": "b0",
+        "kind": "enterprise_boundary",
+        "label": "Bank Boundary"
+      }
+    ],
+    "nodes": [
+      {
+        "description": "A bank customer",
+        "group": "b0",
+        "id": "customerA",
+        "kind": "person",
+        "label": "Customer A"
+      },
+      {
+        "group": "b0",
+        "id": "customerC",
+        "kind": "person_ext",
+        "label": "Customer C"
+      },
+      {
+        "description": "Core system",
+        "id": "sysAA",
+        "kind": "system",
+        "label": "Banking System"
+      },
+      {
+        "id": "sysDb",
+        "kind": "system_db_ext",
+        "label": "Mainframe"
+      }
+    ],
+    "title": "Banking System"
   },
   "diagram": "graph",
   "renderer": {
-    "deterministic": true,
+    "frontmatter": {},
+    "initialize": {
+      "deterministicIDSeed": "33999185586ea916b0b58ad23f12443a07de59ee4356f3f8585953f494c3e33b",
+      "deterministicIds": true
+    },
     "mermaidVersion": "11.16.1"
   },
   "schemaVersion": "1.0.0",
-  "source": {
-    "title": "C4Context source"
-  },
   "target": "C4Context"
 }

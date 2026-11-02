@@ -1,26 +1,51 @@
 {
-  "accessibility": {
-    "description": "Deterministic maximal envelope",
-    "title": "mindmap example"
-  },
   "content": {
-    "edges": [],
+    "edges": [
+      {
+        "from": "root",
+        "to": "a"
+      },
+      {
+        "from": "root",
+        "to": "b"
+      },
+      {
+        "from": "a",
+        "to": "c"
+      }
+    ],
     "nodes": [
       {
         "id": "root",
-        "label": "Root"
+        "label": "Duplicate detector"
+      },
+      {
+        "id": "a",
+        "kind": "square",
+        "label": "Approach A: embeddings"
+      },
+      {
+        "id": "b",
+        "kind": "cloud",
+        "label": "Approach B: hashing"
+      },
+      {
+        "id": "c",
+        "kind": "bang",
+        "label": "Risk: false positives"
       }
     ],
     "root": "root"
   },
   "diagram": "graph",
   "renderer": {
-    "deterministic": true,
+    "frontmatter": {},
+    "initialize": {
+      "deterministicIDSeed": "8002256c72b9f521f639b8e3f57782e55c89679f73882618004359ea417410a0",
+      "deterministicIds": true
+    },
     "mermaidVersion": "11.16.1"
   },
   "schemaVersion": "1.0.0",
-  "source": {
-    "title": "mindmap source"
-  },
   "target": "mindmap"
 }

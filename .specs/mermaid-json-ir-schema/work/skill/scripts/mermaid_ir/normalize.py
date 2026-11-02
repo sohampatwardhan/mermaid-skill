@@ -29,8 +29,18 @@ def _apply_defaults(
     if not isinstance(schema, dict):
         return _canonical_copy(value)
     if "$ref" in schema:
-        resolved, resolved_path, _token = registry.resolve_ref(schema["$ref"], base_schema, base_path)
-        resolved_root = resolved if resolved_path is None else registry.load(resolved_path)[0]
+        reference = schema["$ref"]
+        resolved, resolved_path, _token = registry.resolve_ref(reference, base_schema, base_path)
+        # See the matching comment in schema_runtime.py: only a ref with a file part crosses into
+        # a new document/root. A local `#/...` fragment ref must keep the caller's root and path
+        # unchanged, even when that root has no path of its own (a target schema loaded straight
+        # from disk) — otherwise a second-level or recursive local ref can't resolve.
+        file_part = reference.partition("#")[0]
+        if file_part:
+            resolved_root = registry.load(resolved_path)[0]
+        else:
+            resolved_root = base_schema
+            resolved_path = base_path
         return _apply_defaults(value, resolved, registry, resolved_root, resolved_path)
     result = _canonical_copy(value)
     for child in schema.get("allOf", []):

@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "treeView-beta.schema.json",
+  "title": "treeView-beta canonical envelope",
+  "description": "Mermaid 11.14.0+ treeView-beta: a directory/file-style tree with arbitrary depth (see reference/syntax/treeView.md). Presentational-only features are out of scope for this IR: `:::class` highlighting, `icon()` overrides, and `showIcons`/icon-pack config all change appearance, not content. The box-drawing input alternative is a pure input-syntax variant; this target always emits indentation form.",
+  "type": "object",
+  "required": ["schemaVersion", "diagram", "target", "content"],
+  "properties": {
+    "$schema": {"type": "string"},
+    "schemaVersion": {"const": "1.0.0"},
+    "diagram": {"const": "treeView"},
+    "target": {"const": "treeView-beta"},
+    "accessibility": {"$ref": "common.schema.json#/$defs/accessibility"},
+    "source": {"type": "object", "additionalProperties": false},
+    "renderer": {"$ref": "config.schema.json#/$defs/renderer"},
+    "extensions": {"type": "object"},
+    "content": {
+      "type": "object",
+      "required": ["tree"],
+      "additionalProperties": false,
+      "properties": {
+        "tree": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"$ref": "#/$defs/node"}
+        }
+      }
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "node": {
+      "type": "object",
+      "required": ["label"],
+      "additionalProperties": false,
+      "properties": {
+        "label": {
+          "$ref": "common.schema.json#/$defs/nonEmptyText",
+          "description": "Name only — do not include a trailing '/'; set directory instead."
+        },
+        "directory": {"type": "boolean", "default": false},
+        "description": {
+          "$ref": "common.schema.json#/$defs/nonEmptyText",
+          "description": "Rendered after `##`, in italic next to the label."
+        },
+        "children": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/node"}
+        }
+      }
+    }
+  }
+}

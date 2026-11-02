@@ -1,0 +1,70 @@
+{
+  "diagram": "graph",
+  "target": "flowchart",
+  "direction": "TD",
+  "groups": [
+    {
+      "id": "stage-1",
+      "label": "Stage 1"
+    },
+    {
+      "id": "stage-2",
+      "label": "Stage 2"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "start",
+      "label": "Begin",
+      "kind": "terminator",
+      "group": "stage-1"
+    },
+    {
+      "id": "1.1",
+      "label": "1.1 Session rotation",
+      "kind": "process",
+      "group": "stage-1"
+    },
+    {
+      "id": "decide",
+      "label": "Needs review?",
+      "kind": "decision",
+      "group": "stage-1"
+    },
+    {
+      "id": "1.3",
+      "label": "1.3 Integration test",
+      "kind": "subprocess",
+      "group": "stage-2"
+    },
+    {
+      "id": "log",
+      "label": "Audit log",
+      "kind": "store",
+      "group": "stage-2"
+    }
+  ],
+  "edges": [
+    {
+      "from": "start",
+      "to": "1.1",
+      "kind": "normal"
+    },
+    {
+      "from": "1.1",
+      "to": "decide",
+      "kind": "normal"
+    },
+    {
+      "from": "decide",
+      "to": "1.3",
+      "kind": "dependency",
+      "label": "yes"
+    },
+    {
+      "from": "1.3",
+      "to": "log",
+      "kind": "weak"
+    }
+  ]
+}

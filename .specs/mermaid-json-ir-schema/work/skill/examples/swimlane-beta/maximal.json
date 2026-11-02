@@ -1,0 +1,38 @@
+{
+  "schemaVersion": "1.0.0",
+  "diagram": "graph",
+  "target": "swimlane-beta",
+  "accessibility": {
+    "title": "Support escalation",
+    "description": "A request starts with the customer, is triaged by support, and may be escalated to engineering."
+  },
+  "renderer": {"frontmatter": {"config": {"theme": "neo"}}},
+  "content": {
+    "direction": "LR",
+    "groups": [
+      {"id": "customer", "label": "Customer"},
+      {"id": "support", "label": "Support"},
+      {"id": "engineering", "label": "Engineering"}
+    ],
+    "nodes": [
+      {"id": "request", "label": "Request service", "kind": "stadium", "group": "customer"},
+      {"id": "receive", "label": "Receive update", "kind": "rect", "group": "customer"},
+      {"id": "triage", "label": "Triage request", "kind": "rect", "group": "support"},
+      {"id": "ready", "label": "Ready to answer?", "kind": "decision", "group": "support"},
+      {"id": "answer", "label": "Send answer", "kind": "round", "group": "support"},
+      {"id": "investigate", "label": "Investigate issue", "kind": "rect", "group": "engineering"},
+      {"id": "fix", "label": "Prepare fix", "kind": "rect", "group": "engineering"},
+      {"id": "marker", "label": "Escalation point", "kind": "circle"}
+    ],
+    "edges": [
+      {"from": "request", "to": "triage", "kind": "arrow"},
+      {"from": "triage", "to": "ready", "kind": "line"},
+      {"from": "ready", "to": "answer", "label": "Known issue", "kind": "arrow"},
+      {"from": "ready", "to": "investigate", "label": "Needs code change", "kind": "dotted"},
+      {"from": "investigate", "to": "fix", "kind": "thick"},
+      {"from": "fix", "to": "answer", "kind": "arrow"},
+      {"from": "answer", "to": "receive", "kind": "arrow"},
+      {"from": "investigate", "to": "marker", "kind": "dotted"}
+    ]
+  }
+}

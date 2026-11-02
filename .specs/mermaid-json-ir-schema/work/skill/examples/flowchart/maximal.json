@@ -1,20 +1,81 @@
 {
-  "accessibility": {
-    "description": "Deterministic maximal envelope",
-    "title": "flowchart example"
-  },
   "content": {
-    "edges": [],
-    "nodes": []
+    "direction": "TD",
+    "edges": [
+      {
+        "from": "start",
+        "kind": "normal",
+        "to": "1.1"
+      },
+      {
+        "from": "1.1",
+        "kind": "normal",
+        "to": "decide"
+      },
+      {
+        "from": "decide",
+        "kind": "dependency",
+        "label": "yes",
+        "to": "1.3"
+      },
+      {
+        "from": "1.3",
+        "kind": "weak",
+        "to": "log"
+      }
+    ],
+    "groups": [
+      {
+        "id": "stage-1",
+        "label": "Stage 1"
+      },
+      {
+        "id": "stage-2",
+        "label": "Stage 2"
+      }
+    ],
+    "nodes": [
+      {
+        "group": "stage-1",
+        "id": "start",
+        "kind": "terminator",
+        "label": "Begin"
+      },
+      {
+        "group": "stage-1",
+        "id": "1.1",
+        "kind": "process",
+        "label": "1.1 Session rotation"
+      },
+      {
+        "group": "stage-1",
+        "id": "decide",
+        "kind": "decision",
+        "label": "Needs review?"
+      },
+      {
+        "group": "stage-2",
+        "id": "1.3",
+        "kind": "subprocess",
+        "label": "1.3 Integration test"
+      },
+      {
+        "group": "stage-2",
+        "id": "log",
+        "kind": "store",
+        "label": "Audit log"
+      }
+    ]
   },
   "diagram": "graph",
   "renderer": {
-    "deterministic": true,
+    "frontmatter": {},
+    "initialize": {
+      "deterministicIDSeed": "fbce3f529c1952ff5c2881878b3a52b2fb424be07428f424740ec02e0ce58c90",
+      "deterministicIds": true
+    },
     "mermaidVersion": "11.16.1"
   },
   "schemaVersion": "1.0.0",
-  "source": {
-    "title": "flowchart source"
-  },
   "target": "flowchart"
 }

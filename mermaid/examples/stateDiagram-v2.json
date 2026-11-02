@@ -1,0 +1,48 @@
+{
+  "diagram": "state-machine",
+  "target": "stateDiagram-v2",
+  "direction": "LR",
+  "initial": "Outer",
+  "states": [
+    {
+      "id": "Outer",
+      "states": [
+        {
+          "id": "Inner"
+        }
+      ],
+      "initial": "Inner",
+      "final": [
+        "Inner"
+      ],
+      "transitions": []
+    },
+    {
+      "id": "choice1",
+      "kind": "choice"
+    }
+  ],
+  "transitions": [
+    {
+      "from": "Outer",
+      "to": "choice1"
+    },
+    {
+      "from": "choice1",
+      "to": "Done",
+      "label": "ok"
+    },
+    {
+      "from": "choice1",
+      "to": "Failed",
+      "label": "bad"
+    }
+  ],
+  "notes": [
+    {
+      "state": "Outer",
+      "side": "right",
+      "text": "entry point"
+    }
+  ]
+}

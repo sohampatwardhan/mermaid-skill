@@ -1,6 +1,6 @@
 ---
 name: mermaid
-description: Use when creating, editing, validating, rendering, or fixing ANY Mermaid diagram — flowchart, sequence, class, state, ER, gantt, pie, gitGraph, mindmap, timeline, journey, quadrant, requirement, C4, sankey, xychart, block, packet, kanban, architecture, radar, treemap, zenuml — or when a ```mermaid code block fails to render, has a syntax error, or needs to be turned into an SVG/PNG image.
+description: Use when creating, editing, validating, rendering, or fixing ANY Mermaid diagram — flowchart, sequence, class, state, ER, gantt, pie, gitGraph, mindmap, timeline, journey, quadrant, requirement, C4, sankey, xychart, block, packet, kanban, architecture, radar, treemap, zenuml, swimlane, cynefin, event modeling, wardley map, treeView, venn, ishikawa/fishbone, railroad/syntax diagram, agentflow, use case (usecase) — or ANY other current or future Mermaid diagram type (see reference/diagram-types.md for the full, auto-refreshed catalog) — or when a ```mermaid code block fails to render, has a syntax error, or needs to be turned into an SVG/PNG image.
 ---
 
 # Mermaid
@@ -31,8 +31,10 @@ layout conventions; Mermaid rendering validation alone does not establish standa
 Do not probe, install, authenticate, or reconfigure an MCP server during ordinary diagram work.
 Inspect the tools already available in the current host and choose the shortest working route:
 
-- **Mermaid render tool available:** use it for the final render. Query live syntax only when the
-  escalation rules below require it.
+- **Mermaid render tool available:** use it for ordinary-sized diagrams. For diagrams with more
+  than roughly 20 statements, several long labels, or a Gantt spanning many rows, prefer
+  `scripts/check.sh`: remote preview services can reject a valid diagram merely because their PNG
+  exceeds an output-size limit. Query live syntax only when the escalation rules below require it.
 - **No Mermaid render tool:** use `scripts/check.sh` from this skill directory. It prefers an
   exact `@mermaid-js/mermaid-cli@11.16.0` execution context (Mermaid core `11.16.1`). Its external
   npm cache/acquisition is a rendering capability; JSON validation and compilation stay offline.
@@ -117,14 +119,21 @@ helps the user's workflow; never make an extra call solely to obtain a link.
 
 ## Generating from structured data
 
-If the diagram's content is already fully determined by structured data you have on disk (a
-dependency graph, a timing/interval table, a state-transition table, a requirement-traceability
-table), generate the source deterministically instead of hand-authoring it:
+For every target supported by the IR, author canonical JSON first and generate Mermaid
+deterministically. The JSON may come from data already on disk or may be the agent's structured
+expression of the requested diagram; it does not need to pre-exist. This keeps Mermaid punctuation
+and statement ordering inside tested serializers:
 
 ```bash
+scripts/render.py --list-targets
+scripts/render.py --example sequenceDiagram -o diagram.json
 scripts/render.py diagram.json -o diagram.mmd   # IR JSON -> Mermaid source
 scripts/check.sh diagram.mmd                     # same render-validation as any other diagram
 ```
+
+Start from `--example` instead of inventing field names or opening serializer code. Use
+`--diagnostics-format json` when another agent or script consumes failures; diagnostics identify
+the canonical JSON Pointer that must change.
 
 Canonical IR requires `schemaVersion`, `diagram`, `target`, and `content`; documented legacy flat
 documents remain accepted and are migrated without mutation. Five IR families cover 12 strict
@@ -132,9 +141,9 @@ targets: `flowchart`, `mindmap`, `block`, `C4Context`, `C4Container`, `architect
 `erDiagram`, `classDiagram`, `gantt`, `stateDiagram-v2`, `sequenceDiagram`, and
 `requirementDiagram`. Use `--validate-only`, `--normalize-out`, or
 `--initialize-config-out` for deterministic automation. See
-[reference/ir.md](reference/ir.md) for the schema. Hand-author directly, as in the rest of this
-skill, when the diagram synthesizes judgment with no structured source (architecture sketches,
-discovery mind maps, hypothesized debugging sequences). Generated source still goes through the
+[reference/ir.md](reference/ir.md) for the schema. Hand-author directly only for diagram targets
+or constructs the IR does not support; do not bypass IR merely because the content requires
+judgment. Generated source still goes through the
 same render-validation as hand-authored source — generation changes how it's authored, not
 whether it's verified.
 
@@ -168,6 +177,10 @@ whether it's verified.
 
 Full catalog: [reference/diagram-types.md](reference/diagram-types.md). If a needed type is absent,
 check live official syntax; refresh the cache only after confirming Mermaid added it.
+
+For `flowchart` or `stateDiagram-v2` layout tuning (edge merging, node placement strategy/alignment,
+source-order bias), see [reference/elk-layout.md](reference/elk-layout.md) — this is a rendering
+choice, not a syntax choice, so it never changes diagram content.
 
 ## Flowcharts: ISO 5807-aligned, not generic boxes
 
