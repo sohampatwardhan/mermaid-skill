@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import importlib.util
+import os
 import re
 import shutil
 import subprocess
@@ -17,8 +18,17 @@ SYNTAX_DIR = REFERENCE / "syntax"
 CATALOG_DIR = REFERENCE / "catalog"
 COVERAGE = REFERENCE / "coverage.md"
 CHECK = SKILL_DIR / "scripts" / "check.sh"
+PARSER = SKILL_DIR / "scripts" / "mermaid-parse.mjs"
 BASH = shutil.which("bash") or "/bin/bash"
-HAVE_CLI = bool(shutil.which("mmdc") or shutil.which("npx"))
+
+# check.sh validates by parsing with the pinned Mermaid 12.0.0 (Node + mermaid@12.0.0 + jsdom),
+# no browser. The parse-dependent tests need Node and a way to reach the pin: either a
+# node_modules via MERMAID_PARSE_NODE_MODULES, or npm so check.sh can install it once. HAVE_CLI
+# keeps its name as the "can we actually validate?" gate the test modules already branch on.
+HAVE_CLI = bool(
+    shutil.which("node")
+    and (os.environ.get("MERMAID_PARSE_NODE_MODULES") or shutil.which("npm"))
+)
 
 SECTIONS = (
     "Keywords",

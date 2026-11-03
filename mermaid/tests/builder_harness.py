@@ -254,7 +254,7 @@ def batch_markdown(cases: list[Case]) -> tuple[str, list[tuple[int, str]]]:
 
 
 def run_batch(cases: list[Case]) -> list[str]:
-    """Render every case through `check.sh --markdown` once; return failures by case label."""
+    """Validate every case through `check.sh --markdown` once; return failures by case label."""
     text, starts = batch_markdown(cases)
     with tempfile.TemporaryDirectory() as tmp:
         path = Path(tmp) / "batch.md"

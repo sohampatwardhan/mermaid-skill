@@ -903,7 +903,7 @@ def test_st_start_to_end_is_rejected() -> None:
     assert _st_error_path(_st_doc(states=[{"id": "A"}], transitions=[{"from": "[*]", "to": "[*]"}])) == "/transitions/0/to"
 
 
-@pytest.mark.skipif(not HAVE_CLI, reason="needs Mermaid CLI 12.0.0 or npx")
+@pytest.mark.skipif(not HAVE_CLI, reason="needs Node and the pinned Mermaid 12.0.0 parser")
 @pytest.mark.parametrize("ir", [_st_LIFECYCLE, _st_COMPOSITE], ids=["lifecycle", "composite"])
 def test_st_rule_documents_render(ir: dict, tmp_path) -> None:
     path = tmp_path / "d.mmd"

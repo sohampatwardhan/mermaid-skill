@@ -152,7 +152,7 @@ def test_railroad_corpus_in_every_notation() -> None:
     assert not problems, "\n".join(problems)
 
 
-@pytest.mark.skipif(not HAVE_CLI, reason="needs Mermaid CLI 12.0.0 or npx")
+@pytest.mark.skipif(not HAVE_CLI, reason="needs Node and the pinned Mermaid 12.0.0 parser")
 def test_railroad_corpus_in_every_notation_renders() -> None:
     _, cases = railroad_corpus_cases()
     problems = h.run_batch(cases)

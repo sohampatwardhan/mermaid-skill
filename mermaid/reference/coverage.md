@@ -6,12 +6,14 @@ the page's file stem and the catalog file's stem. `tests/test_coverage.py` parse
 
 - **Keywords** are the IR `target` values `render.py` accepts for the type (its `BUILDERS`
   and `HAND_AUTHOR_ONLY` keys). Other aliases are listed in the catalog file.
-- **Builder** is `builder` (a kept, fully tested IR builder) or `hand-author-only`. A
-  `builder` row always has Gaps `—`. `candidate` is transitional: the builder exists but has
-  not been through the reliability bar yet.
+- **Builder** is `builder` (a kept, fully tested IR builder) or `hand-author-only`. A kept
+  builder meets the reliability bar: every accepted IR parses with the pinned Mermaid 12.0.0,
+  and unrepresentable input is rejected with a JSON Pointer. A `builder` row always has Gaps
+  `—`. `candidate` is transitional: the builder exists but has not been through the bar yet.
 - **Tests** names the test that covers the type.
 
-CI pins `@mermaid-js/mermaid-cli@12.0.0` with Mermaid `12.0.0` on Node 22.
+CI pins `mermaid@12.0.0` (with `jsdom` and the zenuml plugin) on Node 22 and validates by
+parsing with `mermaid.parse()` — no browser or render.
 
 | Type | Keywords | Catalog | Builder | Tests | Gaps |
 |---|---|---|---|---|---|

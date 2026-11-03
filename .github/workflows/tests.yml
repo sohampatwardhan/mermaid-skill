@@ -7,8 +7,8 @@ on:
 jobs:
   mermaid:
     runs-on: ubuntu-latest
-    # A single wedged headless-Chromium render once stalled this job for 45 minutes. check.sh
-    # now bounds each render (MERMAID_CHECK_TIMEOUT); this is the belt-and-braces job backstop.
+    # Parsing is fast, but keep a generous job backstop: check.sh also bounds each parse
+    # (MERMAID_CHECK_TIMEOUT) so a wedged Node process fails fast rather than stalling the run.
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v6
@@ -17,35 +17,28 @@ jobs:
           python-version: "3.11"
       - uses: actions/setup-node@v6
         with:
-          # @mermaid-js/mermaid-cli@12 requires Node >= 22.13. Node 20 makes npx
-          # resolve an older CLI that does not register agentflow-beta.
+          # mermaid@12 is ESM and targets modern Node; 22 matches the CLI the skill documents.
           node-version: "22"
-      # pytest-xdist runs the independent render tests across every runner core; the bulk of
-      # the wall time is headless-Chromium render tests that parallelise cleanly.
-      - run: pip install pytest pytest-xdist
-      # Pin the CLI (and Mermaid) so CI does not float to whatever `npx` latest
-      # resolves. check.sh prefers this mmdc over its npx fallback.
-      - name: Install pinned Mermaid CLI
+      - run: pip install pytest
+      # Provision the pinned parser dependencies: mermaid@12.0.0 (what check.sh validates
+      # against), jsdom (the DOM the parser needs), and the zenuml plugin (the one external
+      # diagram the catalog documents). check.sh and mermaid-parse.mjs read them from
+      # MERMAID_PARSE_NODE_MODULES, so there is no per-test install. Keep the pin in sync with
+      # mermaid/scripts/check.sh.
+      - name: Install pinned Mermaid 12.0.0 parser
         run: |
-          mkdir -p "$RUNNER_TEMP/mmdc"
-          cd "$RUNNER_TEMP/mmdc"
+          mkdir -p "$RUNNER_TEMP/parse"
+          cd "$RUNNER_TEMP/parse"
           npm init -y >/dev/null
           npm install --no-fund --no-audit --save-exact \
-            @mermaid-js/mermaid-cli@12.0.0 \
-            mermaid@12.0.0
-          echo "$RUNNER_TEMP/mmdc/node_modules/.bin" >> "$GITHUB_PATH"
-          "$RUNNER_TEMP/mmdc/node_modules/.bin/mmdc" --version
-          node -e "const v=require(process.env.RUNNER_TEMP+'/mmdc/node_modules/mermaid/package.json').version; if(v!=='12.0.0'){console.error('expected mermaid 12.0.0, got '+v); process.exit(1)} console.log('mermaid '+v)"
-      # GitHub Actions' ubuntu-latest AppArmor policy blocks the unprivileged user namespace
-      # Chromium's sandbox needs; this opt-in escape hatch (unset by default, see check.sh) is
-      # only needed in a locked-down CI-style environment, not for normal/local use.
-      - name: Allow Chromium to run without a sandbox
-        run: |
-          echo '{"args": ["--no-sandbox"]}' > /tmp/puppeteer-config.json
-      - run: python3 -m pytest tests/ -q -n auto --durations=15
+            mermaid@12.0.0 \
+            jsdom \
+            @mermaid-js/mermaid-zenuml@1.0.1
+          node -e "const v=require(process.env.RUNNER_TEMP+'/parse/node_modules/mermaid/package.json').version; if(v!=='12.0.0'){console.error('expected mermaid 12.0.0, got '+v); process.exit(1)} console.log('mermaid '+v)"
+          echo "MERMAID_PARSE_NODE_MODULES=$RUNNER_TEMP/parse/node_modules" >> "$GITHUB_ENV"
+      - run: python3 -m pytest tests/ -q --durations=15
         working-directory: mermaid
         env:
-          MERMAID_PUPPETEER_CONFIG: /tmp/puppeteer-config.json
-          # Bound each render well under the job and per-call limits so a wedged Chromium fails
-          # fast instead of stalling the run; a healthy render finishes in a few seconds.
+          # Bound each parse well under the job limit so a wedged Node process fails fast; a
+          # healthy parse finishes in well under a second.
           MERMAID_CHECK_TIMEOUT: "60"

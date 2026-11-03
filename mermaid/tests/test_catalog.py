@@ -52,7 +52,7 @@ def test_builder_section_matches_coverage(path) -> None:
     assert builder_state(path.read_text()) == rows[path.stem].builder
 
 
-@pytest.mark.skipif(not HAVE_CLI, reason="needs Mermaid CLI 12.0.0 or npx")
+@pytest.mark.skipif(not HAVE_CLI, reason="needs Node and the pinned Mermaid 12.0.0 parser")
 def test_every_catalog_fence_passes_check() -> None:
     files = catalog_files()
     if not files:

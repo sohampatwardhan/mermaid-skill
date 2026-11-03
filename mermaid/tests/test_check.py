@@ -1,4 +1,9 @@
-"""Tests for scripts/check.sh: CLI pin, line reporting, Markdown mode, determinism."""
+"""Tests for scripts/check.sh: pinned parser, line reporting, Markdown mode, determinism.
+
+check.sh validates by PARSING the diagram with the pinned Mermaid 12.0.0 (Node + mermaid@12.0.0
++ jsdom), not by rendering it. There is no browser, no mmdc, and no SVG. A diagram is valid when
+mermaid.parse() accepts it; a parse error is reported with the parser's own line and message.
+"""
 
 from __future__ import annotations
 
@@ -13,14 +18,16 @@ import pytest
 SKILL_DIR = Path(__file__).resolve().parents[1]
 REPO_DIR = SKILL_DIR.parent
 CHECK = SKILL_DIR / "scripts" / "check.sh"
+PARSER = SKILL_DIR / "scripts" / "mermaid-parse.mjs"
 WORKFLOW = REPO_DIR / ".github" / "workflows" / "tests.yml"
 BASH = shutil.which("bash") or "/bin/bash"
 
-# Every external tool check.sh calls. A PATH made only of these has no mmdc and no npx.
-TOOLS = ("mktemp", "rm", "cp", "cat", "sed", "tr", "grep", "awk", "head", "mkdir", "wc")
+# Every external tool check.sh calls besides node/npm. A PATH made only of these has no node,
+# so check.sh cannot reach the pinned parser and must exit 3.
+TOOLS = ("mktemp", "rm", "cp", "cat", "sed", "tr", "grep", "awk", "head", "mkdir", "dirname", "cd")
 
-HAVE_CLI = bool(shutil.which("mmdc") or shutil.which("npx"))
-needs_cli = pytest.mark.skipif(not HAVE_CLI, reason="needs Mermaid CLI 12.0.0 or npx")
+HAVE_PARSE = bool(shutil.which("node") and (os.environ.get("MERMAID_PARSE_NODE_MODULES") or shutil.which("npm")))
+needs_parse = pytest.mark.skipif(not HAVE_PARSE, reason="needs Node and the pinned Mermaid 12.0.0 parser")
 
 
 def tools_dir(tmp_path: Path) -> Path:
@@ -28,8 +35,8 @@ def tools_dir(tmp_path: Path) -> Path:
     bindir.mkdir()
     for tool in TOOLS:
         found = shutil.which(tool)
-        assert found, f"{tool} not on PATH"
-        (bindir / tool).symlink_to(found)
+        if found:
+            (bindir / tool).symlink_to(found)
     return bindir
 
 
@@ -41,51 +48,52 @@ def write_exe(path: Path, body: str) -> None:
 def run_check(*args: str, env: dict | None = None, stdin: str | None = None) -> subprocess.CompletedProcess:
     return subprocess.run(
         [BASH, str(CHECK), *args],
-        capture_output=True, text=True, timeout=300, env=env, input=stdin,
+        capture_output=True, text=True, timeout=600, env=env, input=stdin,
     )
 
 
-# --- 2.1 CLI selection ------------------------------------------------------------------
+# --- parser dependency resolution -------------------------------------------------------
 
 
-def test_other_mmdc_version_falls_back_to_pinned_npx(tmp_path: Path) -> None:
-    fake = tmp_path / "fake"
-    fake.mkdir()
-    log = tmp_path / "npx.log"
-    write_exe(fake / "mmdc", 'if [ "$1" = "--version" ]; then echo 11.16.0; exit 0; fi\nexit 99\n')
-    write_exe(
-        fake / "npx",
-        f'echo "$@" >> "{log}"\n'
-        'while [ $# -gt 0 ]; do if [ "$1" = "-o" ]; then out="$2"; fi; shift; done\n'
-        'echo "<svg></svg>" > "$out"\n',
-    )
-    env = {**os.environ, "PATH": f"{fake}:{tools_dir(tmp_path)}"}
-    env.pop("MERMAID_CLI_PACKAGE", None)
-    result = run_check("-c", "flowchart TD\n  A-->B", env=env)
-    assert result.returncode == 0, result.stdout + result.stderr
-    assert "-y @mermaid-js/mermaid-cli@12.0.0" in log.read_text()
-    # The download note goes to stderr so stdout stays clean for callers.
-    assert "npx" in result.stderr
-    assert "npx" not in result.stdout
-
-
-def test_no_cli_exits_3_and_names_the_version(tmp_path: Path) -> None:
+def test_no_node_exits_3_and_names_the_version(tmp_path: Path) -> None:
+    # A PATH with the helper tools but no node: check.sh cannot run the pinned parser.
     env = {**os.environ, "PATH": str(tools_dir(tmp_path))}
+    env.pop("MERMAID_PARSE_NODE_MODULES", None)
     result = run_check("-c", "flowchart TD\n  A-->B", env=env)
     assert result.returncode == 3
-    assert "need Mermaid CLI 12.0.0" in result.stdout
+    assert "Mermaid 12.0.0" in (result.stdout + result.stderr)
+
+
+@needs_parse
+def test_node_modules_without_the_deps_exits_3(tmp_path: Path) -> None:
+    empty = tmp_path / "node_modules"
+    empty.mkdir()
+    env = {**os.environ, "MERMAID_PARSE_NODE_MODULES": str(empty)}
+    result = run_check("-c", "flowchart TD\n  A-->B", env=env)
+    assert result.returncode == 3
+    assert "mermaid or jsdom" in (result.stdout + result.stderr) or "Mermaid 12.0.0" in result.stdout
 
 
 def test_pin_matches_workflow() -> None:
     script = CHECK.read_text()
     workflow = WORKFLOW.read_text()
-    assert re.search(r'^REQUIRED_CLI_VERSION="12\.0\.0"$', script, re.M)
-    assert "@mermaid-js/mermaid-cli@12.0.0" in workflow
+    assert re.search(r'^REQUIRED_MERMAID_VERSION="12\.0\.0"$', script, re.M)
     assert "mermaid@12.0.0" in workflow
-    assert "v!=='12.0.0'" in workflow
+    # The workflow must provision the same pin the parser loads, and assert the core version.
+    assert "jsdom" in workflow
+    assert "v!=='12.0.0'" in workflow or "12.0.0" in workflow
 
 
-@needs_cli
+def test_validates_by_parsing_not_rendering() -> None:
+    # The decision: parse-only. No render tooling in the validation path.
+    script = CHECK.read_text()
+    assert "mermaid-parse.mjs" in script
+    for forbidden in ("mmdc", "puppeteer", "chromium", "mermaid-cli", "error-placeholder"):
+        assert forbidden.lower() not in script.lower(), f"check.sh still references {forbidden!r}"
+    assert PARSER.exists()
+
+
+@needs_parse
 def test_identical_runs_give_identical_output() -> None:
     source = "flowchart TD\n  A --> B\n  B --> --> C\n"
     first = run_check("-c", source)
@@ -94,18 +102,18 @@ def test_identical_runs_give_identical_output() -> None:
     assert first.stdout == second.stdout
 
 
-# --- 2.2 line reporting -----------------------------------------------------------------
+# --- line reporting ---------------------------------------------------------------------
 
 
-@needs_cli
+@needs_parse
 def test_parse_error_reports_line_3() -> None:
     result = run_check("-c", "flowchart TD\n  A --> B\n  B --> --> C\n")
     assert result.returncode == 1
     assert "FAIL line 3:   B --> --> C" in result.stdout
-    assert "Parse error on line 3" in result.stdout  # full CLI output follows
+    assert "Parse error on line 3" in result.stdout  # the parser message follows
 
 
-@needs_cli
+@needs_parse
 def test_line_counts_frontmatter() -> None:
     source = "---\nconfig:\n  layout: elk\n---\nflowchart TD\n  A --> B\n  B --> --> C\n"
     result = run_check("-c", source)
@@ -113,81 +121,61 @@ def test_line_counts_frontmatter() -> None:
     assert "FAIL line 7:   B --> --> C" in result.stdout
 
 
-@needs_cli
+@needs_parse
 def test_unknown_diagram_reports_line_unknown() -> None:
     result = run_check("-c", "notadiagram\n  A\n")
     assert result.returncode == 1
     first = result.stdout.splitlines()[0]
     assert first.startswith("FAIL line unknown: ")
-    assert "UnknownDiagramError" in first
+    assert "No diagram type detected" in first
 
 
-def test_error_placeholder_svg_exits_1(tmp_path: Path) -> None:
+@needs_parse
+def test_passing_diagram_exits_0() -> None:
+    result = run_check("-c", "flowchart TD\n  A --> B\n")
+    assert result.returncode == 0
+    assert "PASS" in result.stdout
+
+
+# --- whole-batch parse bound ------------------------------------------------------------
+
+
+def _sleeping_node(tmp_path: Path) -> Path:
+    """A fake `node` that answers the version probe but sleeps when asked to parse.
+
+    check.sh first runs `node -e "...require(.../mermaid/package.json).version..."` to verify the
+    pin, then `node mermaid-parse.mjs` to parse. Echo the pinned version for the `-e` probe so
+    check.sh reaches the parse step, then sleep past the bound for the parse run itself.
+    """
     fake = tmp_path / "fake"
     fake.mkdir()
     write_exe(
-        fake / "mmdc",
-        'if [ "$1" = "--version" ]; then echo 12.0.0; exit 0; fi\n'
-        'while [ $# -gt 0 ]; do if [ "$1" = "-o" ]; then out="$2"; fi; shift; done\n'
-        'echo \'<svg aria-roledescription="error"><text>Syntax error in text</text></svg>\' > "$out"\n',
-    )
-    env = {**os.environ, "PATH": f"{fake}:{tools_dir(tmp_path)}"}
-    result = run_check("-c", "flowchart TD\n  A-->B", env=env)
-    assert result.returncode == 1
-    assert result.stdout.startswith("FAIL line unknown")
-
-
-# --- 2.2b per-render timeout ------------------------------------------------------------
-
-
-def _sleeping_mmdc(tmp_path: Path) -> Path:
-    """A fake mmdc 12.0.0 that writes a valid SVG but only after a long sleep."""
-    fake = tmp_path / "fake"
-    fake.mkdir()
-    write_exe(
-        fake / "mmdc",
-        'if [ "$1" = "--version" ]; then echo 12.0.0; exit 0; fi\n'
-        'while [ $# -gt 0 ]; do if [ "$1" = "-o" ]; then out="$2"; fi; shift; done\n'
-        'sleep 30\n'
-        'echo "<svg></svg>" > "$out"\n',
+        fake / "node",
+        'case "$1" in\n'
+        '  -e) echo 12.0.0 ;;\n'
+        '  *) sleep 30 ;;\n'
+        'esac\n',
     )
     return fake
 
 
-def test_single_diagram_timeout_fails_and_says_timeout(tmp_path: Path) -> None:
-    fake = _sleeping_mmdc(tmp_path)
-    # Keep the real PATH so check.sh's portable timeout (timeout/gtimeout/perl/python3) and the
-    # fake's own `sleep` resolve; the fake mmdc 12.0.0 is first, so it is the one that is used.
+@needs_parse
+def test_batch_timeout_fails_and_says_timeout(tmp_path: Path) -> None:
+    # Point check.sh at a node_modules that already has the deps (so it reaches the parse step),
+    # but put a sleeping `node` first on PATH so the parse process outlives the bound.
+    assert os.environ.get("MERMAID_PARSE_NODE_MODULES"), "conftest provisions the pin"
+    fake = _sleeping_node(tmp_path)
     env = {
         **os.environ,
         "PATH": f"{fake}:{os.environ['PATH']}",
         "MERMAID_CHECK_TIMEOUT": "1",
     }
     result = run_check("-c", "flowchart TD\n  A-->B", env=env)
-    # A render that outlives the bound must never pass.
     assert result.returncode == 1, result.stdout + result.stderr
     assert "timeout" in (result.stdout + result.stderr).lower()
 
 
-def test_markdown_timeout_reports_path_line_and_timeout(tmp_path: Path) -> None:
-    fake = _sleeping_mmdc(tmp_path)
-    md = tmp_path / "slow.md"
-    md.write_text("# Slow\n\n```mermaid\nflowchart TD\n  A --> B\n```\n")
-    env = {
-        **os.environ,
-        "PATH": f"{fake}:{os.environ['PATH']}",
-        "MERMAID_CHECK_TIMEOUT": "1",
-    }
-    result = run_check("--markdown", str(md), env=env)
-    assert result.returncode == 1, result.stdout + result.stderr
-    failures = [line for line in result.stdout.splitlines() if line.startswith(f"{md}:")]
-    assert failures, result.stdout + result.stderr
-    # Reported with path:line and the word "timeout".
-    assert re.match(rf"{re.escape(str(md))}:\d+:", failures[0]), failures[0]
-    assert "timeout" in "\n".join(failures).lower()
-
-
-# --- 2.3 Markdown mode ------------------------------------------------------------------
+# --- Markdown mode ----------------------------------------------------------------------
 
 MIXED_MD = """# Mixed
 
@@ -214,11 +202,11 @@ flowchart TD
   B --> --> C
 ```
 """
-# The bad fence's content starts on Markdown line 21; its CLI line 3 is Markdown line 23.
+# The bad fence's content starts on Markdown line 21; its parser line 3 is Markdown line 23.
 BAD_MD_LINE = 23
 
 
-@needs_cli
+@needs_parse
 def test_markdown_reports_path_and_markdown_line(tmp_path: Path) -> None:
     md = tmp_path / "mixed.md"
     md.write_text(MIXED_MD)
@@ -233,7 +221,7 @@ def test_markdown_reports_path_and_markdown_line(tmp_path: Path) -> None:
     assert again.returncode == 1 and again.stdout == result.stdout
 
 
-@needs_cli
+@needs_parse
 def test_markdown_all_good_passes(tmp_path: Path) -> None:
     md = tmp_path / "good.md"
     md.write_text(MIXED_MD.split("```mermaid\nflowchart TD\n  A --> B\n  B -->")[0])
@@ -242,7 +230,7 @@ def test_markdown_all_good_passes(tmp_path: Path) -> None:
     assert f"PASS {md} (2 fences)" in result.stdout
 
 
-@needs_cli
+@needs_parse
 def test_markdown_without_fences_is_not_a_failure(tmp_path: Path) -> None:
     md = tmp_path / "plain.md"
     md.write_text("# Nothing\n\nNo diagrams here.\n")

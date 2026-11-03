@@ -10,15 +10,17 @@ catalog file per diagram type.
   `mermaid/reference/catalog/` with its syntax, every feature, config and theming, traps, and a
   complete worked example. An agent picks a type from the index and loads only that file. The
   cached upstream pages stay in `mermaid/reference/syntax/`, pinned to the `mermaid@12.0.0` tag.
-- **Never presented unverified.** Every diagram is render-validated with `scripts/check.sh`,
-  which pins Mermaid CLI 12.0.0, reports the failing line, and rejects Mermaid's silent
-  error-placeholder SVG. CI runs it on every example in every catalog file.
+- **Never presented unverified.** Every diagram is validated with `scripts/check.sh`, which
+  **parses** the source with the pinned Mermaid 12.0.0 (no browser, no render) and reports the
+  failing line. Mermaid diagrams live in Markdown and are rendered by whatever viewer shows the
+  note, so validation only needs to confirm the source parses. CI runs it on every example in
+  every catalog file.
 - **Optional, reliable generation from structured data.** When a diagram's content is already
   structured data, `mermaid/scripts/render.py` generates the exact Mermaid source from a small
   JSON intermediate representation (IR) — see [`mermaid/reference/ir.md`](mermaid/reference/ir.md).
-  A type keeps a builder only where it is 100% reliable: accepted IR always renders, and anything
-  it cannot represent is rejected with a JSON path rather than guessed. The checked matrix of
-  every type, its keywords, its builder, and its tests is
+  A type keeps a builder only where it is 100% reliable: every accepted IR parses with the pinned
+  Mermaid 12.0.0, and anything it cannot represent is rejected with a JSON path rather than
+  guessed. The checked matrix of every type, its keywords, its builder, and its tests is
   [`mermaid/reference/coverage.md`](mermaid/reference/coverage.md).
 
 ## Install
@@ -52,10 +54,11 @@ part of the installed skill.
 cd mermaid && python3 -m pytest tests/ -q
 ```
 
-The builder tests render every fixture and text-corpus case through `scripts/check.sh` (an
-`mmdc` 12.0.0, otherwise `npx -y @mermaid-js/mermaid-cli@12.0.0`), and `check.sh --markdown`
-validates every example in every catalog file — not just string matches. GitHub Actions installs
-that same pin on Node 22. Mermaid 11 does not register `agentflow-beta`.
+The builder tests parse every fixture and text-corpus case through `scripts/check.sh`, which
+runs `scripts/mermaid-parse.mjs` to load `mermaid@12.0.0` (with `jsdom`, and the zenuml plugin)
+on Node 22+ and call `mermaid.parse()`; `check.sh --markdown` validates every example in every
+catalog file — not just string matches. GitHub Actions installs that same pin on Node 22. The
+pin matters: Mermaid 11 does not register `agentflow-beta`.
 
 ## Versioning
 

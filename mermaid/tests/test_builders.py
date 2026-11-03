@@ -1,8 +1,10 @@
 """Reliability bar for every kept builder (coverage.md Builder column `builder`).
 
-Per type: minimal and maximal fixtures render deterministically, the maximal fixtures cover
+Per type: minimal and maximal fixtures serialize deterministically, the maximal fixtures cover
 every catalog feature id, every text field takes the corpus, unknown keys and bad values fail
-at the right JSON path, and every accepted source passes one `check.sh --markdown` batch.
+at the right JSON path, and every accepted source parses with the pinned Mermaid 12.0.0 in one
+`check.sh --markdown` batch. "Accepted IR parses" is the reliability bar: unrepresentable input
+is rejected with a JSON path, and everything accepted parses with the pin.
 """
 
 from __future__ import annotations
@@ -73,10 +75,10 @@ def test_strictness(type_id: str) -> None:
     assert not problems, "\n".join(problems)
 
 
-@pytest.mark.skipif(not HAVE_CLI, reason="needs Mermaid CLI 12.0.0 or npx")
+@pytest.mark.skipif(not HAVE_CLI, reason="needs Node and the pinned Mermaid 12.0.0 parser")
 @pytest.mark.parametrize("type_id", KEPT)
 def test_pinned_check(type_id: str) -> None:
-    """Every fixture and every accepted corpus substitution, in one check.sh --markdown run."""
+    """Every fixture and every accepted corpus substitution parses, in one check.sh run."""
     _, cases = all_cases(BY_TYPE[type_id])
     assert cases, "nothing to check"
     problems = h.run_batch(cases)

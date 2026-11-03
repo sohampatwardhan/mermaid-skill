@@ -1,35 +1,40 @@
 #!/usr/bin/env bash
-# Validate Mermaid diagrams locally with Mermaid CLI 12.0.0 (no MCP server needed).
+# Validate Mermaid diagrams by PARSING them with the pinned Mermaid 12.0.0 (no render, no
+# browser, no MCP server). A diagram is valid when mermaid.parse() accepts it; a parse error
+# is reported with the parser's own line number and message.
 #
 # Usage:
-#   check.sh diagram.mmd                 # validate (render to a temp SVG, discard)
-#   check.sh diagram.mmd -o out.svg      # validate AND keep the rendered SVG/PNG/PDF
+#   check.sh diagram.mmd                 # validate one .mmd file
 #   cat diagram.mmd | check.sh           # read from stdin
 #   check.sh -c 'flowchart TD; A-->B'    # inline code
 #   check.sh --markdown A.md [B.md ...]  # validate every ```mermaid fence, report PATH:LINE
 #
-# Exit 0 = renders cleanly, 1 = render failure or error-placeholder SVG,
-# 2 = bad input (missing file, empty diagram), 3 = no usable Mermaid CLI 12.0.0.
+# Exit 0 = parses cleanly, 1 = parse failure, 2 = bad input (missing file, empty diagram),
+# 3 = no usable Mermaid 12.0.0 parser (Node 22+ with mermaid@12.0.0 and jsdom).
 #
-# CLI selection: an `mmdc` on PATH is used only when `mmdc --version` prints 12.0.0.
-# Otherwise `npx -y ${MERMAID_CLI_PACKAGE}` (default @mermaid-js/mermaid-cli@12.0.0).
-# Keep the pin in sync with .github/workflows/tests.yml.
+# Parser: scripts/mermaid-parse.mjs loads mermaid@12.0.0 once and parses the whole batch in one
+# Node process. The pinned mermaid and jsdom are resolved from MERMAID_PARSE_NODE_MODULES when
+# set (a node_modules directory holding both at the pin); otherwise check.sh installs the pin
+# once into a cache dir (MERMAID_PARSE_CACHE, default under the system temp) with npm. Keep the
+# pin in sync with .github/workflows/tests.yml.
 #
-# Optional: set MERMAID_CHECK_TIMEOUT to the per-diagram render bound in seconds (default 60).
-# A render that outlives it is reported as a failure naming "timeout" — never a pass. The bound
+# Optional: set MERMAID_CHECK_TIMEOUT to the whole-batch parse bound in seconds (default 120).
+# A parse that outlives it is reported as a failure naming "timeout" — never a pass. The bound
 # is portable (GNU/BSD `timeout`, else a perl or python3 watchdog). Set 0 to disable it.
-#
-# Optional: set MERMAID_PUPPETEER_CONFIG to a puppeteer JSON config path (e.g.
-# {"args": ["--no-sandbox"]}) when the host can't grant Chromium a sandbox — some CI runners
-# (e.g. GitHub Actions' ubuntu-latest, whose AppArmor policy blocks unprivileged user
-# namespaces) need this. Unset by default; local/interactive use is unaffected.
 #
 # Compatible with bash 3.2 (macOS /bin/bash): no associative arrays, no mapfile, and no
 # expansion of a possibly-empty array under `set -u`.
 set -euo pipefail
 
-REQUIRED_CLI_VERSION="12.0.0"
-MERMAID_CLI_PACKAGE="${MERMAID_CLI_PACKAGE:-@mermaid-js/mermaid-cli@${REQUIRED_CLI_VERSION}}"
+REQUIRED_MERMAID_VERSION="12.0.0"
+MERMAID_PARSE_PACKAGE="${MERMAID_PARSE_PACKAGE:-mermaid@${REQUIRED_MERMAID_VERSION}}"
+JSDOM_PACKAGE="${JSDOM_PACKAGE:-jsdom}"
+# zenuml is an external diagram the catalog documents; the parser registers it so a zenuml
+# fence validates. It is optional: without it a zenuml diagram reports a parse failure.
+ZENUML_PACKAGE="${ZENUML_PACKAGE:-@mermaid-js/mermaid-zenuml@1.0.1}"
+
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+PARSER="${SCRIPT_DIR}/mermaid-parse.mjs"
 
 OUT=""; INPUT=""; CODE=""; MARKDOWN=0
 MD_FILES="" # newline-separated; bash 3.2 has no safe empty arrays under set -u
@@ -38,7 +43,7 @@ while [ $# -gt 0 ]; do
     -o) OUT="${2:-}"; shift 2;;
     -c) CODE="${2:-}"; shift 2;;
     --markdown) MARKDOWN=1; shift;;
-    -h|--help) sed -n '2,16p' "$0"; exit 0;;
+    -h|--help) sed -n '2,14p' "$0"; exit 0;;
     *)
       if [ "${MARKDOWN}" = 1 ]; then
         MD_FILES="${MD_FILES}$1
@@ -50,9 +55,13 @@ while [ $# -gt 0 ]; do
   esac
 done
 
+if [ -n "${OUT}" ]; then
+  echo "note: check.sh validates by parsing and does not produce images; -o is ignored. Use a" >&2
+  echo "      separate render tool (a host Mermaid render tool, or render.py then your renderer)." >&2
+fi
+
 TMPDIR_LOCAL="$(mktemp -d)"
 trap 'rm -rf "${TMPDIR_LOCAL}"' EXIT
-ERRLOG="${TMPDIR_LOCAL}/err.log"
 
 # --- input --------------------------------------------------------------------------------
 
@@ -80,29 +89,67 @@ if [ "${MARKDOWN}" = 0 ]; then
   [ -s "${SRC}" ] || { echo "ERROR: empty diagram."; exit 2; }
 fi
 
-# --- CLI selection ------------------------------------------------------------------------
+# --- parser dependencies ------------------------------------------------------------------
 
-# A different mmdc version is never used: its verdict could differ from the pinned one.
-if command -v mmdc >/dev/null 2>&1 \
-  && [ "$(mmdc --version 2>/dev/null | tr -d '[:space:]')" = "${REQUIRED_CLI_VERSION}" ]; then
-  RUN=(mmdc)
-elif command -v npx >/dev/null 2>&1; then
-  echo "note: no mmdc ${REQUIRED_CLI_VERSION} on PATH; using 'npx -y ${MERMAID_CLI_PACKAGE}' (first run downloads it)." >&2
-  RUN=(npx -y "${MERMAID_CLI_PACKAGE}")
-else
-  echo "ERROR: need Mermaid CLI ${REQUIRED_CLI_VERSION} (mmdc ${REQUIRED_CLI_VERSION} or npx on PATH)."
-  echo "Install once with: npm install -g @mermaid-js/mermaid-cli@${REQUIRED_CLI_VERSION}"
+command -v node >/dev/null 2>&1 || {
+  echo "ERROR: need Node.js 22+ to run the pinned Mermaid ${REQUIRED_MERMAID_VERSION} parser."
+  exit 3
+}
+
+# node_modules holding mermaid@12.0.0 and jsdom. Honour a caller-provided one (CI points this
+# at its pinned install); otherwise install the pin once into a cache dir and reuse it.
+resolve_node_modules() {
+  if [ -n "${MERMAID_PARSE_NODE_MODULES:-}" ]; then
+    if [ -d "${MERMAID_PARSE_NODE_MODULES}/mermaid" ] && [ -d "${MERMAID_PARSE_NODE_MODULES}/jsdom" ]; then
+      printf '%s' "${MERMAID_PARSE_NODE_MODULES}"
+      return 0
+    fi
+    echo "ERROR: MERMAID_PARSE_NODE_MODULES=${MERMAID_PARSE_NODE_MODULES} lacks mermaid or jsdom." >&2
+    return 1
+  fi
+  local cache="${MERMAID_PARSE_CACHE:-${TMPDIR:-/tmp}/mermaid-parse-${REQUIRED_MERMAID_VERSION}}"
+  local modules="${cache}/node_modules"
+  if [ -d "${modules}/mermaid" ] && [ -d "${modules}/jsdom" ]; then
+    printf '%s' "${modules}"
+    return 0
+  fi
+  command -v npm >/dev/null 2>&1 || {
+    echo "ERROR: need npm to install the pinned Mermaid ${REQUIRED_MERMAID_VERSION} parser (set" >&2
+    echo "       MERMAID_PARSE_NODE_MODULES to a node_modules that already has mermaid and jsdom)." >&2
+    return 1
+  }
+  echo "note: installing ${MERMAID_PARSE_PACKAGE}, ${JSDOM_PACKAGE}, and ${ZENUML_PACKAGE} into ${cache} (first run only)." >&2
+  mkdir -p "${cache}"
+  ( cd "${cache}" \
+      && { [ -f package.json ] || npm init -y >/dev/null 2>&1; } \
+      && npm install --no-fund --no-audit --save-exact "${MERMAID_PARSE_PACKAGE}" "${JSDOM_PACKAGE}" "${ZENUML_PACKAGE}" >/dev/null 2>&1 ) || {
+    echo "ERROR: could not install the pinned Mermaid ${REQUIRED_MERMAID_VERSION} parser." >&2
+    return 1
+  }
+  printf '%s' "${modules}"
+}
+
+NODE_MODULES="$(resolve_node_modules)" || exit 3
+
+# Verify the pin: a different mermaid version is never used, its verdict could differ.
+INSTALLED_VERSION="$(node -e "try{process.stdout.write(require('${NODE_MODULES}/mermaid/package.json').version)}catch(e){}" 2>/dev/null || true)"
+if [ "${INSTALLED_VERSION}" != "${REQUIRED_MERMAID_VERSION}" ]; then
+  echo "ERROR: need Mermaid ${REQUIRED_MERMAID_VERSION}; found '${INSTALLED_VERSION:-none}' in ${NODE_MODULES}."
   exit 3
 fi
 
-# Per-render wall-clock bound (seconds). A render that outlives it is a failure, never a pass:
-# headless Chromium can wedge forever, and an unbounded render once stalled CI for 45 minutes.
-MERMAID_CHECK_TIMEOUT="${MERMAID_CHECK_TIMEOUT:-60}"
+export MERMAID_PARSE_NODE_MODULES="${NODE_MODULES}"
+
+# --- whole-batch parse bound --------------------------------------------------------------
+
+# Wall-clock bound (seconds) on the single Node parse process. A parse that outlives it is a
+# failure, never a pass. Parsing is fast; the bound is a backstop against a wedged process.
+MERMAID_CHECK_TIMEOUT="${MERMAID_CHECK_TIMEOUT:-120}"
 
 # run_with_timeout SECONDS CMD...: run CMD under a wall-clock bound, portable across macOS and
 # Linux. Prefer GNU/BSD `timeout` (or `gtimeout`); otherwise fall back to a perl or python3
 # SIGALRM watchdog. Exit 124 means the bound was hit (the convention GNU `timeout` uses); any
-# other code is CMD's own. With no usable timer, run CMD unbounded rather than refuse to render.
+# other code is CMD's own. With no usable timer, run CMD unbounded rather than refuse to parse.
 run_with_timeout() {
   local secs="$1"; shift
   if [ "${secs}" -le 0 ] 2>/dev/null; then
@@ -139,81 +186,79 @@ except subprocess.TimeoutExpired:
   fi
 }
 
-# run_mmdc INPUT OUTPUT [DIAGRAM_COUNT]: render under a wall-clock bound of
-# MERMAID_CHECK_TIMEOUT seconds *per diagram*. A single render uses the base bound; one mmdc
-# call that renders a whole Markdown batch of N fences gets N× it, so a healthy large batch is
-# never killed for being large while a wedged render is still bounded. On a timeout (exit 124)
-# write a line containing "timeout" to stderr so the caller's log — and the reported failure,
-# located per fence by the Markdown slow path — names it. A timed-out render never passes.
-run_mmdc() {
-  local status=0 count="${3:-1}" budget
-  if [ "${MERMAID_CHECK_TIMEOUT}" -le 0 ] 2>/dev/null; then
-    budget=0
-  else
-    budget=$((MERMAID_CHECK_TIMEOUT * count))
-  fi
-  if [ -n "${MERMAID_PUPPETEER_CONFIG:-}" ]; then
-    run_with_timeout "${budget}" "${RUN[@]}" -i "$1" -o "$2" -p "${MERMAID_PUPPETEER_CONFIG}" || status=$?
-  else
-    run_with_timeout "${budget}" "${RUN[@]}" -i "$1" -o "$2" || status=$?
-  fi
+# parse_batch BATCH_JSON RESULTS_OUT: run the parser once over a JSON batch. Writes the parser's
+# line-based results to RESULTS_OUT. Returns the parser exit (0 all pass, 1 any failed, 2 bad
+# batch/deps), or synthesises a timeout failure (exit 1, a BATCHERROR line) when the bound is
+# hit. The parser's output is shell-readable, so no second Node process is needed.
+parse_batch() {
+  local batch="$1" out="$2" status=0
+  run_with_timeout "${MERMAID_CHECK_TIMEOUT}" node "${PARSER}" <"${batch}" >"${out}" 2>"${TMPDIR_LOCAL}/parser.err" || status=$?
   if [ "${status}" = 124 ]; then
-    echo "error: render timeout after ${budget}s (${MERMAID_CHECK_TIMEOUT}s x ${count}, MERMAID_CHECK_TIMEOUT)" >&2
+    printf 'BATCHERROR parse timeout after %ss (MERMAID_CHECK_TIMEOUT)\n' "${MERMAID_CHECK_TIMEOUT}" >"${out}"
+    return 1
   fi
   return "${status}"
 }
 
-# --- diagnostics --------------------------------------------------------------------------
+# --- line-based result helpers (pure shell, no second Node) -------------------------------
 
-# Print a CLI log with the temp directory redacted, so output is stable across runs.
-show_log() {
-  echo "----- mermaid-cli output -----"
-  sed "s#${TMPDIR_LOCAL}#<tmp>#g" "$1"
-  echo "------------------------------"
+# batch_error RESULTS: print a BATCHERROR message (dependency/bad-batch/timeout), or nothing.
+batch_error() {
+  sed -n 's/^BATCHERROR //p' "$1" | head -n 1
 }
 
-is_error_svg() {
-  grep -Eiq 'aria-roledescription="error"|class="error-icon"|>Syntax error in text<' "$1"
+# result_ok RESULTS ID: print "true" when diagram ID parsed, else "false".
+result_ok() {
+  if grep -q "^OK $2\$" "$1"; then printf 'true'; else printf 'false'; fi
 }
 
-# Mermaid strips YAML frontmatter before parsing, so its line numbers count from the
-# first line after the closing `---`. Print how many source lines the frontmatter uses.
+# result_line RESULTS ID: print the parser line for a failed diagram ID (empty when none).
+result_line() {
+  local f
+  f="$(grep -m1 "^FAIL $2 " "$1" || true)"
+  [ -n "${f}" ] || return 0
+  # FAIL <id> <line|-> <message...>
+  f="${f#FAIL $2 }"
+  f="${f%% *}"
+  [ "${f}" = "-" ] || printf '%s' "${f}"
+}
+
+# result_message RESULTS ID: print the parser message for a failed diagram ID.
+result_message() {
+  local f
+  f="$(grep -m1 "^FAIL $2 " "$1" || true)"
+  [ -n "${f}" ] || return 0
+  f="${f#FAIL $2 }"      # strip "FAIL <id> "
+  printf '%s' "${f#* }"  # strip the line token, leaving the message
+}
+
+# --- batch assembly: a diagram is one JSON record {id, source} ----------------------------
+#
+# A JSON string is built with python3 when present (robust), else a portable sed/awk escaper.
+json_string() {
+  if command -v python3 >/dev/null 2>&1; then
+    python3 -c 'import json,sys; sys.stdout.write(json.dumps(sys.stdin.read()))' <"$1"
+  else
+    # Escape backslash, double quote, and control characters for a JSON string.
+    awk 'BEGIN{ printf "\"" }
+         { gsub(/\\/,"\\\\"); gsub(/"/,"\\\""); gsub(/\t/,"\\t"); gsub(/\r/,"\\r");
+           if (NR>1) printf "\\n"; printf "%s", $0 }
+         END{ printf "\"" }' "$1"
+  fi
+}
+
+# --- Markdown mode ------------------------------------------------------------------------
+
+# Mermaid strips YAML frontmatter before parsing, so its line numbers count from the first
+# line after the closing `---`. Print how many source lines a fence's frontmatter uses.
 frontmatter_lines() {
   awk 'NR == 1 { if ($0 !~ /^---[ \t]*$/) { print 0; exit } ; next }
        /^---[ \t]*$/ { print NR; exit }' "$1" | head -n 1
 }
 
-# Print the line number in a CLI log (`on line N`, else `line N`), or nothing.
-cli_line() {
-  local n
-  n="$(sed -n -E 's/.*on line ([0-9]+).*/\1/p' "$1" | head -n 1)"
-  [ -n "${n}" ] || n="$(sed -n -E 's/.*[Ll]ine:? ([0-9]+).*/\1/p' "$1" | head -n 1)"
-  printf '%s' "${n}"
-}
-
-# Print the first CLI error line: the first line naming an error, else the first
-# non-empty line that is not a progress message.
-cli_message() {
-  local msg
-  msg="$(grep -m 1 -iE 'error' "$1" || true)"
-  [ -n "${msg}" ] || msg="$(grep -m 1 -vE '^[[:space:]]*$|^Generating |^Found [0-9]+ mermaid' "$1" || true)"
-  printf '%s' "${msg}" | sed "s#${TMPDIR_LOCAL}#<tmp>#g"
-}
-
-# source_line SOURCE LOG: the SOURCE line number the CLI log points at, or nothing.
-source_line() {
-  local n fm
-  n="$(cli_line "$2")"
-  [ -n "${n}" ] || return 0
-  fm="$(frontmatter_lines "$1")"
-  printf '%s' "$((n + ${fm:-0}))"
-}
-
-# --- Markdown mode ------------------------------------------------------------------------
-
 # check_markdown FILE: validate every column-0 ```mermaid fence. Returns 1 on any failure.
 check_markdown() {
-  local md="$1" work count i start status line fence svg
+  local md="$1" work count i start status line fence ok msg fm
   work="$(mktemp -d "${TMPDIR_LOCAL}/md.XXXXXX")"
   # Extract fences and the Markdown line of each fence's first content line.
   awk -v dir="${work}" '
@@ -231,59 +276,49 @@ check_markdown() {
     return 0
   fi
 
-  # Fast path: one CLI run renders every fence (CLI 12.0.0 writes out-1.svg .. out-N.svg).
-  : > "${work}/batch.md"
-  i=1
-  while [ "${i}" -le "${count}" ]; do
-    { printf '```mermaid\n'; cat "${work}/fence-${i}.mmd"; printf '```\n\n'; } >> "${work}/batch.md"
-    i=$((i + 1))
-  done
-  mkdir "${work}/out"
-  status=0
-  # The batch renders every fence in one mmdc process, so give it the per-diagram bound times
-  # the fence count; the slow path below re-renders each fence under the base per-diagram bound.
-  if run_mmdc "${work}/batch.md" "${work}/out/out.md" "${count}" >"${work}/batch.log" 2>&1; then
+  # Build one batch with a record per fence, parse it in a single Node process.
+  {
+    printf '{"diagrams":['
     i=1
     while [ "${i}" -le "${count}" ]; do
-      svg="${work}/out/out-${i}.svg"
-      if [ ! -f "${svg}" ] || is_error_svg "${svg}"; then status=1; fi
+      [ "${i}" = 1 ] || printf ','
+      printf '{"id":%s,"source":%s}' "${i}" "$(json_string "${work}/fence-${i}.mmd")"
       i=$((i + 1))
     done
-  else
-    status=1
-  fi
-  if [ "${status}" = 0 ]; then
-    echo "PASS ${md} (${count} fences)"
-    return 0
+    printf ']}\n'
+  } > "${work}/batch.json"
+
+  parse_batch "${work}/batch.json" "${work}/results.txt" || true
+  local berr
+  berr="$(batch_error "${work}/results.txt")"
+  if [ -n "${berr}" ]; then
+    echo "${md}: parser error: ${berr}"
+    return 1
   fi
 
-  # Slow path: render each fence alone to locate every failure.
   status=0
   i=1
   while [ "${i}" -le "${count}" ]; do
-    fence="${work}/fence-${i}.mmd"
-    start="$(sed -n "${i}p" "${work}/starts")"
-    svg="${work}/fence-${i}.svg"
-    if ! run_mmdc "${fence}" "${svg}" >"${ERRLOG}" 2>&1; then
+    ok="$(result_ok "${work}/results.txt" "${i}")"
+    if [ "${ok}" != "true" ]; then
       status=1
-      line="$(source_line "${fence}" "${ERRLOG}")"
+      start="$(sed -n "${i}p" "${work}/starts")"
+      fence="${work}/fence-${i}.mmd"
+      line="$(result_line "${work}/results.txt" "${i}")"
+      msg="$(result_message "${work}/results.txt" "${i}")"
       if [ -n "${line}" ]; then
-        echo "${md}:$((start + line - 1)): $(cli_message "${ERRLOG}")"
-        echo "    $(sed -n "${line}p" "${fence}")"
+        fm="$(frontmatter_lines "${fence}")"
+        echo "${md}:$((start + line - 1 + ${fm:-0})): ${msg}"
+        echo "    $(sed -n "$((line + ${fm:-0}))p" "${fence}")"
       else
-        echo "${md}:${start}: line unknown: $(cli_message "${ERRLOG}")"
+        echo "${md}:${start}: line unknown: ${msg}"
       fi
-    elif is_error_svg "${svg}"; then
-      status=1
-      echo "${md}:${start}: line unknown: Mermaid emitted an error SVG despite returning exit 0."
     fi
     i=$((i + 1))
   done
   if [ "${status}" = 0 ]; then
-    # Every fence passes alone; the batch failure came from the batch run itself.
-    echo "${md}: batch render failed although every fence renders alone"
-    show_log "${work}/batch.log"
-    return 1
+    echo "PASS ${md} (${count} fences)"
+    return 0
   fi
   return 1
 }
@@ -301,40 +336,30 @@ fi
 
 # --- single diagram -----------------------------------------------------------------------
 
-VALIDATION_DEST="${TMPDIR_LOCAL}/validation.svg"
+RESULTS="${TMPDIR_LOCAL}/results.txt"
+printf '{"diagrams":[{"id":0,"source":%s}]}\n' "$(json_string "${SRC}")" > "${TMPDIR_LOCAL}/batch.json"
 
-if ! run_mmdc "${SRC}" "${VALIDATION_DEST}" >"${ERRLOG}" 2>&1; then
-  LINE="$(source_line "${SRC}" "${ERRLOG}")"
-  if [ -n "${LINE}" ]; then
-    echo "FAIL line ${LINE}: $(sed -n "${LINE}p" "${SRC}")"
-  else
-    echo "FAIL line unknown: $(cli_message "${ERRLOG}")"
-  fi
-  show_log "${ERRLOG}"
+parse_batch "${TMPDIR_LOCAL}/batch.json" "${RESULTS}" || true
+BERR="$(batch_error "${RESULTS}")"
+if [ -n "${BERR}" ]; then
+  echo "FAIL line unknown: ${BERR}"
   exit 1
 fi
 
-# Mermaid CLI can exit 0 while writing its syntax-error placeholder SVG. Inspect
-# the artifact itself so an error image is never reported as a successful render.
-if is_error_svg "${VALIDATION_DEST}"; then
-  echo "FAIL line unknown: Mermaid emitted an error SVG despite returning exit 0."
-  show_log "${ERRLOG}"
-  exit 1
+OK="$(result_ok "${RESULTS}" 0)"
+if [ "${OK}" = "true" ]; then
+  echo "PASS: diagram parses cleanly."
+  exit 0
 fi
 
-if [ -n "${OUT}" ]; then
-  case "${OUT}" in
-    *.svg) cp "${VALIDATION_DEST}" "${OUT}" ;;
-    *)
-      if ! run_mmdc "${SRC}" "${OUT}" >"${ERRLOG}" 2>&1; then
-        echo "FAIL: Mermaid validated as SVG but could not write ${OUT}."
-        show_log "${ERRLOG}"
-        exit 1
-      fi
-      ;;
-  esac
+LINE="$(result_line "${RESULTS}" 0)"
+MSG="$(result_message "${RESULTS}" 0)"
+FM="$(frontmatter_lines "${SRC}")"
+if [ -n "${LINE}" ]; then
+  SRCLINE="$((LINE + ${FM:-0}))"
+  echo "FAIL line ${SRCLINE}: $(sed -n "${SRCLINE}p" "${SRC}")"
+  echo "${MSG}"
+else
+  echo "FAIL line unknown: ${MSG}"
 fi
-
-echo "PASS: diagram renders cleanly."
-[ -n "${OUT}" ] && echo "Wrote ${OUT}"
-exit 0
+exit 1

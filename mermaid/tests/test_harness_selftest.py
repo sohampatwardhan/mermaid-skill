@@ -101,7 +101,7 @@ def test_batch_maps_lines_to_cases() -> None:
     assert lines[starts[1][0] - 1] == "pie"
 
 
-@pytest.mark.skipif(not HAVE_CLI, reason="needs Mermaid CLI 12.0.0 or npx")
+@pytest.mark.skipif(not HAVE_CLI, reason="needs Node and the pinned Mermaid 12.0.0 parser")
 def test_batch_reports_the_failing_case() -> None:
     cases = [h.Case("good", "info\n"), h.Case("bad", "flowchart TD\n  A --> B\n  B --> --> C\n")]
     problems = h.run_batch(cases)
