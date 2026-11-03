@@ -1,0 +1,1244 @@
+{
+  "diagram": "graph",
+  "target": "flowchart",
+  "title": "Flowchart feature tour",
+  "config": {
+    "theme": "default",
+    "look": "classic",
+    "layout": "dagre",
+    "markdownAutoWrap": true,
+    "flowchart": {
+      "curve": "basis",
+      "nodeSpacing": 50,
+      "rankSpacing": 50,
+      "padding": 15,
+      "diagramPadding": 8,
+      "wrappingWidth": 200,
+      "minNodeWidth": 70,
+      "titleTopMargin": 25,
+      "subGraphTitleMargin": {
+        "top": 0,
+        "bottom": 0
+      },
+      "inheritDir": false,
+      "useMaxWidth": true
+    }
+  },
+  "accessibility": {
+    "title": "Flowchart feature tour",
+    "description": "Every coexisting flowchart construct in one diagram."
+  },
+  "comment": "classic shapes, typed shapes, links, subgraphs, styling and interaction",
+  "direction": "LR",
+  "semicolons": true,
+  "subgraphs": [
+    {
+      "id": "one"
+    },
+    {
+      "id": "ide1",
+      "label": "**Two**",
+      "labelType": "markdown",
+      "direction": "TB"
+    },
+    {
+      "id": "grp",
+      "label": "Collapsed group",
+      "view": "collapsed"
+    },
+    {
+      "id": "keep",
+      "label": "Expanded group",
+      "view": "expanded",
+      "subgraphs": [
+        {
+          "id": "inner",
+          "label": "Inner group",
+          "direction": "RL"
+        }
+      ]
+    }
+  ],
+  "nodes": [
+    {
+      "id": "txt",
+      "form": "rect",
+      "label": "Text in a box"
+    },
+    {
+      "id": "bare"
+    },
+    {
+      "id": "uni",
+      "label": "This ❤ Unicode"
+    },
+    {
+      "id": "qt",
+      "form": "rect",
+      "label": "The (text) in the box"
+    },
+    {
+      "id": "ent",
+      "label": "A double quote:\""
+    },
+    {
+      "id": "n1",
+      "form": "round",
+      "label": "round"
+    },
+    {
+      "id": "n2",
+      "form": "stadium",
+      "label": "stadium"
+    },
+    {
+      "id": "n3",
+      "form": "subroutine",
+      "label": "subroutine"
+    },
+    {
+      "id": "n4",
+      "form": "cylinder",
+      "label": "cylinder"
+    },
+    {
+      "id": "n5",
+      "form": "circle",
+      "label": "circle"
+    },
+    {
+      "id": "n6",
+      "form": "asymmetric",
+      "label": "asymmetric"
+    },
+    {
+      "id": "n7",
+      "form": "rhombus",
+      "label": "rhombus"
+    },
+    {
+      "id": "n8",
+      "form": "hexagon",
+      "label": "hexagon"
+    },
+    {
+      "id": "n9",
+      "form": "parallelogram",
+      "label": "parallelogram"
+    },
+    {
+      "id": "n10",
+      "form": "parallelogram-alt",
+      "label": "parallelogram-alt"
+    },
+    {
+      "id": "n11",
+      "form": "trapezoid",
+      "label": "trapezoid"
+    },
+    {
+      "id": "n12",
+      "form": "trapezoid-alt",
+      "label": "trapezoid-alt"
+    },
+    {
+      "id": "n13",
+      "form": "double-circle",
+      "label": "double-circle"
+    },
+    {
+      "id": "typed",
+      "shape": "rect",
+      "label": "Typed shape label"
+    },
+    {
+      "id": "s1",
+      "shape": "rect",
+      "label": "rect"
+    },
+    {
+      "id": "s2",
+      "shape": "rounded",
+      "label": "rounded"
+    },
+    {
+      "id": "s3",
+      "shape": "stadium",
+      "label": "stadium"
+    },
+    {
+      "id": "s4",
+      "shape": "subproc",
+      "label": "subproc"
+    },
+    {
+      "id": "s5",
+      "shape": "cyl",
+      "label": "cyl"
+    },
+    {
+      "id": "s6",
+      "shape": "circle",
+      "label": "circle"
+    },
+    {
+      "id": "s7",
+      "shape": "odd",
+      "label": "odd"
+    },
+    {
+      "id": "s8",
+      "shape": "diamond",
+      "label": "diamond"
+    },
+    {
+      "id": "s9",
+      "shape": "hex",
+      "label": "hex"
+    },
+    {
+      "id": "s10",
+      "shape": "lean-r",
+      "label": "lean-r"
+    },
+    {
+      "id": "s11",
+      "shape": "lean-l",
+      "label": "lean-l"
+    },
+    {
+      "id": "s12",
+      "shape": "datastore",
+      "label": "datastore"
+    },
+    {
+      "id": "s13",
+      "shape": "trap-b",
+      "label": "trap-b"
+    },
+    {
+      "id": "s14",
+      "shape": "trap-t",
+      "label": "trap-t"
+    },
+    {
+      "id": "s15",
+      "shape": "dbl-circ",
+      "label": "dbl-circ"
+    },
+    {
+      "id": "s16",
+      "shape": "text",
+      "label": "text"
+    },
+    {
+      "id": "s17",
+      "shape": "notch-rect",
+      "label": "notch-rect"
+    },
+    {
+      "id": "s18",
+      "shape": "lin-rect",
+      "label": "lin-rect"
+    },
+    {
+      "id": "s19",
+      "shape": "sm-circ",
+      "label": "sm-circ"
+    },
+    {
+      "id": "s20",
+      "shape": "framed-circle",
+      "label": "framed-circle"
+    },
+    {
+      "id": "s21",
+      "shape": "fork",
+      "label": "fork"
+    },
+    {
+      "id": "s22",
+      "shape": "hourglass",
+      "label": "hourglass"
+    },
+    {
+      "id": "s23",
+      "shape": "comment",
+      "label": "comment"
+    },
+    {
+      "id": "s24",
+      "shape": "brace-r",
+      "label": "brace-r"
+    },
+    {
+      "id": "s25",
+      "shape": "braces",
+      "label": "braces"
+    },
+    {
+      "id": "s26",
+      "shape": "bolt",
+      "label": "bolt"
+    },
+    {
+      "id": "s27",
+      "shape": "doc",
+      "label": "doc"
+    },
+    {
+      "id": "s28",
+      "shape": "delay",
+      "label": "delay"
+    },
+    {
+      "id": "s29",
+      "shape": "das",
+      "label": "das"
+    },
+    {
+      "id": "s30",
+      "shape": "lin-cyl",
+      "label": "lin-cyl"
+    },
+    {
+      "id": "s31",
+      "shape": "curv-trap",
+      "label": "curv-trap"
+    },
+    {
+      "id": "s32",
+      "shape": "div-rect",
+      "label": "div-rect"
+    },
+    {
+      "id": "s33",
+      "shape": "tri",
+      "label": "tri"
+    },
+    {
+      "id": "s34",
+      "shape": "win-pane",
+      "label": "win-pane"
+    },
+    {
+      "id": "s35",
+      "shape": "f-circ",
+      "label": "f-circ"
+    },
+    {
+      "id": "s36",
+      "shape": "lin-doc",
+      "label": "lin-doc"
+    },
+    {
+      "id": "s37",
+      "shape": "notch-pent",
+      "label": "notch-pent"
+    },
+    {
+      "id": "s38",
+      "shape": "flip-tri",
+      "label": "flip-tri"
+    },
+    {
+      "id": "s39",
+      "shape": "sl-rect",
+      "label": "sl-rect"
+    },
+    {
+      "id": "s40",
+      "shape": "docs",
+      "label": "docs"
+    },
+    {
+      "id": "s41",
+      "shape": "processes",
+      "label": "processes"
+    },
+    {
+      "id": "s42",
+      "shape": "flag",
+      "label": "flag"
+    },
+    {
+      "id": "s43",
+      "shape": "bow-rect",
+      "label": "bow-rect"
+    },
+    {
+      "id": "s44",
+      "shape": "cross-circ",
+      "label": "cross-circ"
+    },
+    {
+      "id": "s45",
+      "shape": "tag-doc",
+      "label": "tag-doc"
+    },
+    {
+      "id": "s46",
+      "shape": "tag-rect",
+      "label": "tag-rect"
+    },
+    {
+      "id": "s47",
+      "shape": "manual-file",
+      "label": "manual-file"
+    },
+    {
+      "id": "s48",
+      "shape": "manual-input",
+      "label": "manual-input"
+    },
+    {
+      "id": "s49",
+      "shape": "procs",
+      "label": "procs"
+    },
+    {
+      "id": "s50",
+      "shape": "paper-tape",
+      "label": "paper-tape"
+    },
+    {
+      "id": "i1",
+      "icon": {
+        "name": "fa:user",
+        "form": "square",
+        "pos": "t",
+        "h": 60
+      },
+      "label": "Square"
+    },
+    {
+      "id": "i2",
+      "icon": {
+        "name": "fa:user",
+        "form": "circle",
+        "pos": "b"
+      },
+      "label": "Circle"
+    },
+    {
+      "id": "i3",
+      "icon": {
+        "name": "fa:user",
+        "form": "rounded"
+      },
+      "label": "Rounded"
+    },
+    {
+      "id": "im1",
+      "image": {
+        "url": "https://mermaid.js.org/favicon.svg",
+        "pos": "t",
+        "w": 60,
+        "h": 60,
+        "constraint": "on"
+      },
+      "label": "Top"
+    },
+    {
+      "id": "im2",
+      "image": {
+        "url": "https://mermaid.js.org/favicon.svg",
+        "pos": "b",
+        "h": 60,
+        "constraint": "off"
+      },
+      "label": "Bottom"
+    },
+    {
+      "id": "md",
+      "form": "round",
+      "label": "The **cat**\nin the hat",
+      "labelType": "markdown",
+      "group": "one"
+    },
+    {
+      "id": "dog",
+      "form": "hexagon",
+      "label": "The *dog*",
+      "labelType": "markdown",
+      "group": "one"
+    },
+    {
+      "id": "t1",
+      "group": "ide1"
+    },
+    {
+      "id": "t2",
+      "group": "ide1"
+    },
+    {
+      "id": "g1",
+      "group": "grp"
+    },
+    {
+      "id": "g2",
+      "group": "grp"
+    },
+    {
+      "id": "k1",
+      "group": "keep"
+    },
+    {
+      "id": "k2",
+      "label": "Nested",
+      "group": "inner"
+    },
+    {
+      "id": "f1",
+      "form": "rect",
+      "faIcon": {
+        "prefix": "fa",
+        "name": "twitter"
+      },
+      "label": "for peace"
+    },
+    {
+      "id": "f2",
+      "form": "rect",
+      "faIcon": {
+        "prefix": "fab",
+        "name": "github"
+      },
+      "label": "brands"
+    },
+    {
+      "id": "f3",
+      "form": "rect",
+      "faIcon": {
+        "prefix": "fas",
+        "name": "user"
+      },
+      "label": "solid"
+    },
+    {
+      "id": "f4",
+      "form": "rect",
+      "faIcon": {
+        "prefix": "far",
+        "name": "bell"
+      },
+      "label": "regular"
+    },
+    {
+      "id": "f5",
+      "form": "rect",
+      "faIcon": {
+        "prefix": "fal",
+        "name": "star"
+      },
+      "label": "light"
+    },
+    {
+      "id": "f6",
+      "form": "rect",
+      "faIcon": {
+        "prefix": "fad",
+        "name": "camera"
+      },
+      "label": "duotone"
+    },
+    {
+      "id": "f7",
+      "form": "round",
+      "faIcon": {
+        "prefix": "fak",
+        "name": "custom-icon-name"
+      }
+    },
+    {
+      "id": "S1",
+      "class": "someclass"
+    },
+    {
+      "id": "S2"
+    },
+    {
+      "id": "S3"
+    },
+    {
+      "id": "S4"
+    },
+    {
+      "id": "S5"
+    },
+    {
+      "id": "K1",
+      "kind": "decision",
+      "label": "ISO decision"
+    },
+    {
+      "id": "L1"
+    },
+    {
+      "id": "L2"
+    },
+    {
+      "id": "L3"
+    },
+    {
+      "id": "L4"
+    },
+    {
+      "id": "L5"
+    },
+    {
+      "id": "L6"
+    },
+    {
+      "id": "L7"
+    },
+    {
+      "id": "L8"
+    },
+    {
+      "id": "L9"
+    },
+    {
+      "id": "L10"
+    },
+    {
+      "id": "L11"
+    },
+    {
+      "id": "L12"
+    },
+    {
+      "id": "L13"
+    },
+    {
+      "id": "L14"
+    },
+    {
+      "id": "L15"
+    },
+    {
+      "id": "L16"
+    },
+    {
+      "id": "L17"
+    },
+    {
+      "id": "L18"
+    },
+    {
+      "id": "L19"
+    },
+    {
+      "id": "L20"
+    },
+    {
+      "id": "L21"
+    },
+    {
+      "id": "L22"
+    },
+    {
+      "id": "L23"
+    },
+    {
+      "id": "L24"
+    },
+    {
+      "id": "L25"
+    },
+    {
+      "id": "L26"
+    },
+    {
+      "id": "L27"
+    },
+    {
+      "id": "L28"
+    },
+    {
+      "id": "L29"
+    },
+    {
+      "id": "L30"
+    },
+    {
+      "id": "L31"
+    },
+    {
+      "id": "E1"
+    },
+    {
+      "id": "E2"
+    },
+    {
+      "id": "E3"
+    },
+    {
+      "id": "E4"
+    },
+    {
+      "id": "E5"
+    },
+    {
+      "id": "C0"
+    },
+    {
+      "id": "C1"
+    },
+    {
+      "id": "C2"
+    },
+    {
+      "id": "C3"
+    },
+    {
+      "id": "C4"
+    },
+    {
+      "id": "C5"
+    },
+    {
+      "id": "C6"
+    },
+    {
+      "id": "C7"
+    },
+    {
+      "id": "C8"
+    },
+    {
+      "id": "C9"
+    },
+    {
+      "id": "C10"
+    },
+    {
+      "id": "C11"
+    },
+    {
+      "id": "C12"
+    }
+  ],
+  "edges": [
+    {
+      "from": "L1",
+      "to": "L2",
+      "stroke": "normal",
+      "head": "arrow"
+    },
+    {
+      "from": "L2",
+      "to": "L3",
+      "head": "none"
+    },
+    {
+      "from": "L3",
+      "to": "L4",
+      "head": "none",
+      "label": "open text",
+      "labelForm": "inline"
+    },
+    {
+      "from": "L4",
+      "to": "L5",
+      "head": "none",
+      "label": "pipe text",
+      "labelForm": "pipe"
+    },
+    {
+      "from": "L5",
+      "to": "L6",
+      "label": "pipe text",
+      "labelForm": "pipe"
+    },
+    {
+      "from": "L6",
+      "to": "L7",
+      "label": "inline text",
+      "labelForm": "inline"
+    },
+    {
+      "from": "L7",
+      "to": "L8",
+      "stroke": "dotted"
+    },
+    {
+      "from": "L8",
+      "to": "L9",
+      "stroke": "dotted",
+      "head": "none"
+    },
+    {
+      "from": "L9",
+      "to": "L10",
+      "stroke": "dotted",
+      "label": "dotted text",
+      "labelForm": "inline"
+    },
+    {
+      "from": "L10",
+      "to": "L11",
+      "stroke": "thick"
+    },
+    {
+      "from": "L11",
+      "to": "L12",
+      "stroke": "thick",
+      "head": "none"
+    },
+    {
+      "from": "L12",
+      "to": "L13",
+      "stroke": "thick",
+      "label": "thick text",
+      "labelForm": "inline"
+    },
+    {
+      "from": "L13",
+      "to": "L14",
+      "stroke": "invisible"
+    },
+    {
+      "from": "L14",
+      "to": "L15",
+      "head": "circle"
+    },
+    {
+      "from": "L15",
+      "to": "L16",
+      "head": "cross"
+    },
+    {
+      "from": "L16",
+      "to": "L17",
+      "head": "circle",
+      "bidirectional": true
+    },
+    {
+      "from": "L17",
+      "to": "L18",
+      "head": "arrow",
+      "bidirectional": true
+    },
+    {
+      "from": "L18",
+      "to": "L19",
+      "head": "cross",
+      "bidirectional": true
+    },
+    {
+      "from": "L19",
+      "to": "L20",
+      "label": "t1",
+      "labelForm": "inline",
+      "then": [
+        {
+          "to": "L21",
+          "label": "t2",
+          "labelForm": "inline"
+        }
+      ]
+    },
+    {
+      "from": [
+        "L21",
+        "L22"
+      ],
+      "to": [
+        "L23",
+        "L24"
+      ]
+    },
+    {
+      "from": "L24",
+      "to": "L25",
+      "head": "none",
+      "length": 2
+    },
+    {
+      "from": "L25",
+      "to": "L26",
+      "length": 2
+    },
+    {
+      "from": "L26",
+      "to": "L27",
+      "stroke": "thick",
+      "head": "none",
+      "length": 2
+    },
+    {
+      "from": "L27",
+      "to": "L28",
+      "stroke": "thick",
+      "length": 2
+    },
+    {
+      "from": "L28",
+      "to": "L29",
+      "stroke": "dotted",
+      "head": "none",
+      "length": 2
+    },
+    {
+      "from": "L29",
+      "to": "L30",
+      "stroke": "dotted",
+      "length": 2
+    },
+    {
+      "from": "L30",
+      "to": "L31",
+      "label": "No",
+      "labelForm": "inline",
+      "length": 3
+    },
+    {
+      "from": "E1",
+      "to": "E2",
+      "id": "a1",
+      "animate": true
+    },
+    {
+      "from": "E1",
+      "to": "E3",
+      "id": "a2",
+      "animation": "fast"
+    },
+    {
+      "from": "E1",
+      "to": "E4",
+      "id": "a3",
+      "animation": "slow"
+    },
+    {
+      "from": "E1",
+      "to": "E5",
+      "id": "a4"
+    },
+    {
+      "from": "C0",
+      "to": "C1",
+      "id": "c1",
+      "curve": "basis"
+    },
+    {
+      "from": "C0",
+      "to": "C2",
+      "id": "c2",
+      "curve": "bumpX"
+    },
+    {
+      "from": "C0",
+      "to": "C3",
+      "id": "c3",
+      "curve": "bumpY"
+    },
+    {
+      "from": "C0",
+      "to": "C4",
+      "id": "c4",
+      "curve": "cardinal"
+    },
+    {
+      "from": "C0",
+      "to": "C5",
+      "id": "c5",
+      "curve": "catmullRom"
+    },
+    {
+      "from": "C0",
+      "to": "C6",
+      "id": "c6",
+      "curve": "linear"
+    },
+    {
+      "from": "C0",
+      "to": "C7",
+      "id": "c7",
+      "curve": "monotoneX"
+    },
+    {
+      "from": "C0",
+      "to": "C8",
+      "id": "c8",
+      "curve": "monotoneY"
+    },
+    {
+      "from": "C0",
+      "to": "C9",
+      "id": "c9",
+      "curve": "natural"
+    },
+    {
+      "from": "C0",
+      "to": "C10",
+      "id": "c10",
+      "curve": "step"
+    },
+    {
+      "from": "C0",
+      "to": "C11",
+      "id": "c11",
+      "curve": "stepAfter"
+    },
+    {
+      "from": "C0",
+      "to": "C12",
+      "id": "c12",
+      "curve": "stepBefore"
+    },
+    {
+      "from": "md",
+      "to": "dog",
+      "label": "Bold **edge label**",
+      "labelType": "markdown",
+      "labelForm": "inline"
+    },
+    {
+      "from": "t1",
+      "to": "t2"
+    },
+    {
+      "from": "g1",
+      "to": "g2"
+    },
+    {
+      "from": "k1",
+      "to": "k2"
+    },
+    {
+      "from": "one",
+      "to": "ide1"
+    },
+    {
+      "from": "L1",
+      "to": "grp"
+    },
+    {
+      "from": "f1",
+      "to": "f2",
+      "then": [
+        {
+          "to": "f3"
+        },
+        {
+          "to": "f4"
+        },
+        {
+          "to": "f5"
+        },
+        {
+          "to": "f6"
+        },
+        {
+          "to": "f7"
+        }
+      ]
+    },
+    {
+      "from": "S1",
+      "to": "S2"
+    },
+    {
+      "from": [
+        {
+          "id": "S3",
+          "class": "foo"
+        },
+        {
+          "id": "S4",
+          "class": "bar"
+        }
+      ],
+      "to": {
+        "id": "S5",
+        "class": "foobar"
+      }
+    },
+    {
+      "from": "K1",
+      "to": "txt",
+      "kind": "strong",
+      "label": "legacy kind"
+    }
+  ],
+  "classDefs": [
+    {
+      "names": [
+        "animate"
+      ],
+      "style": {
+        "strokeDasharray": "9 5",
+        "strokeDashoffset": 900,
+        "animation": {
+          "name": "dash",
+          "duration": "25s",
+          "timing": "linear",
+          "iterations": "infinite"
+        }
+      }
+    },
+    {
+      "names": [
+        "someclass"
+      ],
+      "style": {
+        "fill": "#f96"
+      }
+    },
+    {
+      "names": [
+        "foo",
+        "bar"
+      ],
+      "style": {
+        "stroke": "#f00"
+      }
+    },
+    {
+      "names": [
+        "foobar"
+      ],
+      "style": {
+        "stroke": "#00f",
+        "fontWeight": "bold",
+        "fontStyle": "italic"
+      }
+    },
+    {
+      "names": [
+        "default"
+      ],
+      "style": {
+        "strokeWidth": "2px"
+      }
+    },
+    {
+      "names": [
+        "hl"
+      ],
+      "style": {
+        "fill": "#ffd",
+        "color": "black",
+        "fontSize": "12pt"
+      }
+    }
+  ],
+  "classes": [
+    {
+      "ids": [
+        "a4"
+      ],
+      "class": "animate"
+    },
+    {
+      "ids": [
+        "bare",
+        "uni"
+      ],
+      "class": "hl"
+    },
+    {
+      "ids": [
+        "qt"
+      ],
+      "class": "hl"
+    }
+  ],
+  "styles": [
+    {
+      "id": "txt",
+      "style": {
+        "fill": "#f9f",
+        "stroke": "#333",
+        "strokeWidth": "4px"
+      }
+    },
+    {
+      "id": "keep",
+      "style": {
+        "fill": "lightyellow"
+      }
+    }
+  ],
+  "linkStyles": [
+    {
+      "links": [
+        3
+      ],
+      "style": {
+        "stroke": "#ff3",
+        "strokeWidth": "4px",
+        "color": "red"
+      }
+    },
+    {
+      "links": [
+        1,
+        2
+      ],
+      "style": {
+        "color": "blue"
+      }
+    },
+    {
+      "links": "default",
+      "style": {
+        "stroke": "#888"
+      }
+    }
+  ],
+  "clicks": [
+    {
+      "id": "L1",
+      "action": "callback",
+      "function": "callback",
+      "tooltip": "Tooltip for a callback"
+    },
+    {
+      "id": "L2",
+      "action": "call",
+      "function": "callback",
+      "tooltip": "Tooltip for a call"
+    },
+    {
+      "id": "L3",
+      "action": "url",
+      "url": "https://www.github.com",
+      "tooltip": "Tooltip for a link"
+    },
+    {
+      "id": "L4",
+      "action": "href",
+      "url": "https://www.github.com",
+      "tooltip": "Tooltip for a link"
+    },
+    {
+      "id": "L5",
+      "action": "url",
+      "url": "https://www.github.com",
+      "target": "_self"
+    },
+    {
+      "id": "L6",
+      "action": "url",
+      "url": "https://www.github.com",
+      "tooltip": "New tab",
+      "target": "_blank"
+    },
+    {
+      "id": "L7",
+      "action": "href",
+      "url": "https://www.github.com",
+      "target": "_parent"
+    },
+    {
+      "id": "L8",
+      "action": "href",
+      "url": "https://www.github.com",
+      "tooltip": "Top frame",
+      "target": "_top"
+    }
+  ]
+}

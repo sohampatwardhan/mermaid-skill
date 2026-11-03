@@ -203,3 +203,14 @@ def test_registry_rejects_duplicates() -> None:
         render.register(builder)
     with pytest.raises(ValueError):
         render.hand_author_only("x", builder.keywords[0])
+
+
+def test_family_target_mismatch_is_rejected() -> None:
+    with pytest.raises(IRError):
+        render.render({"diagram": "graph", "target": "packet", "nodes": [], "edges": []})
+
+
+def test_unsupported_backend_is_rejected() -> None:
+    with pytest.raises(IRError) as info:
+        render.render({"diagram": "info", "target": "info"}, backend="tikz")
+    assert "unsupported backend" in info.value.reason

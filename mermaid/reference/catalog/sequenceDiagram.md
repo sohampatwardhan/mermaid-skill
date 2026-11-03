@@ -356,4 +356,34 @@ Covers: `sequenceDiagram.autonumber`.
 
 ## Builder
 
-`candidate`: `scripts/render.py` has an IR builder for this type (target keyword(s) `sequenceDiagram`). It has not been through the reliability bar yet; see [coverage.md](../coverage.md).
+`builder`: family `sequence`, keyword `sequenceDiagram`. Full example:
+[maximal.json](../../tests/fixtures/sequenceDiagram/maximal.json) (plus `maximal.autonumber.json`).
+
+| Key | Type | Meaning |
+|---|---|---|
+| `title`, `accessibility`, `comment` | text | frontmatter title, `accTitle`/`accDescr`, `%%` line |
+| `config` | object | `theme`, `look`, `sequence.*` (numbers, booleans, `noteAlign`/`messageAlign`) |
+| `autonumber` | `true` or `{start, increment?}` | `autonumber` / `autonumber 10 5` (at most 2 decimals) |
+| `actors[]` | participant or box | declaration order |
+| `actors[].id` | id | `[A-Za-z_][A-Za-z0-9_]*`, not a keyword (`end`, `loop`, ...) |
+| `actors[].kind` | `participant` \| `actor` \| `box` | default `participant` |
+| `actors[].type` | `boundary` \| `control` \| `entity` \| `database` \| `collections` \| `queue` | `@{ "type" }`, participants only |
+| `actors[].alias` / `.inlineAlias` | text | `as Alias` / `@{ "alias" }`; newline becomes `<br/>` |
+| `actors[].implicit` | boolean | listed for references, created by its first message |
+| `actors[].menu` | `{form: link \| links, items[{label, url}]}` | `link` lines or one `links` JSON; participants only |
+| box: `label`, `color`, `actors[]` | text, color, participants | `box`; no color emits `transparent` so the label is kept |
+| `steps[].type` | `message` (default) \| `activate` \| `deactivate` \| `note` \| `create` \| `destroy` \| `loop` \| `opt` \| `break` \| `rect` \| `alt` \| `par` \| `critical` | one statement or block |
+| message: `from`, `to`, `label`, `arrow`, `activation`, `central` | ref, ref, text, enum, `activate` \| `deactivate`, `source` \| `target` \| `both` | `arrow` names follow the feature ids (`solid`, `dotted-cross`, `stick-solid-reverse-top`, ...); default `solid` |
+| note: `position`, `actors[]`, `text` | `left_of` \| `right_of` \| `over`, 1 (2 for `over`), text | `Note over A,B: text` |
+| create: `participant` | `{id, kind?, type?, alias?, inlineAlias?}` | must be followed by a message to it |
+| destroy / activate / deactivate: `actor` | ref | destroy must be followed by a message from or to it |
+| loop/opt/break: `label?`, `steps[]`; rect: `color`, `steps[]` | text, nested steps | `end` is emitted |
+| alt/par/critical: `branches[{label?, steps[]}]` | at least 1 | `else` / `and` / `option` |
+
+Rejected: undeclared ids (participants created by `create` exist only after it), unbalanced or
+unclosed activations, `-` shorthand before an id starting with `x`, shorthand together with
+`central`, hex colors (`#` starts a comment; use a CSS name or `rgb()`/`hsl()`), `)` in a box
+label after an `rgb()`/`hsl()` color, menus on `actor`, non-http(s) menu URLs. Message, note,
+alias, box and menu text encode `# ; : < > " & % { } \ $` as entity codes. Block and branch
+labels are word-wrapped by Mermaid, which can split an entity code, so they reject `#`, `;`, `<`,
+`$$` and a leading `wrap:`. `config.sequence.wrap` is not accepted for the same reason.

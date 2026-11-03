@@ -303,4 +303,24 @@ Covers: `entityRelationshipDiagram.direction-rl`.
 
 ## Builder
 
-`candidate`: `scripts/render.py` has an IR builder for this type (target keyword(s) `erDiagram`). It has not been through the reliability bar yet; see [coverage.md](../coverage.md).
+`builder`: family `graph`, keyword `erDiagram`. Example: [maximal.json](../../tests/fixtures/entityRelationshipDiagram/maximal.json).
+
+| Key | Type | Meaning |
+|---|---|---|
+| `title`, `config`, `accessibility`, `comment` | shared | frontmatter title; typed `config` (`theme`, `look`, `layout`: `dagre`/`elk`, `er.*` keys above); `accTitle`/`accDescr`; one `%%` line |
+| `direction` | enum | `TB`, `BT`, `LR`, `RL` (no `TD`) |
+| `nodes[]` | object | entity: `id` (bare id, used for references), optional `name` (quoted entity name, any text), `label` (display alias), `classes` (`:::`), `attributes` |
+| `nodes[].attributes[]` | object | `type`, `name` (may start with `*`), `params` (integers: `string(99)`), `array` (`[]`), `optional` (`?`), `keys` (`PK`, `FK`, `UK`), `comment` |
+| `edges[]` | object | `from`, `to` (entity or subgraph ids), `label` (required), `left`, `right`: `zero_or_one`, `exactly_one`, `zero_or_more`, `one_or_more`; `identifying` (default `true`, `false` = dashed) |
+| `edges[].left_form`, `right_form` | enum | spelling: `symbol` (default), `mirrored` (`o{` on the left), word aliases `one-or-zero`, `zero-or-one`, `only-one`, `one`, `1`, `zero-or-more`, `zero-or-many`, `many-0`, `0-plus`, `many`, `one-or-more`, `one-or-many`, `many-1`, `1-plus` (each valid for its cardinality only) |
+| `edges[].connector_form`, `from_classes`, `to_classes` | enum, arrays | `symbol` (`--`/`..`) or `words` (`to`/`optionally to`); `:::` classes on either end |
+| `subgraphs[]` | object | `id`, optional `name` (quoted id), `title` (`[...]`), `direction`, `members` (entity ids, each in one subgraph at most), nested `subgraphs` |
+| `styles[]`, `class_defs[]`, `class_assignments[]` | object | `{nodes, style}`, `{names, style}` (`default` allowed), `{nodes, classes}` |
+| `style` | object | `fill`, `stroke`, `color` (#hex or a lowercase name), `strokeWidth`, `fontSize` (integer + `px`/`pt`/`em`), `strokeDasharray` (one integer), `fontWeight`, `fontStyle` |
+
+- Text in names, aliases, labels, titles, and attribute comments is quoted and every special
+  character is written as an entity code. A label or alias that is one plain word is left bare.
+- Rejected: ids that start with a keyword or cardinality word (`end`, `one`, `many`, `to`,
+  `class`, `style`, `u-`...); text containing `direction TB|BT|RL|LR`; attribute names or types
+  `PK`/`FK`/`UK`; decimal or spaced style values and `rgb()`; `style`/`class` statements on an
+  entity with a quoted `name` (use its `classes`); a duplicate id or name.

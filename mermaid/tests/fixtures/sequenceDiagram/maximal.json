@@ -1,0 +1,778 @@
+{
+  "diagram": "sequence",
+  "target": "sequenceDiagram",
+  "title": "Sequence feature tour",
+  "config": {
+    "theme": "default",
+    "look": "classic",
+    "sequence": {
+      "mirrorActors": false,
+      "actorFontSize": 14,
+      "actorFontWeight": 400,
+      "noteAlign": "center",
+      "messageAlign": "center",
+      "messageFontSize": 16,
+      "diagramMarginX": 50,
+      "diagramMarginY": 10,
+      "boxTextMargin": 5,
+      "noteMargin": 10,
+      "messageMargin": 35,
+      "hideUnusedParticipants": false,
+      "activationWidth": 10,
+      "actorMargin": 50,
+      "width": 150,
+      "height": 65,
+      "boxMargin": 10,
+      "forceMenus": false,
+      "rightAngles": false,
+      "wrapPadding": 10,
+      "bottomMarginAdj": 1
+    }
+  },
+  "accessibility": {
+    "title": "Sequence feature tour",
+    "description": "Every coexisting sequenceDiagram construct."
+  },
+  "comment": "messages follow",
+  "autonumber": {
+    "start": 10,
+    "increment": 5
+  },
+  "actors": [
+    {
+      "kind": "box",
+      "color": "Aqua",
+      "label": "Front end",
+      "actors": [
+        {
+          "id": "P",
+          "kind": "participant",
+          "alias": "Portal",
+          "menu": {
+            "form": "links",
+            "items": [
+              {
+                "label": "Dashboard",
+                "url": "https://dashboard.contoso.com/p"
+              },
+              {
+                "label": "Wiki",
+                "url": "https://wiki.contoso.com/p"
+              }
+            ]
+          }
+        },
+        {
+          "id": "U",
+          "kind": "actor"
+        }
+      ]
+    },
+    {
+      "kind": "box",
+      "label": "Group without description",
+      "actors": [
+        {
+          "id": "B1",
+          "type": "boundary"
+        },
+        {
+          "id": "C1",
+          "type": "control"
+        }
+      ]
+    },
+    {
+      "kind": "box",
+      "color": "rgb(33,66,99)",
+      "actors": [
+        {
+          "id": "E1",
+          "type": "entity"
+        }
+      ]
+    },
+    {
+      "kind": "box",
+      "color": "rgba(33,66,99,0.5)",
+      "label": "Storage",
+      "actors": [
+        {
+          "id": "D1",
+          "type": "database"
+        }
+      ]
+    },
+    {
+      "kind": "box",
+      "color": "hsl(10, 40%, 90%)",
+      "actors": [
+        {
+          "id": "L1",
+          "type": "collections"
+        }
+      ]
+    },
+    {
+      "kind": "box",
+      "color": "hsla(10, 40%, 90%, 0.5)",
+      "actors": [
+        {
+          "id": "Q1",
+          "type": "queue"
+        }
+      ]
+    },
+    {
+      "kind": "box",
+      "color": "transparent",
+      "label": "Aqua",
+      "actors": [
+        {
+          "id": "API",
+          "type": "boundary",
+          "alias": "Public API"
+        },
+        {
+          "id": "Auth",
+          "type": "control",
+          "inlineAlias": "Auth Service"
+        },
+        {
+          "id": "X",
+          "type": "database",
+          "inlineAlias": "Internal",
+          "alias": "External"
+        }
+      ]
+    },
+    {
+      "id": "A",
+      "kind": "participant",
+      "alias": "Alice\nJohnson",
+      "menu": {
+        "form": "link",
+        "items": [
+          {
+            "label": "Dashboard",
+            "url": "https://dashboard.contoso.com/alice"
+          }
+        ]
+      }
+    },
+    {
+      "id": "Implicit",
+      "implicit": true
+    }
+  ],
+  "steps": [
+    {
+      "type": "message",
+      "from": "A",
+      "to": "U",
+      "label": "solid default label"
+    },
+    {
+      "type": "message",
+      "from": "A",
+      "to": "U",
+      "label": "solid open",
+      "arrow": "solid-open"
+    },
+    {
+      "type": "message",
+      "from": "A",
+      "to": "U",
+      "label": "dotted open",
+      "arrow": "dotted-open"
+    },
+    {
+      "type": "message",
+      "from": "A",
+      "to": "U",
+      "label": "solid",
+      "arrow": "solid"
+    },
+    {
+      "type": "message",
+      "from": "A",
+      "to": "U",
+      "label": "dotted",
+      "arrow": "dotted"
+    },
+    {
+      "type": "message",
+      "from": "A",
+      "to": "U",
+      "label": "solid bidirectional",
+      "arrow": "solid-bidirectional"
+    },
+    {
+      "type": "message",
+      "from": "A",
+      "to": "U",
+      "label": "dotted bidirectional",
+      "arrow": "dotted-bidirectional"
+    },
+    {
+      "type": "message",
+      "from": "A",
+      "to": "U",
+      "label": "solid cross",
+      "arrow": "solid-cross"
+    },
+    {
+      "type": "message",
+      "from": "A",
+      "to": "U",
+      "label": "dotted cross",
+      "arrow": "dotted-cross"
+    },
+    {
+      "type": "message",
+      "from": "A",
+      "to": "U",
+      "label": "solid async",
+      "arrow": "solid-async"
+    },
+    {
+      "type": "message",
+      "from": "A",
+      "to": "U",
+      "label": "dotted async",
+      "arrow": "dotted-async"
+    },
+    {
+      "type": "message",
+      "from": "A",
+      "to": "U",
+      "label": "half solid top",
+      "arrow": "half-solid-top"
+    },
+    {
+      "type": "message",
+      "from": "A",
+      "to": "U",
+      "label": "half dotted top",
+      "arrow": "half-dotted-top"
+    },
+    {
+      "type": "message",
+      "from": "A",
+      "to": "U",
+      "label": "half solid bottom",
+      "arrow": "half-solid-bottom"
+    },
+    {
+      "type": "message",
+      "from": "A",
+      "to": "U",
+      "label": "half dotted bottom",
+      "arrow": "half-dotted-bottom"
+    },
+    {
+      "type": "message",
+      "from": "A",
+      "to": "U",
+      "label": "half solid reverse top",
+      "arrow": "half-solid-reverse-top"
+    },
+    {
+      "type": "message",
+      "from": "A",
+      "to": "U",
+      "label": "half dotted reverse top",
+      "arrow": "half-dotted-reverse-top"
+    },
+    {
+      "type": "message",
+      "from": "A",
+      "to": "U",
+      "label": "half solid reverse bottom",
+      "arrow": "half-solid-reverse-bottom"
+    },
+    {
+      "type": "message",
+      "from": "A",
+      "to": "U",
+      "label": "half dotted reverse bottom",
+      "arrow": "half-dotted-reverse-bottom"
+    },
+    {
+      "type": "message",
+      "from": "A",
+      "to": "U",
+      "label": "stick solid top",
+      "arrow": "stick-solid-top"
+    },
+    {
+      "type": "message",
+      "from": "A",
+      "to": "U",
+      "label": "stick dotted top",
+      "arrow": "stick-dotted-top"
+    },
+    {
+      "type": "message",
+      "from": "A",
+      "to": "U",
+      "label": "stick solid bottom",
+      "arrow": "stick-solid-bottom"
+    },
+    {
+      "type": "message",
+      "from": "A",
+      "to": "U",
+      "label": "stick dotted bottom",
+      "arrow": "stick-dotted-bottom"
+    },
+    {
+      "type": "message",
+      "from": "A",
+      "to": "U",
+      "label": "stick solid reverse top",
+      "arrow": "stick-solid-reverse-top"
+    },
+    {
+      "type": "message",
+      "from": "A",
+      "to": "U",
+      "label": "stick dotted reverse top",
+      "arrow": "stick-dotted-reverse-top"
+    },
+    {
+      "type": "message",
+      "from": "A",
+      "to": "U",
+      "label": "stick solid reverse bottom",
+      "arrow": "stick-solid-reverse-bottom"
+    },
+    {
+      "type": "message",
+      "from": "A",
+      "to": "U",
+      "label": "stick dotted reverse bottom",
+      "arrow": "stick-dotted-reverse-bottom"
+    },
+    {
+      "type": "message",
+      "from": "A",
+      "to": "U",
+      "label": "central target",
+      "central": "target"
+    },
+    {
+      "type": "message",
+      "from": "A",
+      "to": "U",
+      "label": "central source",
+      "central": "source"
+    },
+    {
+      "type": "message",
+      "from": "U",
+      "to": "A",
+      "label": "central both",
+      "central": "both"
+    },
+    {
+      "type": "message",
+      "from": "Implicit",
+      "to": "A",
+      "label": "implicit participant"
+    },
+    {
+      "type": "message",
+      "from": "A",
+      "to": "B1",
+      "label": "I ♥ you ∞ #1 \"really\""
+    },
+    {
+      "type": "message",
+      "from": "B1",
+      "to": "C1",
+      "label": "Hello,\ntwo lines"
+    },
+    {
+      "type": "message",
+      "from": "C1",
+      "to": "E1",
+      "label": "a; b"
+    },
+    {
+      "type": "message",
+      "from": "E1",
+      "to": "D1",
+      "label": "x"
+    },
+    {
+      "type": "message",
+      "from": "D1",
+      "to": "L1",
+      "label": "x"
+    },
+    {
+      "type": "message",
+      "from": "L1",
+      "to": "Q1",
+      "label": "x"
+    },
+    {
+      "type": "message",
+      "from": "API",
+      "to": "Auth",
+      "label": "x"
+    },
+    {
+      "type": "message",
+      "from": "Auth",
+      "to": "X",
+      "label": "x"
+    },
+    {
+      "type": "activate",
+      "actor": "P"
+    },
+    {
+      "type": "message",
+      "from": "P",
+      "to": "U",
+      "label": "activated"
+    },
+    {
+      "type": "deactivate",
+      "actor": "P"
+    },
+    {
+      "type": "message",
+      "from": "A",
+      "to": "P",
+      "label": "stack 1",
+      "activation": "activate"
+    },
+    {
+      "type": "message",
+      "from": "A",
+      "to": "P",
+      "label": "stack 2",
+      "activation": "activate"
+    },
+    {
+      "type": "message",
+      "from": "P",
+      "to": "A",
+      "label": "unstack 2",
+      "arrow": "dotted",
+      "activation": "deactivate"
+    },
+    {
+      "type": "message",
+      "from": "P",
+      "to": "A",
+      "label": "unstack 1",
+      "arrow": "dotted",
+      "activation": "deactivate"
+    },
+    {
+      "type": "message",
+      "from": "A",
+      "to": "U",
+      "label": "reverse with deactivate",
+      "activation": "activate"
+    },
+    {
+      "type": "message",
+      "from": "U",
+      "to": "A",
+      "label": "reverse solid unstack",
+      "arrow": "half-solid-reverse-top",
+      "activation": "deactivate"
+    },
+    {
+      "type": "note",
+      "position": "right_of",
+      "actors": [
+        "A"
+      ],
+      "text": "right"
+    },
+    {
+      "type": "note",
+      "position": "left_of",
+      "actors": [
+        "A"
+      ],
+      "text": "left"
+    },
+    {
+      "type": "note",
+      "position": "over",
+      "actors": [
+        "A"
+      ],
+      "text": "(end)"
+    },
+    {
+      "type": "note",
+      "position": "over",
+      "actors": [
+        "A",
+        "U"
+      ],
+      "text": "span\ntwo lines"
+    },
+    {
+      "type": "loop",
+      "label": "Every minute",
+      "steps": [
+        {
+          "type": "message",
+          "from": "U",
+          "to": "A",
+          "label": "ping",
+          "arrow": "dotted-open"
+        }
+      ]
+    },
+    {
+      "type": "alt",
+      "branches": [
+        {
+          "label": "is sick",
+          "steps": [
+            {
+              "type": "message",
+              "from": "U",
+              "to": "A",
+              "label": "Not so good"
+            }
+          ]
+        },
+        {
+          "label": "is well",
+          "steps": [
+            {
+              "type": "message",
+              "from": "U",
+              "to": "A",
+              "label": "Fresh"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "opt",
+      "label": "Extra response",
+      "steps": [
+        {
+          "type": "message",
+          "from": "U",
+          "to": "A",
+          "label": "Thanks"
+        }
+      ]
+    },
+    {
+      "type": "par",
+      "branches": [
+        {
+          "label": "A to U",
+          "steps": [
+            {
+              "type": "message",
+              "from": "A",
+              "to": "U",
+              "label": "Hi"
+            }
+          ]
+        },
+        {
+          "label": "A to P",
+          "steps": [
+            {
+              "type": "message",
+              "from": "A",
+              "to": "P",
+              "label": "Hi"
+            },
+            {
+              "type": "par",
+              "branches": [
+                {
+                  "label": "P to U",
+                  "steps": [
+                    {
+                      "type": "message",
+                      "from": "P",
+                      "to": "U",
+                      "label": "nested"
+                    }
+                  ]
+                },
+                {
+                  "label": "P to A",
+                  "steps": [
+                    {
+                      "type": "message",
+                      "from": "P",
+                      "to": "A",
+                      "label": "nested"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "critical",
+      "branches": [
+        {
+          "label": "Connect to DB",
+          "steps": [
+            {
+              "type": "message",
+              "from": "A",
+              "to": "D1",
+              "label": "connect",
+              "arrow": "dotted-open"
+            }
+          ]
+        },
+        {
+          "label": "Network timeout",
+          "steps": [
+            {
+              "type": "message",
+              "from": "A",
+              "to": "A",
+              "label": "log",
+              "arrow": "dotted-open"
+            }
+          ]
+        },
+        {
+          "label": "Credentials rejected",
+          "steps": [
+            {
+              "type": "message",
+              "from": "A",
+              "to": "A",
+              "label": "log other",
+              "arrow": "dotted-open"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "critical",
+      "branches": [
+        {
+          "label": "No options",
+          "steps": [
+            {
+              "type": "message",
+              "from": "A",
+              "to": "D1",
+              "label": "connect",
+              "arrow": "dotted-open"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "break",
+      "label": "when booking fails",
+      "steps": [
+        {
+          "type": "message",
+          "from": "A",
+          "to": "U",
+          "label": "failure",
+          "arrow": "dotted-open"
+        }
+      ]
+    },
+    {
+      "type": "rect",
+      "color": "rgb(191, 223, 255)",
+      "steps": [
+        {
+          "type": "message",
+          "from": "A",
+          "to": "U",
+          "label": "highlighted"
+        },
+        {
+          "type": "rect",
+          "color": "rgba(0, 0, 255, .1)",
+          "steps": [
+            {
+              "type": "message",
+              "from": "U",
+              "to": "A",
+              "label": "nested highlight"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "create",
+      "participant": {
+        "id": "Carl",
+        "kind": "participant"
+      }
+    },
+    {
+      "type": "message",
+      "from": "A",
+      "to": "Carl",
+      "label": "Hi Carl"
+    },
+    {
+      "type": "create",
+      "participant": {
+        "id": "D",
+        "kind": "actor",
+        "alias": "Donald"
+      }
+    },
+    {
+      "type": "message",
+      "from": "Carl",
+      "to": "D",
+      "label": "Hi"
+    },
+    {
+      "type": "create",
+      "participant": {
+        "id": "Q2",
+        "type": "queue",
+        "inlineAlias": "Retry queue"
+      }
+    },
+    {
+      "type": "message",
+      "from": "A",
+      "to": "Q2",
+      "label": "enqueue"
+    },
+    {
+      "type": "destroy",
+      "actor": "Carl"
+    },
+    {
+      "type": "message",
+      "from": "A",
+      "to": "Carl",
+      "label": "We are too many",
+      "arrow": "solid-cross"
+    }
+  ]
+}

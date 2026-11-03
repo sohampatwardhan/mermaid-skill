@@ -1,0 +1,21 @@
+{
+  "diagram": "graph",
+  "target": "erDiagram",
+  "nodes": [
+    {
+      "id": "CUSTOMER"
+    },
+    {
+      "id": "ORDER"
+    }
+  ],
+  "edges": [
+    {
+      "from": "CUSTOMER",
+      "to": "ORDER",
+      "label": "places",
+      "left": "exactly_one",
+      "right": "zero_or_more"
+    }
+  ]
+}

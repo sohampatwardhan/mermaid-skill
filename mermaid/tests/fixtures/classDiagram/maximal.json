@@ -1,0 +1,706 @@
+{
+  "diagram": "graph",
+  "target": "classDiagram",
+  "title": "Class feature tour",
+  "config": {
+    "theme": "default",
+    "look": "classic",
+    "layout": "dagre",
+    "class": {
+      "hideEmptyMembersBox": false,
+      "hierarchicalNamespaces": true,
+      "htmlLabels": false,
+      "titleTopMargin": 25,
+      "dividerMargin": 10,
+      "padding": 5,
+      "textHeight": 10,
+      "arrowMarkerAbsolute": false,
+      "useMaxWidth": true
+    }
+  },
+  "accessibility": {
+    "title": "Class feature tour",
+    "description": "Every coexisting classDiagram construct."
+  },
+  "comment": "classes, members, relations, namespaces, notes, interaction and styling",
+  "direction": "RL",
+  "nodes": [
+    {
+      "id": "Animal",
+      "label": "Animal with a label"
+    },
+    {
+      "id": "Animal Class",
+      "backtick": true
+    },
+    {
+      "id": "my-node",
+      "backtick": true,
+      "implicit": true
+    },
+    {
+      "id": "Vehicle",
+      "implicit": true,
+      "style": {
+        "fill": "#f9f",
+        "stroke": "#333",
+        "strokeWidth": "4px"
+      }
+    },
+    {
+      "id": "Car",
+      "implicit": true
+    },
+    {
+      "id": "BankAccount",
+      "member_syntax": "colon",
+      "members": [
+        {
+          "kind": "attribute",
+          "visibility": "public",
+          "type": "String",
+          "name": "owner"
+        },
+        {
+          "kind": "attribute",
+          "visibility": "private",
+          "type": "BigDecimal",
+          "name": "balance"
+        },
+        {
+          "kind": "method",
+          "visibility": "protected",
+          "name": "deposit",
+          "parameters": [
+            {
+              "name": "amount"
+            }
+          ],
+          "return_type": "bool"
+        },
+        {
+          "kind": "method",
+          "visibility": "package",
+          "name": "withdrawal",
+          "parameters": [
+            {
+              "name": "amount",
+              "type": "int"
+            }
+          ],
+          "return_type": "int"
+        }
+      ]
+    },
+    {
+      "id": "Square",
+      "generic": [
+        "Shape"
+      ],
+      "member_syntax": "block",
+      "members": [
+        {
+          "kind": "attribute",
+          "type": "int",
+          "name": "id"
+        },
+        {
+          "kind": "attribute",
+          "type": {
+            "name": "List",
+            "args": [
+              "int"
+            ]
+          },
+          "name": "position"
+        },
+        {
+          "kind": "method",
+          "visibility": "public",
+          "name": "setPoints",
+          "parameters": [
+            {
+              "name": "points",
+              "type": {
+                "name": "List",
+                "args": [
+                  "int"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "kind": "method",
+          "visibility": "public",
+          "name": "getPoints",
+          "parameters": [],
+          "return_type": {
+            "name": "List",
+            "args": [
+              "int"
+            ]
+          }
+        },
+        {
+          "kind": "method",
+          "visibility": "public",
+          "name": "someAbstractMethod",
+          "classifier": "abstract"
+        },
+        {
+          "kind": "method",
+          "visibility": "public",
+          "name": "someStaticMethod",
+          "classifier": "static"
+        },
+        {
+          "kind": "attribute",
+          "type": "String",
+          "name": "someField",
+          "classifier": "static"
+        },
+        {
+          "kind": "method",
+          "visibility": "public",
+          "name": "getDistanceMatrix",
+          "parameters": [],
+          "return_type": {
+            "name": "List",
+            "args": [
+              {
+                "name": "List",
+                "args": [
+                  "int"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "kind": "attribute",
+          "visibility": "private",
+          "type": {
+            "name": "Map",
+            "args": [
+              "K",
+              "V"
+            ]
+          },
+          "name": "lookup"
+        }
+      ]
+    },
+    {
+      "id": "classA",
+      "implicit": true
+    },
+    {
+      "id": "classB",
+      "implicit": true
+    },
+    {
+      "id": "classC",
+      "implicit": true
+    },
+    {
+      "id": "classD",
+      "implicit": true
+    },
+    {
+      "id": "classE",
+      "implicit": true
+    },
+    {
+      "id": "classF",
+      "implicit": true
+    },
+    {
+      "id": "classG",
+      "implicit": true
+    },
+    {
+      "id": "classH",
+      "implicit": true
+    },
+    {
+      "id": "classI",
+      "implicit": true
+    },
+    {
+      "id": "classJ",
+      "implicit": true
+    },
+    {
+      "id": "classK",
+      "implicit": true
+    },
+    {
+      "id": "classL",
+      "implicit": true
+    },
+    {
+      "id": "classM",
+      "implicit": true
+    },
+    {
+      "id": "classN",
+      "implicit": true
+    },
+    {
+      "id": "classO",
+      "implicit": true
+    },
+    {
+      "id": "classP",
+      "implicit": true
+    },
+    {
+      "id": "classQ",
+      "implicit": true
+    },
+    {
+      "id": "classR",
+      "implicit": true
+    },
+    {
+      "id": "Zebra",
+      "implicit": true
+    },
+    {
+      "id": "Horse",
+      "implicit": true
+    },
+    {
+      "id": "T1",
+      "implicit": true
+    },
+    {
+      "id": "T2",
+      "implicit": true
+    },
+    {
+      "id": "T3",
+      "implicit": true
+    },
+    {
+      "id": "T4",
+      "implicit": true
+    },
+    {
+      "id": "T5",
+      "implicit": true
+    },
+    {
+      "id": "T6",
+      "implicit": true
+    },
+    {
+      "id": "T7",
+      "implicit": true
+    },
+    {
+      "id": "T8",
+      "implicit": true
+    },
+    {
+      "id": "T9",
+      "implicit": true
+    },
+    {
+      "id": "T10",
+      "implicit": true
+    },
+    {
+      "id": "bar",
+      "implicit": true
+    },
+    {
+      "id": "foo",
+      "implicit": true
+    },
+    {
+      "id": "Class01",
+      "implicit": true
+    },
+    {
+      "id": "baz",
+      "implicit": true
+    },
+    {
+      "id": "Customer",
+      "implicit": true
+    },
+    {
+      "id": "Ticket",
+      "implicit": true
+    },
+    {
+      "id": "Student",
+      "implicit": true
+    },
+    {
+      "id": "Course",
+      "implicit": true
+    },
+    {
+      "id": "Galaxy",
+      "implicit": true
+    },
+    {
+      "id": "Star",
+      "implicit": true
+    },
+    {
+      "id": "Planet",
+      "implicit": true
+    },
+    {
+      "id": "Moon",
+      "implicit": true
+    },
+    {
+      "id": "Triangle"
+    },
+    {
+      "id": "UserService",
+      "annotation": {
+        "name": "service",
+        "placement": "block"
+      }
+    },
+    {
+      "id": "Developer"
+    },
+    {
+      "id": "Repository"
+    },
+    {
+      "id": "Gateway"
+    },
+    {
+      "id": "Shape",
+      "annotation": {
+        "name": "interface",
+        "placement": "inline"
+      }
+    },
+    {
+      "id": "Base"
+    },
+    {
+      "id": "Legacy",
+      "implicit": true,
+      "annotation": {
+        "name": "abstract"
+      }
+    },
+    {
+      "id": "Color",
+      "annotation": {
+        "name": "enumeration",
+        "placement": "block"
+      },
+      "members": [
+        {
+          "kind": "attribute",
+          "name": "RED"
+        },
+        {
+          "kind": "attribute",
+          "name": "BLUE"
+        }
+      ]
+    },
+    {
+      "id": "Mineral",
+      "class": "someclass"
+    },
+    {
+      "id": "Rock",
+      "class": "someclass",
+      "member_syntax": "block",
+      "members": [
+        {
+          "kind": "attribute",
+          "visibility": "private",
+          "type": "int",
+          "name": "sizeInFeet"
+        }
+      ]
+    },
+    {
+      "id": "Base2",
+      "annotation": {
+        "name": "abstract",
+        "placement": "separate"
+      }
+    }
+  ],
+  "namespaces": [
+    {
+      "id": "BaseShapes",
+      "classes": [
+        "Triangle"
+      ]
+    },
+    {
+      "id": "Auth",
+      "label": "Authentication Service",
+      "classes": [
+        "UserService"
+      ]
+    },
+    {
+      "id": "Company.Engineering.Backend",
+      "classes": [
+        "Developer"
+      ]
+    },
+    {
+      "id": "Platform",
+      "label": "Platform services",
+      "classes": [
+        "Gateway"
+      ],
+      "namespaces": [
+        {
+          "id": "Data",
+          "label": "Data layer",
+          "classes": [
+            "Repository"
+          ]
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "from": "my-node",
+      "to": "Animal",
+      "kind": "association"
+    },
+    {
+      "from": "Vehicle",
+      "to": "Car",
+      "kind": "inheritance"
+    },
+    {
+      "from": "classA",
+      "to": "classB",
+      "kind": "inheritance",
+      "label": "implements"
+    },
+    {
+      "from": "classC",
+      "to": "classD",
+      "kind": "composition"
+    },
+    {
+      "from": "classE",
+      "to": "classF",
+      "kind": "aggregation"
+    },
+    {
+      "from": "classG",
+      "to": "classH",
+      "kind": "association"
+    },
+    {
+      "from": "classI",
+      "to": "classJ",
+      "kind": "link"
+    },
+    {
+      "from": "classK",
+      "to": "classL",
+      "kind": "dependency"
+    },
+    {
+      "from": "classM",
+      "to": "classN",
+      "kind": "realization"
+    },
+    {
+      "from": "classO",
+      "to": "classP",
+      "kind": "link_dashed"
+    },
+    {
+      "from": "classQ",
+      "to": "classR",
+      "kind": "inheritance",
+      "ends": "to"
+    },
+    {
+      "from": "Zebra",
+      "to": "Horse",
+      "kind": "inheritance",
+      "ends": "both"
+    },
+    {
+      "from": "T1",
+      "to": "T2",
+      "kind": "composition",
+      "ends": "both"
+    },
+    {
+      "from": "T3",
+      "to": "T4",
+      "kind": "aggregation",
+      "ends": "both"
+    },
+    {
+      "from": "T5",
+      "to": "T6",
+      "kind": "association",
+      "ends": "both"
+    },
+    {
+      "from": "T7",
+      "to": "T8",
+      "kind": "realization",
+      "ends": "both"
+    },
+    {
+      "from": "T9",
+      "to": "T10",
+      "kind": "dependency",
+      "ends": "both"
+    },
+    {
+      "from": "bar",
+      "to": "foo",
+      "kind": "lollipop",
+      "ends": "from"
+    },
+    {
+      "from": "Class01",
+      "to": "baz",
+      "kind": "lollipop",
+      "ends": "to"
+    },
+    {
+      "from": "Customer",
+      "to": "Ticket",
+      "kind": "association",
+      "from_card": "1",
+      "to_card": "*",
+      "label": "buys"
+    },
+    {
+      "from": "Student",
+      "to": "Course",
+      "kind": "association",
+      "from_card": "0..1",
+      "to_card": "1..*"
+    },
+    {
+      "from": "Galaxy",
+      "to": "Star",
+      "kind": "association",
+      "from_card": "n",
+      "to_card": "0..n",
+      "label": "Contains"
+    },
+    {
+      "from": "Planet",
+      "to": "Moon",
+      "kind": "association",
+      "to_card": "1..n"
+    },
+    {
+      "from": "Gateway",
+      "to": "Repository",
+      "kind": "association",
+      "label": "delegates"
+    },
+    {
+      "from": "Legacy",
+      "to": "Base",
+      "kind": "realization"
+    }
+  ],
+  "notes": [
+    {
+      "text": "This is a general note"
+    },
+    {
+      "for": "Square",
+      "text": "line1\nline2"
+    }
+  ],
+  "interactions": [
+    {
+      "node": "Shape",
+      "action": "link",
+      "url": "https://www.github.com",
+      "tooltip": "This is a tooltip for a link"
+    },
+    {
+      "node": "Base",
+      "action": "href",
+      "url": "https://www.github.com",
+      "tooltip": "This is a tooltip for a link"
+    },
+    {
+      "node": "Color",
+      "action": "callback",
+      "function": "callbackFunction",
+      "tooltip": "Callback tooltip"
+    },
+    {
+      "node": "Triangle",
+      "action": "call",
+      "function": "callbackFunction",
+      "tooltip": "Callback tooltip"
+    }
+  ],
+  "class_defs": [
+    {
+      "names": [
+        "default"
+      ],
+      "style": {
+        "fill": "#eef"
+      }
+    },
+    {
+      "names": [
+        "someclass"
+      ],
+      "style": {
+        "fill": "#f96",
+        "stroke": "#333",
+        "strokeDasharray": "5 5",
+        "fontWeight": "bold"
+      }
+    },
+    {
+      "names": [
+        "pink",
+        "blue"
+      ],
+      "style": {
+        "color": "#f9f",
+        "fontSize": "12pt",
+        "fontStyle": "italic"
+      }
+    }
+  ],
+  "css_classes": [
+    {
+      "nodes": [
+        "Car"
+      ],
+      "class": "pink"
+    },
+    {
+      "nodes": [
+        "classA",
+        "classB"
+      ],
+      "class": "blue"
+    }
+  ]
+}

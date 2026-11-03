@@ -287,4 +287,48 @@ Covers: every feature id.
 
 ## Builder
 
-`candidate`: `scripts/render.py` has an IR builder for this type (target keyword(s) `classDiagram`). It has not been through the reliability bar yet; see [coverage.md](../coverage.md).
+`builder`: family `graph`, keyword `classDiagram`. Example:
+[maximal.json](../../tests/fixtures/classDiagram/maximal.json).
+
+| Key | Type | Meaning |
+|---|---|---|
+| `title` | string | frontmatter `title:` |
+| `config` | object | `theme`, `look`, `layout`, and `class.*` (the keys in the table above) |
+| `accessibility` | `{title, description}` | `accTitle:` / `accDescr:` (a newline in `description` uses the block form) |
+| `comment` | string | one `%%` line |
+| `direction` | `TB` \| `BT` \| `LR` \| `RL` | `direction` |
+| `nodes[]` | object | one class each (required, at least one) |
+| `nodes[].id` | identifier | class name; with `backtick: true` words joined by single spaces, dots or dashes, emitted as `` `A B` `` |
+| `nodes[].implicit` | boolean | no `class` line; the class comes from its relations (needs an edge; only `members` in colon form, a `separate` annotation and `style`) |
+| `nodes[].label` | string | `class A["label"]` |
+| `nodes[].generic` | string[] | `class A~K, V~` |
+| `nodes[].annotation` | `{name, placement}` | `interface` \| `abstract` \| `service` \| `enumeration`; placement `block` (default), `inline`, `separate` |
+| `nodes[].member_syntax` | `block` \| `colon` | members in `{ }` (default) or as `A : member` lines |
+| `nodes[].members[]` | object | `kind` `attribute` (`visibility`, `type`, `name`, `classifier`) or `method` (`visibility`, `name`, `parameters[] {name, type}`, `return_type`, `classifier`) |
+| `visibility` / `classifier` | enum | `public` `private` `protected` `package` / `static` `abstract` |
+| type | string or `{name, args[]}` | `{"name": "List", "args": ["int"]}` is `List~int~`; nests |
+| `nodes[].class` | classDef name | `class A:::name` |
+| `nodes[].style` | style object | `style A ...` |
+| `namespaces[]` | `{id, label, classes[], namespaces[]}` | `namespace` blocks; `id` may be dotted (`A.B`) |
+| `edges[]` | `{from, to, kind, ends, from_card, to_card, label}` | relations |
+| `edges[].kind` | enum | `inheritance` `composition` `aggregation` `association` `dependency` `realization` `link` `link_dashed` `lollipop` |
+| `edges[].ends` | `from` \| `to` \| `both` | arrowhead side; default `from` for inheritance, composition, aggregation, lollipop and `to` for association, dependency, realization; not allowed on links |
+| `edges[].from_card` / `to_card` | enum | `1` `0..1` `1..*` `*` `n` `0..n` `1..n` |
+| `notes[]` | `{text, for}` | `note "..."` or `note for A "..."`; a newline becomes `<br>` |
+| `interactions[]` | `{node, action, url, function, tooltip}` | action `href` / `link` (need `url`) or `call` / `callback` (need `function`); one per class |
+| `class_defs[]` | `{names[], style}` | `classDef a,b ...`; `default` styles every class |
+| `css_classes[]` | `{nodes[], class}` | `cssClass "A,B" name` |
+| style object | object | `fill`, `stroke`, `color`, `strokeWidth`, `strokeDasharray`, `fontSize`, `fontWeight`, `fontStyle` |
+
+Rejection rules:
+
+- Labels, members, generics, edge labels, and notes encode `` " # ; < > & | ` { } [ ] ( ) : , % \ ~ ``
+  as entity codes, which render back as the same characters. Member text also encodes `$ * + -`.
+  The title is written as-is.
+- Tooltips encode the same characters except `~`, and reject `<` and `>`. URLs must be `http(s)://` or `mailto:`, without spaces, quotes,
+  `;`, `<`, `>`, brackets or braces. Colors are `#hex`, a name, or `rgb()`/`hsl()` without commas.
+- Names reject these words, alone or as one word of a backtick or dotted name: `class`,
+  `namespace`, `note`, `style`, `click`, `link`, `callback`, `call`, `href`, `classDef`, `cssClass`, `classDiagram`, `o`, `_blank`, `_self`, `_parent` and `_top`.
+- These combinations are rejected because they do not parse: an `inline` annotation together with
+  `class`, `style` on a backtick name, an empty namespace, and a generic with several arguments
+  nested inside another generic.

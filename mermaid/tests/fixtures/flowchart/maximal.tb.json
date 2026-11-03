@@ -1,0 +1,27 @@
+{
+  "diagram": "graph",
+  "target": "flowchart",
+  "direction": "TB",
+  "config": {
+    "markdownAutoWrap": false,
+    "flowchart": {
+      "curve": "stepBefore"
+    }
+  },
+  "nodes": [
+    {
+      "id": "A",
+      "label": "Markdown with **autowrap** off",
+      "labelType": "markdown"
+    },
+    {
+      "id": "B"
+    }
+  ],
+  "edges": [
+    {
+      "from": "A",
+      "to": "B"
+    }
+  ]
+}

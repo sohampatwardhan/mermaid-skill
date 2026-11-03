@@ -1,0 +1,21 @@
+{
+  "diagram": "graph",
+  "target": "flowchart-elk",
+  "direction": "BT",
+  "nodes": [
+    {
+      "id": "A",
+      "label": "Start"
+    },
+    {
+      "id": "B",
+      "label": "End"
+    }
+  ],
+  "edges": [
+    {
+      "from": "A",
+      "to": "B"
+    }
+  ]
+}

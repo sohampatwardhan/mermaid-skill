@@ -579,4 +579,51 @@ Covers: `flowchart.direction-rl`.
 
 ## Builder
 
-`candidate`: `scripts/render.py` has an IR builder for this type (target keyword(s) `flowchart`). It has not been through the reliability bar yet; see [coverage.md](../coverage.md).
+`builder`: family `graph`, keywords `flowchart`, `graph`, `flowchart-elk` (emitted unchanged).
+Example: [maximal.json](../../tests/fixtures/flowchart/maximal.json) (plus `maximal.*.json` for the
+other keywords and directions; `maximal.graph.json` is the old branch's example).
+
+| Key | Type | Meaning |
+|---|---|---|
+| `title` | string | frontmatter `title:` |
+| `config` | object | `theme`, `look`, `layout`, `markdownAutoWrap`, and `flowchart.*` (`curve`, spacings, paddings, `wrappingWidth`, `minNodeWidth`, `titleTopMargin`, `subGraphTitleMargin {top, bottom}`, `inheritDir`, `useMaxWidth`) |
+| `accessibility` | `{title, description}` | `accTitle:` / `accDescr:` (a newline in `description` uses the block form) |
+| `comment` | string | one `%%` line |
+| `direction` | `TB` \| `TD` \| `BT` \| `RL` \| `LR` | header direction (default `TD`) |
+| `semicolons` | boolean | end node and edge statements with `;` |
+| `nodes[]` | object | required, at least one |
+| `nodes[].id` | identifier | `[A-Za-z_][A-Za-z0-9_]*`; a node with no label and no look is emitted bare |
+| `nodes[].label`, `labelType` | string, `text` \| `markdown` | quoted label; `markdown` is a `` "`...`" `` string (classic forms only, may contain newlines) |
+| `nodes[].form` | enum | classic brackets: `rect` `round` `stadium` `subroutine` `cylinder` `circle` `asymmetric` `rhombus` `hexagon` `parallelogram` `parallelogram-alt` `trapezoid` `trapezoid-alt` `double-circle` |
+| `nodes[].shape` | enum | typed shape `@{ shape: ... }`: every name in the Features table, aliases included |
+| `nodes[].kind` | enum | ISO 5807 meaning: `terminator` `process` `decision` `io` `subprocess` `document` `store` `connector` (typed shape) |
+| `nodes[].icon` | `{name, form, pos, h}` | icon node; `name` like `fa:user`, `form` `square` \| `circle` \| `rounded`, `pos` `t` \| `b`, `h` >= 48 |
+| `nodes[].image` | `{url, pos, w, h, constraint}` | image node; `constraint` `on` \| `off` |
+| `nodes[].faIcon` | `{prefix, name}` | Font Awesome icon before the label (`fa` `fab` `fas` `far` `fal` `fad` `fak`); needs a `form` |
+| `nodes[].class` | classDef name | `A:::name` |
+| `nodes[].group` | subgraph id | declares the node inside that subgraph |
+| `subgraphs[]` | `{id, label, labelType, direction, view, subgraphs[]}` | nested `subgraph` blocks; `direction` `TB` `BT` `RL` `LR`; `view` `collapsed` \| `expanded`. `groups[]` is the legacy flat form |
+| `edges[]` | object | `from`, `to` (an id, `{id, class}` for `:::`, or a list for `&`), link keys, and `then[]` (`{to, link keys}`) for chains |
+| link keys | object | `stroke` `normal` \| `thick` \| `dotted` \| `invisible`; `head` `arrow` \| `none` \| `circle` \| `cross`; `bidirectional`; `length` 1-8; `label`, `labelType`, `labelForm` `pipe` \| `inline`; legacy `kind` `normal` `dependency` `conditional` `weak` `strong` |
+| edge metadata | object | `id` (edge id `e1@-->`), `animate`, `animation` `fast` \| `slow`, `curve` (needs `id`) |
+| `classDefs[]` | `{names[], style}` | `classDef a,b ...`; `default` styles every node |
+| `classes[]` | `{ids[], class}` | `class a,b name`; ids are nodes, subgraphs, or edge ids |
+| `styles[]` | `{id, style}` | `style id ...` on a node or subgraph |
+| `linkStyles[]` | `{links, style}` | `links` is `"default"` or link indexes counted from 0 (an `A & B --> C` edge counts 2) |
+| `clicks[]` | `{id, action, function, url, tooltip, target}` | `action` `callback` \| `call` (need `function`) or `url` \| `href` (need `url`, optional `target` `_self` `_blank` `_parent` `_top`); one per node |
+| style object | object | `fill`, `stroke`, `color` (#hex or a name), `strokeWidth`, `fontSize` (`4px`), `strokeDasharray` (`5 5`), `strokeDashoffset`, `fontWeight`, `fontStyle`, `animation {name, duration, timing, iterations}` |
+
+Rejection rules:
+
+- Labels, subgraph titles, edge text and tooltips encode every character in
+  `` " # ; < > & | ` { } [ ] ( ) : , % \ `` as entity codes, which render back as the same character.
+  So `fa:fa-x` typed into a label stays text; use `faIcon` for an icon.
+- `htmlLabels` is not offered: with it off, entity codes are drawn literally.
+- Tooltips reject `<`, `>` and `-->` (the sanitizer drops such a tooltip). URLs must be `http(s)://`
+  without spaces, quotes, `#`, `%`, `;`, angle brackets, brackets or braces.
+- Ids reject `end`, `graph`, `flowchart`, `subgraph`, `style`, `class`, `classDef`, `linkStyle`,
+  `click`, `call`, `href`, `interpolate`, `default`, `direction`, `accTitle`, `accDescr` and the link
+  targets. Node, subgraph and edge ids share one namespace.
+- Colors with parentheses (`rgb()`) do not parse in flowchart styles and are rejected. An invisible
+  link takes no arrowhead, length or label; `bidirectional` needs an arrowhead; edge metadata needs
+  an `id`, and an `id` cannot be used with `&` lists. A `linkStyle` index past the last link is rejected.

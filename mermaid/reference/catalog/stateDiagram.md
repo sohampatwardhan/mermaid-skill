@@ -224,4 +224,39 @@ Covers: `stateDiagram.keyword-legacy`.
 
 ## Builder
 
-`candidate`: `scripts/render.py` has an IR builder for this type (target keyword(s) `stateDiagram-v2`). It has not been through the reliability bar yet; see [coverage.md](../coverage.md).
+`builder`: family `state-machine`, keywords `stateDiagram-v2` and `stateDiagram` (the IR
+`target` picks the header; both take the same IR). Example:
+[maximal.json](../../tests/fixtures/stateDiagram/maximal.json).
+
+| Key path | Type | Meaning |
+|---|---|---|
+| `title` | string | frontmatter `title:` |
+| `config` | object | `theme`, `look`, `layout` (`dagre`/`elk`), `state.{wrappingWidth, minNodeWidth, titleTopMargin, padding, dividerMargin, noteMargin, forkWidth, forkHeight, radius}` (numbers >= 0), `state.useMaxWidth` (bool) |
+| `accessibility` | object | `{title, description}`; a description with `\n` uses `accDescr { }` |
+| `comment` | string | own-line `%% comment` after the header |
+| `direction` | enum | `TB`, `BT`, `LR`, `RL` (`TD` is rejected: it is not a state-diagram direction) |
+| `classDefs[]` | object | `{name, style}`: `classDef name ...` |
+| `states[]` | object | `{id, label?, labelForm?, kind?, direction?, states?, initial?, transitions?, final?, notes?, regions?}` |
+| `states[].label` / `labelForm` | string / enum | description; `colon` (default, `id : text`) or `as` (`state "text" as id`); a composite with a label is `composite-named` |
+| `states[].kind` | enum | `choice`, `fork`, `join` pseudo-state (takes only `id` and `kind`) |
+| `states[].states` ... | body | a composite: same body keys as the top level, optional `direction` |
+| `states[].regions[]` | body | >= 2 concurrent regions (`--`), each `{states, initial?, transitions?, final?, notes?}` |
+| `initial` / `final[]` | id | `[*] --> id` / `id --> [*]` in that body |
+| `transitions[]` | object | `{from, to, label?, comment?, fromClass?, toClass?}`; `from`/`to` is a sibling id or `[*]`; `comment` is a trailing `%%`; `*Class` is the `:::` shorthand |
+| `notes[]` | object | `{state, side: left/right, text}` (one line) or `{state, side, lines: [...]}` (`end note` block) |
+| `classes[]` | object | `{class, states: [id, ...]}`: `class a, b name` |
+| `styles[]` | object | `{state, style}`: `style id ...` |
+| `*.style` | object | `fill`, `stroke`, `color` (CSS color, no commas), `strokeWidth`, `fontSize` (`2px`), `strokeDasharray` (`5 5`), `fontWeight`, `fontStyle` (enums) |
+
+Rules an agent should know:
+
+- Ids match `[A-Za-z_][A-Za-z0-9_]*`, are unique across the whole diagram, and cannot be a
+  keyword (`state`, `note`, `class`, `classDef`, `style`, `as`, `default`, `scale`, `click`,
+  `href`, `stateDiagram`, `direction`, any case). Every state is declared in `states`;
+  transitions, `initial`, `final` and notes refer only to states declared in the same body.
+- Text is written verbatim with `#;<>"&:%[]` as entity codes. Every text field is one line
+  (except the accessibility description). Labels, one-line notes, comments and accessibility
+  text reject `direction` followed by `TB`/`BT`/`RL`/`LR` (the line would become a direction
+  statement). A `lines` entry cannot start with `end note`.
+- `:::` (`fromClass`/`toClass`) works only on simple states in top-level transitions; `classes`
+  and `styles` target simple states (Mermaid does not draw them on composites or pseudo-states).

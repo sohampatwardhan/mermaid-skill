@@ -1,0 +1,129 @@
+{
+  "diagram": "state-machine",
+  "target": "stateDiagram-v2",
+  "title": "State feature tour",
+  "config": {
+    "theme": "default",
+    "look": "classic",
+    "layout": "dagre",
+    "state": {
+      "wrappingWidth": 120,
+      "minNodeWidth": 120,
+      "titleTopMargin": 25,
+      "padding": 8,
+      "dividerMargin": 10,
+      "noteMargin": 10,
+      "forkWidth": 70,
+      "forkHeight": 7,
+      "radius": 5,
+      "useMaxWidth": true
+    }
+  },
+  "accessibility": {
+    "title": "State feature tour",
+    "description": "Every coexisting stateDiagram construct."
+  },
+  "comment": "pseudo-states, composites and styling",
+  "direction": "LR",
+  "classDefs": [
+    {"name": "notMoving", "style": {"fill": "white"}},
+    {"name": "movement", "style": {"fontStyle": "italic"}},
+    {"name": "badBadEvent", "style": {"fill": "#f00", "color": "white", "fontWeight": "bold", "strokeWidth": "2px", "stroke": "yellow"}},
+    {"name": "dashed", "style": {"stroke": "rgb(0 0 255)", "strokeDasharray": "5 5", "fontSize": "14px"}}
+  ],
+  "states": [
+    {"id": "s3", "label": "This is a state description", "labelForm": "colon"},
+    {"id": "s2", "label": "This is a state description", "labelForm": "as"},
+    {"id": "stateId"},
+    {"id": "yswsii", "label": "Your state with spaces in it"},
+    {"id": "if_state", "kind": "choice"},
+    {"id": "fork_state", "kind": "fork"},
+    {"id": "join_state", "kind": "join"},
+    {"id": "Still"},
+    {"id": "Moving"},
+    {"id": "Crash"},
+    {"id": "Left"},
+    {"id": "Right"},
+    {
+      "id": "First",
+      "direction": "TB",
+      "states": [
+        {
+          "id": "second",
+          "states": [{"id": "third"}],
+          "initial": "third",
+          "final": ["third"]
+        },
+        {"id": "fourth", "label": "Fourth state"}
+      ],
+      "initial": "second",
+      "transitions": [{"from": "second", "to": "fourth", "label": "inner step"}],
+      "final": ["fourth"]
+    },
+    {
+      "id": "NamedComposite",
+      "label": "Another Composite",
+      "regions": [
+        {
+          "states": [{"id": "NumLockOff"}, {"id": "NumLockOn"}],
+          "initial": "NumLockOff",
+          "transitions": [{"from": "NumLockOff", "to": "NumLockOn", "label": "EvNumLockPressed"}],
+          "notes": [{"state": "NumLockOn", "side": "left", "text": "Num lock is on"}]
+        },
+        {
+          "states": [{"id": "CapsLockOff", "label": "Caps lock off"}, {"id": "CapsLockOn"}],
+          "initial": "CapsLockOff",
+          "transitions": [{"from": "CapsLockOff", "to": "CapsLockOn", "label": "EvCapsLockPressed"}]
+        }
+      ]
+    },
+    {
+      "id": "Outer",
+      "label": "Outer machine",
+      "labelForm": "as",
+      "states": [{"id": "Inner"}],
+      "initial": "Inner",
+      "final": ["Inner"]
+    },
+    {"id": "choice1", "kind": "choice"},
+    {"id": "Done"},
+    {"id": "Failed"}
+  ],
+  "initial": "yswsii",
+  "transitions": [
+    {"from": "yswsii", "to": "s2", "label": "A transition"},
+    {"from": "s2", "to": "s3"},
+    {"from": "s3", "to": "if_state"},
+    {"from": "if_state", "to": "Still", "label": "if n < 0"},
+    {"from": "if_state", "to": "fork_state", "label": "if n >= 0"},
+    {"from": "fork_state", "to": "Left"},
+    {"from": "fork_state", "to": "Right"},
+    {"from": "Left", "to": "join_state"},
+    {"from": "Right", "to": "join_state"},
+    {"from": "join_state", "to": "First"},
+    {"from": "First", "to": "NamedComposite"},
+    {"from": "NamedComposite", "to": "Still"},
+    {"from": "Still", "to": "Moving", "toClass": "movement"},
+    {"from": "Moving", "to": "Crash", "comment": "trailing comment"},
+    {"from": "Crash", "to": "[*]", "fromClass": "badBadEvent"},
+    {"from": "[*]", "to": "Outer", "label": "second entry"},
+    {"from": "Outer", "to": "choice1"},
+    {"from": "choice1", "to": "Done", "label": "ok"},
+    {"from": "choice1", "to": "Failed", "label": "bad"},
+    {"from": "stateId", "to": "Still"}
+  ],
+  "final": ["Done", "Failed"],
+  "notes": [
+    {"state": "Still", "side": "right", "lines": ["Important information! You can write", "notes."]},
+    {"state": "Moving", "side": "left", "text": "This is the note to the left."},
+    {"state": "Outer", "side": "right", "text": "entry point"}
+  ],
+  "classes": [
+    {"class": "notMoving", "states": ["Still"]},
+    {"class": "movement", "states": ["Moving", "Crash"]},
+    {"class": "dashed", "states": ["third"]}
+  ],
+  "styles": [
+    {"state": "stateId", "style": {"fill": "#ccf", "stroke": "#333", "strokeWidth": "2px"}}
+  ]
+}

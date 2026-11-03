@@ -1,0 +1,10 @@
+{
+  "diagram": "graph",
+  "target": "flowchart",
+  "nodes": [
+    {
+      "id": "A",
+      "label": "Start"
+    }
+  ]
+}
