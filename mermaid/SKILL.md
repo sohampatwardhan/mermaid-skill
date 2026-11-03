@@ -1,6 +1,9 @@
 ---
 name: mermaid
 description: Produce validated Mermaid for a Markdown note. Use when choosing a diagram type or writing a ```mermaid block for any open-source Mermaid 12 type — graph types (flowchart, sequence, class, state, ER), time and tree types (gantt, timeline, journey, gitGraph, kanban, mindmap), charts (pie, quadrant, xy, radar, treemap, venn), structure (C4, architecture, block, packet, requirement), and the Mermaid 12 betas (agentflow, usecase, swimlanes, wardley, cynefin, event modeling, ishikawa, treeView, railroad). Validate every diagram with scripts/check.sh, which pins Mermaid CLI 12.0.0 and rejects error-placeholder SVGs.
+metadata:
+  author: sohampatwardhan
+  version: "2.0.0"
 ---
 
 # Mermaid
