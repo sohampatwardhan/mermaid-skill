@@ -33,11 +33,11 @@ CI pins `@mermaid-js/mermaid-cli@12.0.0` with Mermaid `12.0.0` on Node 22.
 | `radar` | `radar-beta` | [radar.md](catalog/radar.md) | builder | `test_builders.py::radar` | — |
 | `treemap` | `treemap-beta`, `treemap` | [treemap.md](catalog/treemap.md) | builder | `test_builders.py::treemap` | — |
 | `venn` | `venn-beta` | [venn.md](catalog/venn.md) | builder | `test_builders.py::venn` | — |
-| `c4` | `C4Context`, `C4Container`, `C4Component`, `C4Dynamic`, `C4Deployment` | [c4.md](catalog/c4.md) | candidate | `test_render_legacy` | Sprites, tags, `UpdateElementStyle`, `UpdateRelStyle` |
-| `architecture` | `architecture-beta` | [architecture.md](catalog/architecture.md) | candidate | `test_render_legacy` | Group-edge `{group}` modifier, edge labels |
-| `block` | `block` | [block.md](catalog/block.md) | candidate | `test_render_legacy` | Nested `block` groups, `blockArrow`, columns only as a top-level int |
-| `packet` | `packet` | [packet.md](catalog/packet.md) | candidate | `test_render_legacy` | Byte-vs-bit display config |
-| `requirementDiagram` | `requirementDiagram` | [requirementDiagram.md](catalog/requirementDiagram.md) | candidate | `test_render_legacy` | — |
+| `c4` | `C4Context`, `C4Container`, `C4Component`, `C4Dynamic`, `C4Deployment` | [c4.md](catalog/c4.md) | builder | `test_builders.py::c4` | — |
+| `architecture` | `architecture-beta` | [architecture.md](catalog/architecture.md) | builder | `test_builders.py::architecture` | — |
+| `block` | `block`, `block-beta` | [block.md](catalog/block.md) | builder | `test_builders.py::block` | — |
+| `packet` | `packet`, `packet-beta` | [packet.md](catalog/packet.md) | builder | `test_builders.py::packet` | — |
+| `requirementDiagram` | `requirementDiagram` | [requirementDiagram.md](catalog/requirementDiagram.md) | builder | `test_builders.py::requirementDiagram` | — |
 | `agentflow` | `agentflow-beta` | [agentflow.md](catalog/agentflow.md) | candidate | `test_render_legacy` | Metadata, `connector`, `global`, collapsed `view` |
 | `usecase` | `usecase-beta` | [usecase.md](catalog/usecase.md) | candidate | `test_render_legacy` | Notes, JSON tables, stereotypes, actor type/icon, package boundaries |
 | `swimlanes` | `swimlane-beta` | [swimlanes.md](catalog/swimlanes.md) | candidate | `test_render_legacy` | Lane-only features beyond flowchart subgraphs |

@@ -1,0 +1,37 @@
+{
+  "diagram": "graph",
+  "target": "architecture-beta",
+  "config": {"padding": 40, "iconSize": 80, "fontSize": 16, "randomize": false, "idealEdgeLengthMultiplier": 1.5, "seed": 1},
+  "accessibility": {"title": "Platform topology", "description": "Public API, private services and storage"},
+  "comment": "groups",
+  "groups": [
+    {"id": "api", "label": "Public API", "icon": "cloud"},
+    {"id": "priv", "label": "Private API", "icon": "cloud", "group": "api"},
+    {"id": "store", "label": "Storage"}
+  ],
+  "nodes": [
+    {"id": "gw", "label": "Gateway", "icon": "internet", "group": "api"},
+    {"id": "srv", "kind": "service", "label": "Server", "icon": "server", "group": "priv"},
+    {"id": "db", "label": "Database", "icon": "database", "group": "priv"},
+    {"id": "disk1", "label": "Disk One", "icon": "disk", "group": "store"},
+    {"id": "disk2", "label": "Disk Two", "icon": "disk", "group": "store"},
+    {"id": "logs", "label": "Logs", "group": "store"},
+    {"id": "ec2", "label": "EC2", "icon": "logos:aws-ec2"},
+    {"id": "jc", "kind": "junction"},
+    {"id": "jg", "kind": "junction", "group": "api"}
+  ],
+  "edges": [
+    {"from": "gw", "from_side": "B", "to": "jg", "to_side": "T"},
+    {"from": "jg", "from_side": "R", "to": "srv", "to_side": "L", "arrow": "forward"},
+    {"from": "srv", "from_side": "L", "to": "db", "to_side": "R", "arrow": "none"},
+    {"from": "db", "from_side": "T", "to": "ec2", "to_side": "L"},
+    {"from": "srv", "from_side": "B", "from_group": true, "to": "disk1", "to_side": "T", "to_group": true, "arrow": "forward"},
+    {"from": "disk2", "from_side": "B", "to": "logs", "to_side": "T", "arrow": "backward"},
+    {"from": "jc", "from_side": "R", "to": "disk2", "to_side": "L", "arrow": "both"},
+    {"from": "disk1", "from_side": "R", "to": "jc", "to_side": "L"}
+  ],
+  "alignments": [
+    {"axis": "row", "members": ["disk1", "jc", "disk2"]},
+    {"axis": "column", "members": ["disk2", "logs"]}
+  ]
+}

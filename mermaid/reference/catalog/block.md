@@ -109,7 +109,7 @@ config:
 ## Traps
 - `A - B` (single dash) is a lexical error; use `-->` or `---`.
 - `style A fill#969;` (missing `:`) renders without error but applies no style.
-- `title X` is not a title: it renders two blocks labelled `title` and `X`. There is no title statement; use frontmatter `title:`.
+- `title X` is not a title: it renders two blocks labelled `title` and `X`. There is no title statement, and CLI 12.0.0 does not draw a frontmatter `title:` either.
 - `accTitle:` / `accDescr:` fail to parse.
 - The `:::class` shorthand from flowchart is a lexical error; use `class id name`.
 - `click` is not supported (parse error).
@@ -169,4 +169,24 @@ block-beta
 Covers: `block.keyword-beta`, `block.columns-auto`, `block.block-plain`.
 
 ## Builder
-`candidate`: `scripts/render.py` has an IR builder for this type (target keyword(s) `block`). It has not been through the reliability bar yet; see [coverage.md](../coverage.md).
+`builder`: family `graph`, keywords `block`, `block-beta` (emitted as given).
+
+| Key | Type | Meaning |
+|---|---|---|
+| `blocks[]` | array, required | grid items in source order; `kind` is `block` (default), `space`, `arrow` or `composite` |
+| `blocks[].id` | identifier | block, arrow or composite id; unique; not `end`, `space`, `block`, `style`, `class`, `classDef`, `default` |
+| `blocks[].label` | text | quoted label; `"`, `#`, `<`, `>`, `&` and `` ` `` become entity codes, U+00A0 becomes `&nbsp;` |
+| `blocks[].shape` | enum | `rect`, `round`, `stadium`, `subroutine`, `cylinder`, `circle`, `asymmetric`, `rhombus`, `hexagon`, `parallelogram`, `parallelogram-alt`, `trapezoid`, `trapezoid-alt`, `double-circle` (needs `label`) |
+| `blocks[].width` | integer >= 1 | column span `:N` (block, space, arrow, composite with an id) |
+| `blocks[].directions[]` | enum list | arrow only: `right`, `left`, `up`, `down`, `x`, `y`; several combine |
+| `blocks[].children[]`, `.columns` | array, integer or `auto` | composite only: nested items and their own `columns` |
+| `columns` | integer or `auto` | top-level `columns` |
+| `edges[]` | `{from, to, label?, kind?}` | `kind` `arrow` (`-->`, default) or `line` (`---`); ends must be declared ids |
+| `class_defs[]` | `{name, style}` | `classDef` |
+| `class_assignments[]` | `{blocks[], class}` | `class a,b name`; the class must be defined |
+| `styles[]` | `{block, style}` | `style id ...` |
+| `style` objects | typed | `fill`, `stroke`, `color` (#hex or a lowercase name), `strokeWidth`, `fontSize` (CSS length), `strokeDasharray` (`5 5`), `fontWeight`, `fontStyle` |
+| `config` | object | typed `config.block`: `padding`, `useMaxWidth` |
+| `comment` | text | `%%` line |
+
+Rejected: edges to undeclared ids (Mermaid would add a block), empty composites, and raw CSS strings. Block diagrams draw no title, so the IR has none. Example: [maximal.json](../../tests/fixtures/block/maximal.json), plus `maximal.block-beta.json` for `block-beta` and `columns auto`.

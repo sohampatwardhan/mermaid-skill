@@ -1,0 +1,8 @@
+{
+  "diagram": "requirement-links",
+  "target": "requirementDiagram",
+  "direction": "BT",
+  "requirements": [{"id": "r", "req_id": "1"}],
+  "elements": [{"id": "e", "type": "simulation"}],
+  "links": [{"from": "e", "to": "r", "kind": "satisfies"}]
+}

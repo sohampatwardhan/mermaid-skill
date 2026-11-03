@@ -1,0 +1,202 @@
+{
+  "diagram": "graph",
+  "target": "C4Context",
+  "config": {
+    "wrap": true,
+    "c4ShapeInRow": 4,
+    "c4BoundaryInRow": 2
+  },
+  "comment": "elements and boundaries",
+  "title": "System Context diagram for Internet Banking",
+  "accessibility": {
+    "description": "Customers, the banking system\nand its neighbours."
+  },
+  "groups": [
+    {
+      "id": "b0",
+      "label": "Bank",
+      "kind": "enterprise_boundary"
+    },
+    {
+      "id": "b2",
+      "label": "Core",
+      "kind": "system_boundary",
+      "group": "b0"
+    },
+    {
+      "id": "b3",
+      "label": "Partners",
+      "kind": "boundary",
+      "boundary_type": "boundary",
+      "group": "b0"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "customerA",
+      "label": "Banking Customer A",
+      "kind": "person",
+      "description": "A customer\nwith accounts",
+      "group": "b0",
+      "tags": "v1.0"
+    },
+    {
+      "id": "customerC",
+      "label": "Partner",
+      "kind": "person_ext",
+      "description": "External person",
+      "group": "b0",
+      "sprite": "user"
+    },
+    {
+      "id": "sysAA",
+      "label": "Internet Banking",
+      "kind": "system",
+      "description": "Views accounts, makes payments",
+      "group": "b0",
+      "link": "https://example.com"
+    },
+    {
+      "id": "sysA",
+      "label": "Banking System A",
+      "kind": "system",
+      "group": "b2"
+    },
+    {
+      "id": "sysD",
+      "label": "Ledger DB",
+      "kind": "system_db",
+      "description": "Stores balances",
+      "group": "b2"
+    },
+    {
+      "id": "sysF",
+      "label": "Event Queue",
+      "kind": "system_queue",
+      "description": "Domain events",
+      "group": "b2"
+    },
+    {
+      "id": "mail",
+      "label": "E-mail system",
+      "kind": "system_ext",
+      "description": "Microsoft Exchange",
+      "group": "b3"
+    },
+    {
+      "id": "mainframe",
+      "label": "Mainframe",
+      "kind": "system_db_ext",
+      "description": "Core banking data",
+      "group": "b3"
+    },
+    {
+      "id": "partnerQ",
+      "label": "Partner Queue",
+      "kind": "system_queue_ext",
+      "description": "Inbound files",
+      "group": "b3"
+    }
+  ],
+  "edges": [
+    {
+      "from": "customerA",
+      "to": "sysAA",
+      "label": "Uses",
+      "technology": "HTTPS"
+    },
+    {
+      "from": "sysAA",
+      "to": "mainframe",
+      "label": "Syncs",
+      "kind": "birel"
+    },
+    {
+      "from": "sysA",
+      "to": "sysAA",
+      "label": "Reports to",
+      "kind": "rel_up"
+    },
+    {
+      "from": "sysD",
+      "to": "sysA",
+      "label": "Feeds",
+      "kind": "rel_u"
+    },
+    {
+      "from": "sysAA",
+      "to": "sysA",
+      "label": "Calls",
+      "kind": "rel_down"
+    },
+    {
+      "from": "sysA",
+      "to": "sysD",
+      "label": "Writes",
+      "kind": "rel_d"
+    },
+    {
+      "from": "sysF",
+      "to": "sysA",
+      "label": "Notifies",
+      "kind": "rel_left"
+    },
+    {
+      "from": "partnerQ",
+      "to": "sysF",
+      "label": "Forwards",
+      "kind": "rel_l"
+    },
+    {
+      "from": "sysAA",
+      "to": "mail",
+      "label": "Sends e-mails",
+      "kind": "rel_right",
+      "technology": "SMTP"
+    },
+    {
+      "from": "sysA",
+      "to": "sysF",
+      "label": "Publishes",
+      "kind": "rel_r"
+    },
+    {
+      "from": "customerC",
+      "to": "mail",
+      "label": "Sends e-mails to",
+      "kind": "rel_back"
+    }
+  ],
+  "element_styles": [
+    {
+      "element": "customerA",
+      "font_color": "red",
+      "bg_color": "grey",
+      "border_color": "red"
+    }
+  ],
+  "rel_styles": [
+    {
+      "from": "customerA",
+      "to": "sysAA",
+      "text_color": "blue",
+      "line_color": "blue",
+      "offset_x": 5,
+      "offset_y": -10,
+      "form": "named"
+    },
+    {
+      "from": "sysAA",
+      "to": "mail",
+      "text_color": "red",
+      "line_color": "red",
+      "offset_x": -40,
+      "offset_y": 20,
+      "form": "positional"
+    }
+  ],
+  "layout": {
+    "shape_in_row": 3,
+    "boundary_in_row": 1
+  }
+}

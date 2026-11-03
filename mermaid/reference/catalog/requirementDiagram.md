@@ -262,4 +262,23 @@ e - satisfies -> r
 Covers: `requirementDiagram.direction-rl`.
 
 ## Builder
-`candidate`: `scripts/render.py` has an IR builder for this type (target keyword(s) `requirementDiagram`). It has not been through the reliability bar yet; see [coverage.md](../coverage.md).
+`builder`: family `requirement-links`, keyword `requirementDiagram`.
+
+| Key | Type | Meaning |
+|---|---|---|
+| `requirements[]` | object, required | `{id, type?, name?, req_id?, text?, risk?, verify_method?, classes?, markdown?}` |
+| `requirements[].type` | enum | `requirement` (default), `functionalRequirement`, `interfaceRequirement`, `performanceRequirement`, `physicalRequirement`, `designConstraint` |
+| `.risk`, `.verify_method` | enum | `low`, `medium`, `high`; `analysis`, `inspection`, `test`, `demonstration` |
+| `.req_id`, `.text` | text | the `id:` and `text:` fields, always quoted |
+| `elements[]` | object | `{id, name?, type?, docref?, classes?, markdown?}` |
+| `id` | identifier | bare node name and the IR reference; not a lexer keyword (case-insensitive: `element`, `text`, `high`, `test`, ...) |
+| `name` | text | quoted node name used instead of `id` in the source |
+| `markdown` | boolean | keep `*` and `_` as Markdown in this node's text; otherwise they are encoded so they show as typed |
+| `classes[]` | class names | `:::a,b` on the definition |
+| `links[]` | `{from, to, kind, reverse?}` | `contains`, `copies`, `derives`, `satisfies`, `verifies`, `refines`, `traces`; `reverse` writes `to <- kind - from` |
+| `direction` | enum | `TB`, `BT`, `LR`, `RL` |
+| `title` | text | frontmatter `title:` |
+| `class_defs[]`, `class_assignments[]`, `styles[]` | typed | `{name, style}`; `{nodes[], classes[], shorthand?}` (`shorthand` writes `node:::a,b`, one node); `{nodes[], style}` with the same style object as [block](block.md#builder) |
+| `accessibility`, `comment` | | `accTitle` / `accDescr`, `%%` line |
+
+Text is quoted Markdown with HTML: `"`, `#`, `<`, `>`, `&`, `\` (and `*`, `_` unless `markdown`) become entity codes, so the visible text is what you typed. Rejected: links or classes to undeclared ids and two nodes with the same emitted name. Example: [maximal.json](../../tests/fixtures/requirementDiagram/maximal.json), plus `maximal.direction-*.json` for the other directions and one-line `accDescr`.

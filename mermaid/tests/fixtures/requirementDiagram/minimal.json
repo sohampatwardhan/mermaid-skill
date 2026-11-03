@@ -1,0 +1,5 @@
+{
+  "diagram": "requirement-links",
+  "target": "requirementDiagram",
+  "requirements": [{"id": "r1", "text": "The system shall log in users"}]
+}

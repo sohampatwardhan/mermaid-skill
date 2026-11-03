@@ -4819,6 +4819,81 @@ register(Builder(
 
 # === group 4: structure: c4, architecture, block, packet, requirementDiagram ==========
 
+# --- group 4 shared helpers -----------------------------------------------------------------
+
+# A frontmatter title is emitted as a JSON (YAML 1.2) string scalar, so nothing needs encoding.
+text_context("g4.frontmatter-title")
+text_context(
+    "g4.style-color",
+    reject_patterns=((r"^(?!#[0-9A-Fa-f]{3}([0-9A-Fa-f]{1}|[0-9A-Fa-f]{3}|[0-9A-Fa-f]{5})?$|[a-z]+$)",
+                      "must be #hex (3, 4, 6 or 8 digits) or a lowercase CSS color name"),),
+)
+text_context(
+    "g4.style-length",
+    reject_patterns=((r"^(?!\d+(\.\d+)?(px|em|rem|pt)$)", "must be a CSS length such as 4px"),),
+)
+text_context(
+    "g4.style-dash",
+    reject_patterns=((r"^(?!\d+( \d+)*$)", "must be whole numbers separated by single spaces, such as 5 5"),),
+)
+
+# IR style key -> (CSS property, text context). Emitted in this order.
+_G4_STYLE_TEXT = (
+    ("fill", "fill", "g4.style-color"),
+    ("stroke", "stroke", "g4.style-color"),
+    ("color", "color", "g4.style-color"),
+    ("strokeWidth", "stroke-width", "g4.style-length"),
+    ("strokeDasharray", "stroke-dasharray", "g4.style-dash"),
+    ("fontSize", "font-size", "g4.style-length"),
+)
+_G4_FONT_WEIGHTS = ("normal", "bold", "bolder", "lighter", "100", "200", "300", "400", "500", "600", "700", "800", "900")
+_G4_FONT_STYLES = ("normal", "italic", "oblique")
+_G4_STYLE_KEYS = tuple(key for key, _, _ in _G4_STYLE_TEXT) + ("fontWeight", "fontStyle")
+
+
+def _g4_style(v: Validator, value: Any, path: str) -> str:
+    """A typed style object -> `fill:#f9f,stroke:#333,stroke-width:4px` (for style / classDef)."""
+    obj = v.fields(value, path, optional=_G4_STYLE_KEYS)
+    if not obj:
+        raise v.error(path, f"must set at least one of: {', '.join(_G4_STYLE_KEYS)}")
+    parts = []
+    for key, css, context in _G4_STYLE_TEXT:
+        if key in obj:
+            parts.append(f"{css}:{v.text(obj[key], ptr(path, key), context)}")
+    if "fontWeight" in obj:
+        parts.append(f"font-weight:{v.enum(obj['fontWeight'], ptr(path, 'fontWeight'), _G4_FONT_WEIGHTS)}")
+    if "fontStyle" in obj:
+        parts.append(f"font-style:{v.enum(obj['fontStyle'], ptr(path, 'fontStyle'), _G4_FONT_STYLES)}")
+    return ",".join(parts)
+
+
+def _g4_frontmatter(v: Validator, ir: dict, namespace: str, schema: dict, title: Any = None) -> list[str]:
+    """Frontmatter with an optional title (already chosen by the caller) and typed `config`."""
+    title_text = None
+    if title is not None:
+        title_text = v.text(title, "/title", "g4.frontmatter-title")
+    config = None
+    if "config" in ir:
+        validated = validate_config(v, ir["config"], "/config", schema)
+        config = {namespace: validated} if validated else None
+    return emit_frontmatter(title_text, config)
+
+
+def _g4_id(v: Validator, value: Any, path: str, reserved: set[str] = frozenset(), *,
+           fold: bool = False, pattern: re.Pattern[str] = _IDENT, seen: dict | None = None) -> str:
+    """A bare identifier that is not a keyword of the type, optionally unique in `seen`."""
+    v.ident(value, path, pattern)
+    if (value.lower() if fold else value) in reserved:
+        raise v.error(path, f"{json.dumps(value)} is a keyword in this diagram type; choose another id")
+    if seen is not None:
+        if value in seen:
+            raise v.error(path, f"duplicate id {json.dumps(value)} (first declared at {seen[value]})")
+        seen[value] = path
+    return value
+
+
+# --- c4 -------------------------------------------------------------------------------------
+
 _C4_PERSON_SYSTEM_KINDS = {
     "person": "Person",
     "person_ext": "Person_Ext",
@@ -4829,8 +4904,6 @@ _C4_PERSON_SYSTEM_KINDS = {
     "system_db_ext": "SystemDb_Ext",
     "system_queue_ext": "SystemQueue_Ext",
 }
-
-
 _C4_CONTAINER_KINDS = {
     "container": "Container",
     "container_db": "ContainerDb",
@@ -4839,8 +4912,6 @@ _C4_CONTAINER_KINDS = {
     "container_db_ext": "ContainerDb_Ext",
     "container_queue_ext": "ContainerQueue_Ext",
 }
-
-
 _C4_COMPONENT_KINDS = {
     "component": "Component",
     "component_db": "ComponentDb",
@@ -4849,22 +4920,14 @@ _C4_COMPONENT_KINDS = {
     "component_db_ext": "ComponentDb_Ext",
     "component_queue_ext": "ComponentQueue_Ext",
 }
-
-
 _C4_NODE_KINDS = {**_C4_PERSON_SYSTEM_KINDS, **_C4_CONTAINER_KINDS, **_C4_COMPONENT_KINDS}
-
-
 _C4_TECH_KINDS = set(_C4_CONTAINER_KINDS) | set(_C4_COMPONENT_KINDS)
-
-
 _C4_DEPLOYMENT_KINDS = {
     "deployment_node": "Deployment_Node",
     "node": "Node",
     "node_left": "Node_L",
     "node_right": "Node_R",
 }
-
-
 _C4_TARGET_NODE_KINDS = {
     "C4Context": set(_C4_PERSON_SYSTEM_KINDS),
     "C4Container": set(_C4_PERSON_SYSTEM_KINDS) | set(_C4_CONTAINER_KINDS),
@@ -4872,8 +4935,6 @@ _C4_TARGET_NODE_KINDS = {
     "C4Dynamic": set(_C4_NODE_KINDS),
     "C4Deployment": set(_C4_PERSON_SYSTEM_KINDS) | set(_C4_CONTAINER_KINDS),
 }
-
-
 _C4_BOUNDARY_KINDS = {
     "enterprise_boundary": "Enterprise_Boundary",
     "system_boundary": "System_Boundary",
@@ -4881,402 +4942,941 @@ _C4_BOUNDARY_KINDS = {
     "boundary": "Boundary",
     **_C4_DEPLOYMENT_KINDS,
 }
-
-
 _C4_TARGET_BOUNDARY_KINDS = {
     "C4Context": {"enterprise_boundary", "system_boundary", "boundary"},
-    "C4Container": {"container_boundary", "boundary"},
+    "C4Container": {"system_boundary", "container_boundary", "boundary"},
     "C4Component": {"container_boundary", "boundary"},
     "C4Dynamic": {"container_boundary", "boundary"},
     "C4Deployment": set(_C4_DEPLOYMENT_KINDS),
 }
-
-
 _C4_REL_KINDS = {
     "rel": "Rel",
     "birel": "BiRel",
-    "rel_up": "Rel_U",
-    "rel_down": "Rel_D",
-    "rel_left": "Rel_L",
-    "rel_right": "Rel_R",
+    "rel_up": "Rel_Up",
+    "rel_u": "Rel_U",
+    "rel_down": "Rel_Down",
+    "rel_d": "Rel_D",
+    "rel_left": "Rel_Left",
+    "rel_l": "Rel_L",
+    "rel_right": "Rel_Right",
+    "rel_r": "Rel_R",
     "rel_back": "Rel_Back",
     "rel_index": "RelIndex",
 }
+_C4_CONFIG = {
+    "wrap": ("boolean",),
+    "wrapPadding": ("number", 0, 1000),
+    "c4ShapeInRow": ("integer", 1, 100),
+    "c4BoundaryInRow": ("integer", 1, 100),
+    "width": ("number", 1, 10000),
+    "height": ("number", 1, 10000),
+    "c4ShapeMargin": ("number", 0, 1000),
+    "c4ShapePadding": ("number", 0, 1000),
+    "diagramMarginX": ("number", 0, 1000),
+    "diagramMarginY": ("number", 0, 1000),
+    "boxMargin": ("number", 0, 1000),
+    "nextLinePaddingX": ("number", 0, 1000),
+    "useMaxWidth": ("boolean",),
+}
+# UpdateElementStyle / UpdateRelStyle: IR key -> C4 parameter, in positional order.
+_C4_ELEMENT_STYLE = (("bg_color", "bgColor"), ("font_color", "fontColor"), ("border_color", "borderColor"))
+_C4_REL_STYLE_COLORS = (("text_color", "textColor"), ("line_color", "lineColor"))
+_C4_REL_STYLE_OFFSETS = (("offset_x", "offsetX"), ("offset_y", "offsetY"))
+
+# Element (shape) text: no entity decoding, `>` is stripped, `&lt;` decodes, `<br>` breaks a line.
+text_context(
+    "c4.element",
+    encode={"\n": "<br/>"},
+    reject='"<>',
+    allow_newline=True,
+    reject_patterns=(
+        (r"&#?\w+;|#\w+;", "C4 shapes do not round-trip entity codes"),
+        (r"  ", "repeated spaces collapse to one in C4 shapes"),
+        (r"\n\n|\n | \n", "a line break must sit between two non-blank lines"),
+    ),
+)
+# Boundary, deployment node and relationship text: entity codes decode.
+text_context("c4.boundary", encode={'"': ENTITY['"'], "#": ENTITY["#"], "<": ENTITY["<"], ">": ENTITY[">"]})
+text_context("c4.rel", encode={'"': ENTITY['"'], "#": ENTITY["#"], "<": ENTITY["<"], ">": ENTITY[">"]})
+text_context("c4.title", encode={"#": ENTITY["#"], ";": ENTITY[";"], "&": ENTITY["&"]})
+# $tags, $link, $sprite: parsed, not drawn; only the closing quote cannot be carried.
+text_context("c4.param", reject='"')
 
 
-def render_graph_c4(ir: dict) -> str:
-    target = ir.get("target")
-    if target not in _C4_TARGET_NODE_KINDS:
-        raise IRError(
-            f"graph/c4 requires ir['target'] to be one of {sorted(_C4_TARGET_NODE_KINDS)} (got {target!r})"
-        )
-    _require(ir, ("nodes", "edges"), f"graph/{target}")
-    allowed_node_kinds = _C4_TARGET_NODE_KINDS[target]
-    allowed_boundary_kinds = _C4_TARGET_BOUNDARY_KINDS[target]
-    lines = [target]
-    if ir.get("title"):
-        lines.append(f"    title {ir['title']}")
+def _c4_quote(v: Validator, value: Any, path: str, context: str) -> str:
+    return f'"{v.text(value, path, context)}"'
 
-    known: set[str] = set()
-    by_group: dict[str | None, list[dict]] = {}
-    for node in ir["nodes"]:
-        _require(node, ("id", "label", "kind"), f"graph/{target} node")
-        by_group.setdefault(node.get("group"), []).append(node)
 
-    def emit_node(node: dict, indent: str) -> None:
-        kind = node["kind"]
-        macro = _C4_NODE_KINDS.get(kind)
-        if macro is None or kind not in allowed_node_kinds:
-            raise IRError(f"graph/{target} node {node['id']!r} has unknown/unsupported kind {kind!r}")
-        node_id = _identifier(node["id"], f"graph/{target} node")
-        known.add(node["id"])
-        args = [node_id, _quote(node["label"])]
-        technology = node.get("technology")
-        description = node.get("description")
-        if kind in _C4_TECH_KINDS:
-            if technology is not None:
-                args.append(_quote(technology))
-            elif description is not None:
-                raise IRError(
-                    f"graph/{target} node {node['id']!r} has 'description' but no 'technology'; "
-                    "this macro takes technology before description"
-                )
-        elif technology is not None:
-            raise IRError(f"graph/{target} node {node['id']!r} kind {kind!r} does not accept 'technology'")
-        if description is not None:
-            args.append(_quote(description))
-        lines.append(f'{indent}{macro}({", ".join(args)})')
+def _c4_serialize(ir: dict, keyword: str) -> str:
+    v = Validator(keyword)
+    v.fields(ir, "", ("nodes",), ("groups", "edges", "title", "accessibility", "comment", "config",
+                                   "element_styles", "rel_styles", "layout"))
+    lines = _g4_frontmatter(v, ir, "c4", _C4_CONFIG)
+    lines.append(keyword)
+    lines += emit_comment(v, ir)
+    if "title" in ir:
+        lines.append(f"    title {v.text(ir['title'], '/title', 'c4.title')}")
+        if isinstance(ir.get("accessibility"), dict) and "title" in ir["accessibility"]:
+            raise v.error("/accessibility/title", "C4 keeps title and accTitle in one slot and draws only the last; set one of them")
+    lines += emit_accessibility(v, ir)
 
-    groups_by_id: dict[str, dict] = {}
-    children_by_parent: dict[str | None, list[dict]] = {}
-    for group in ir.get("groups", []):
-        _require(group, ("id", "label", "kind"), f"graph/{target} group")
-        if group["kind"] not in allowed_boundary_kinds:
-            raise IRError(f"graph/{target} group {group['id']!r} has unknown/unsupported kind {group['kind']!r}")
-        groups_by_id[group["id"]] = group
-        children_by_parent.setdefault(group.get("group"), []).append(group)
+    seen: dict[str, str] = {}
+    node_kinds = _C4_TARGET_NODE_KINDS[keyword]
+    boundary_kinds = _C4_TARGET_BOUNDARY_KINDS[keyword]
 
-    def emit_group(group: dict, indent: str) -> None:
-        macro = _C4_BOUNDARY_KINDS[group["kind"]]
-        group_id = _identifier(group["id"], f"graph/{target} group")
-        args = [group_id, _quote(group["label"])]
-        if group["kind"] == "boundary":
-            if not group.get("boundary_type"):
-                raise IRError(f"graph/{target} group {group['id']!r} of kind 'boundary' requires 'boundary_type'")
-            args.append(_quote(group["boundary_type"]))
-        elif group.get("boundary_type"):
-            raise IRError(
-                f"graph/{target} group {group['id']!r} kind {group['kind']!r} does not accept 'boundary_type'"
-            )
-        if group["kind"] in _C4_DEPLOYMENT_KINDS:
-            technology = group.get("technology")
-            description = group.get("description")
-            if technology is not None:
-                args.append(_quote(technology))
-            elif description is not None:
-                raise IRError(
-                    f"graph/{target} group {group['id']!r} has 'description' but no 'technology'; "
-                    "deployment nodes take type before description"
-                )
-            if description is not None:
-                args.append(_quote(description))
-        lines.append(f'{indent}{macro}({", ".join(args)}) {{')
-        for node in by_group.pop(group["id"], []):
-            emit_node(node, indent + "    ")
-        for child in children_by_parent.pop(group["id"], []):
-            emit_group(child, indent + "    ")
+    groups = v.array(ir.get("groups", []), "/groups")
+    group_ids: dict[str, int] = {}
+    for i, group in enumerate(groups):
+        p = f"/groups/{i}"
+        v.fields(group, p, ("id", "label", "kind"), ("boundary_type", "technology", "description", "group"))
+        _g4_id(v, group["id"], ptr(p, "id"), seen=seen)
+        kind = v.enum(group["kind"], ptr(p, "kind"), sorted(boundary_kinds))
+        if "group" in group:
+            v.ref(group["group"], ptr(p, "group"), group_ids)  # a parent comes before its children
+        if "boundary_type" in group and kind != "boundary":
+            raise v.error(ptr(p, "boundary_type"), "only kind 'boundary' takes boundary_type")
+        for key in ("technology", "description"):
+            if key in group and kind not in _C4_DEPLOYMENT_KINDS:
+                raise v.error(ptr(p, key), f"only deployment nodes take {key}")
+        group_ids[group["id"]] = i
+
+    nodes = v.array(ir["nodes"], "/nodes", 1)
+    node_ids: set[str] = set()
+    for i, node in enumerate(nodes):
+        p = f"/nodes/{i}"
+        v.fields(node, p, ("id", "label", "kind"), ("description", "technology", "group", "tags", "link", "sprite"))
+        _g4_id(v, node["id"], ptr(p, "id"), seen=seen)
+        kind = v.enum(node["kind"], ptr(p, "kind"), sorted(node_kinds))
+        if "technology" in node and kind not in _C4_TECH_KINDS:
+            raise v.error(ptr(p, "technology"), f"kind {kind!r} takes no technology; only containers and components do")
+        if "group" in node:
+            v.ref(node["group"], ptr(p, "group"), group_ids)
+        node_ids.add(node["id"])
+
+    children: dict[str | None, list[tuple[str, int]]] = {}
+    for i, node in enumerate(nodes):
+        children.setdefault(node.get("group"), []).append(("node", i))
+    for i, group in enumerate(groups):
+        children.setdefault(group.get("group"), []).append(("group", i))
+    for i, group in enumerate(groups):
+        if not children.get(group["id"]):
+            raise v.error(f"/groups/{i}", "a boundary must contain at least one node or group (Mermaid rejects an empty body)")
+
+    def emit_node(i: int, indent: str) -> None:
+        node, p = nodes[i], f"/nodes/{i}"
+        args = [node["id"], _c4_quote(v, node["label"], ptr(p, "label"), "c4.element")]
+        if "technology" in node:
+            args.append(_c4_quote(v, node["technology"], ptr(p, "technology"), "c4.element"))
+        if "description" in node:
+            description = _c4_quote(v, node["description"], ptr(p, "description"), "c4.element")
+            needs_name = node["kind"] in _C4_TECH_KINDS and "technology" not in node
+            args.append(f"$descr={description}" if needs_name else description)
+        for key in ("tags", "link", "sprite"):
+            if key in node:
+                args.append(f"${key}={_c4_quote(v, node[key], ptr(p, key), 'c4.param')}")
+        lines.append(f'{indent}{_C4_NODE_KINDS[node["kind"]]}({", ".join(args)})')
+
+    def emit_group(i: int, indent: str) -> None:
+        group, p = groups[i], f"/groups/{i}"
+        args = [group["id"], _c4_quote(v, group["label"], ptr(p, "label"), "c4.boundary")]
+        if "boundary_type" in group:
+            args.append(_c4_quote(v, group["boundary_type"], ptr(p, "boundary_type"), "c4.boundary"))
+        if "technology" in group:
+            args.append(_c4_quote(v, group["technology"], ptr(p, "technology"), "c4.boundary"))
+        if "description" in group:
+            description = _c4_quote(v, group["description"], ptr(p, "description"), "c4.boundary")
+            args.append(description if "technology" in group else f"$descr={description}")
+        lines.append(f'{indent}{_C4_BOUNDARY_KINDS[group["kind"]]}({", ".join(args)}) {{')
+        emit_level(group["id"], indent + "    ")
         lines.append(f"{indent}}}")
 
-    for group in children_by_parent.pop(None, []):
-        emit_group(group, "    ")
-    leftover_groups = [g for g in children_by_parent if g is not None]
-    if leftover_groups:
-        raise IRError(f"graph/{target} groups reference undeclared parent group(s): {leftover_groups}")
+    def emit_level(parent: str | None, indent: str) -> None:
+        # Nodes first, then nested boundaries, each in input order.
+        level = children.get(parent, [])
+        for what, i in level:
+            if what == "node":
+                emit_node(i, indent)
+        for what, i in level:
+            if what == "group":
+                emit_group(i, indent)
 
-    for node in by_group.pop(None, []):
-        emit_node(node, "    ")
-    leftover_nodes = [g for g in by_group if g is not None]
-    if leftover_nodes:
-        raise IRError(f"graph/{target} nodes reference undeclared group(s): {leftover_nodes}")
+    emit_level(None, "    ")
 
-    for edge in ir["edges"]:
-        _require(edge, ("from", "to", "label"), f"graph/{target} edge")
-        kind = edge.get("kind", "rel")
-        macro = _C4_REL_KINDS.get(kind)
-        if macro is None:
-            raise IRError(f"graph/{target} edge has unknown kind {kind!r}")
-        if kind == "rel_index" and target != "C4Dynamic":
-            raise IRError("graph/c4 edge kind 'rel_index' is only valid on C4Dynamic")
-        if edge["from"] not in known or edge["to"] not in known:
-            raise IRError(f"graph/{target} edge references undeclared node: {edge}")
-        args = [edge["from"], edge["to"], _quote(edge["label"])]
+    rel_pairs: set[tuple[str, str]] = set()
+    for i, edge in enumerate(v.array(ir.get("edges", []), "/edges")):
+        p = f"/edges/{i}"
+        v.fields(edge, p, ("from", "to", "label"), ("kind", "technology", "index"))
+        v.ref(edge["from"], ptr(p, "from"), node_ids)
+        v.ref(edge["to"], ptr(p, "to"), node_ids)
+        kind = v.enum(edge["kind"], ptr(p, "kind"), sorted(_C4_REL_KINDS)) if "kind" in edge else "rel"
+        args = [edge["from"], edge["to"], _c4_quote(v, edge["label"], ptr(p, "label"), "c4.rel")]
         if kind == "rel_index":
-            if edge.get("technology"):
-                raise IRError("graph/C4Dynamic rel_index does not take 'technology'")
-            index = edge.get("index")
-            if isinstance(index, bool) or not isinstance(index, int):
-                raise IRError(f"graph/C4Dynamic rel_index edge requires an integer 'index': {edge}")
-            args.insert(0, str(index))
-        if edge.get("technology"):
-            args.append(_quote(edge["technology"]))
-        lines.append(f'    {macro}({", ".join(args)})')
+            if keyword != "C4Dynamic":
+                raise v.error(ptr(p, "kind"), "rel_index is only valid on C4Dynamic")
+            if "index" not in edge:
+                raise v.error(ptr(p, "index"), "required key is missing for kind 'rel_index'")
+            args.insert(0, v.number(edge["index"], ptr(p, "index"), 1, integer=True))
+        elif "index" in edge:
+            raise v.error(ptr(p, "index"), "only kind 'rel_index' takes an index")
+        if "technology" in edge:
+            args.append(_c4_quote(v, edge["technology"], ptr(p, "technology"), "c4.rel"))
+        lines.append(f'    {_C4_REL_KINDS[kind]}({", ".join(args)})')
+        rel_pairs.add((edge["from"], edge["to"]))
+
+    styleable = set(node_ids) | set(group_ids)
+    for i, style in enumerate(v.array(ir.get("element_styles", []), "/element_styles")):
+        p = f"/element_styles/{i}"
+        keys = tuple(key for key, _ in _C4_ELEMENT_STYLE)
+        v.fields(style, p, ("element",), keys + ("form",))
+        v.ref(style["element"], ptr(p, "element"), styleable)
+        values = [(key, name, f'"{v.text(style[key], ptr(p, key), "g4.style-color")}"')
+                  for key, name in _C4_ELEMENT_STYLE if key in style]
+        lines.append(f"    UpdateElementStyle({style['element']}, {_c4_params(v, p, style, values, keys)})")
+
+    for i, style in enumerate(v.array(ir.get("rel_styles", []), "/rel_styles")):
+        p = f"/rel_styles/{i}"
+        keys = tuple(key for key, _ in _C4_REL_STYLE_COLORS + _C4_REL_STYLE_OFFSETS)
+        v.fields(style, p, ("from", "to"), keys + ("form",))
+        v.ref(style["from"], ptr(p, "from"), node_ids)
+        v.ref(style["to"], ptr(p, "to"), node_ids)
+        if (style["from"], style["to"]) not in rel_pairs:
+            raise v.error(p, f"no relationship from {style['from']!r} to {style['to']!r}; Mermaid would ignore this style")
+        values = [(key, name, f'"{v.text(style[key], ptr(p, key), "g4.style-color")}"')
+                  for key, name in _C4_REL_STYLE_COLORS if key in style]
+        values += [(key, name, f'"{v.number(style[key], ptr(p, key), -10000, 10000, integer=True)}"')
+                   for key, name in _C4_REL_STYLE_OFFSETS if key in style]
+        lines.append(f"    UpdateRelStyle({style['from']}, {style['to']}, {_c4_params(v, p, style, values, keys)})")
+
+    if "layout" in ir:
+        layout = v.fields(ir["layout"], "/layout", optional=("shape_in_row", "boundary_in_row"))
+        if not layout:
+            raise v.error("/layout", "must set shape_in_row or boundary_in_row")
+        params = []
+        for key, name in (("shape_in_row", "c4ShapeInRow"), ("boundary_in_row", "c4BoundaryInRow")):
+            if key in layout:
+                params.append(f'${name}="{v.number(layout[key], ptr("/layout", key), 1, 100, integer=True)}"')
+        lines.append(f"    UpdateLayoutConfig({', '.join(params)})")
     return "\n".join(lines) + "\n"
 
 
-_ARCH_BASE_ICONS = {"cloud", "database", "disk", "internet", "server"}
+def _c4_params(v: Validator, path: str, style: dict, values: list[tuple[str, str, str]], order: tuple[str, ...]) -> str:
+    """`$name="value"` arguments, or positional ones when `form` is `positional`."""
+    if not values:
+        raise v.error(path, f"must set at least one of: {', '.join(order)}")
+    form = v.enum(style["form"], ptr(path, "form"), ("named", "positional")) if "form" in style else "named"
+    if form == "named":
+        return ", ".join(f"${name}={text}" for _key, name, text in values)
+    present = [key for key, _name, _text in values]
+    expected = list(order[: len(present)])
+    if sorted(present, key=order.index) != expected:
+        missing = next(key for key in expected if key not in present)
+        raise v.error(ptr(path, "form"), f"positional form needs every earlier parameter; {missing!r} is missing")
+    return ", ".join(text for _key, _name, text in sorted(values, key=lambda item: order.index(item[0])))
 
 
-_ARCH_SIDES = {"T", "B", "L", "R"}
+# --- architecture ---------------------------------------------------------------------------
 
-
-_ARCH_ARROWS = {
-    "none": ("", ""),
-    "forward": ("", ">"),
-    "backward": ("<", ""),
-    "both": ("<", ">"),
+_ARCH_BASE_ICONS = ("cloud", "database", "disk", "internet", "server")
+_ARCH_ICON_PACK = re.compile(r"[a-z0-9]+(-[a-z0-9]+)*:[a-z0-9]+(-[a-z0-9]+)*")
+_ARCH_SIDES = ("T", "B", "L", "R")
+_ARCH_ARROWS = {"none": ("", ""), "forward": ("", ">"), "backward": ("<", ""), "both": ("<", ">")}
+# Ids starting with a side letter or `title` are lexed as keywords by the 12.0.0 parser.
+_ARCH_ID = re.compile(r"(?![LRTB]|title)[A-Za-z_][A-Za-z0-9_]*")
+_ARCH_RESERVED = {"service", "group", "junction", "in", "align", "row", "column", "accTitle", "accDescr"}
+_ARCH_CONFIG = {
+    "padding": ("number", 0, 1000),
+    "iconSize": ("number", 1, 1000),
+    "fontSize": ("number", 1, 200),
+    "randomize": ("boolean",),
+    "nodeSeparation": ("number", 0, 10000),
+    "idealEdgeLengthMultiplier": ("number", 0, 100),
+    "edgeElasticity": ("number", 0, 1),
+    "numIter": ("integer", 1, 1000000),
+    "seed": ("integer", 0, 2147483647),
+    "useMaxWidth": ("boolean",),
 }
+_ARCH_MARKDOWN = (r"[*_~`]|\\[!-/:-@\[-`{-~]", "'*', '_', '~', '`' and a backslash before punctuation are read as Markdown in architecture titles")
+_ARCH_ENTITY = (r"&#?\w+;|#\w+;", "architecture titles do not round-trip entity codes")
+text_context(
+    "architecture.label",
+    reject_patterns=(_ARCH_MARKDOWN, _ARCH_ENTITY, (r"  ", "repeated spaces collapse to one"), (r'^"', "a title cannot start with '\"'")),
+)
+# Titles with brackets use the quoted ["..."] form, which cannot carry a double quote.
+text_context(
+    "architecture.label-quoted",
+    reject='"',
+    reject_patterns=(_ARCH_MARKDOWN, _ARCH_ENTITY, (r"  ", "repeated spaces collapse to one")),
+)
 
 
-def _arch_icon(icon: str, where: str) -> str:
-    if icon in _ARCH_BASE_ICONS or ":" in icon:
-        return icon
-    raise IRError(
-        f"{where} icon {icon!r} is not a built-in architecture icon {sorted(_ARCH_BASE_ICONS)}; "
-        "use 'pack:icon-name' to reference a registered icon pack"
-    )
+def _arch_label(v: Validator, value: Any, path: str) -> str:
+    if isinstance(value, str) and ("[" in value or "]" in value):
+        return f'["{v.text(value, path, "architecture.label-quoted")}"]'
+    return f"[{v.text(value, path, 'architecture.label')}]"
 
 
-def render_graph_architecture(ir: dict) -> str:
-    _require(ir, ("nodes", "edges"), "graph/architecture-beta")
-    lines = ["architecture-beta"]
-    known: set[str] = set()
+def _arch_icon(v: Validator, obj: dict, path: str) -> str:
+    if "icon" not in obj:
+        return ""
+    icon = obj["icon"]
+    if isinstance(icon, str) and _ARCH_ICON_PACK.fullmatch(icon):
+        return f"({icon})"
+    if icon not in _ARCH_BASE_ICONS:
+        raise v.error(ptr(path, "icon"), f"unknown icon {json.dumps(icon)}; use one of {', '.join(_ARCH_BASE_ICONS)} or 'pack:icon-name' for a registered icon pack")
+    return f"({icon})"
 
-    groups_by_id: dict[str, dict] = {}
-    children_by_parent: dict[str | None, list[dict]] = {}
-    for group in ir.get("groups", []):
-        _require(group, ("id", "label"), "graph/architecture-beta group")
-        groups_by_id[group["id"]] = group
-        children_by_parent.setdefault(group.get("group"), []).append(group)
 
-    def emit_group(group: dict) -> None:
-        group_id = _identifier(group["id"], "graph/architecture-beta group")
-        parent_id = group.get("group")
-        parent = f" in {_identifier(parent_id, 'graph/architecture-beta group')}" if parent_id else ""
-        icon = group.get("icon")
-        where = f"graph/architecture-beta group {group['id']!r}"
-        icon_part = f"({_arch_icon(icon, where)})" if icon else "()"
-        lines.append(f'    group {group_id}{icon_part}[{_quote(group["label"])}]{parent}')
-        for child in children_by_parent.pop(group["id"], []):
-            emit_group(child)
+def _arch_serialize(ir: dict, keyword: str) -> str:
+    v = Validator(keyword)
+    v.fields(ir, "", ("nodes",), ("groups", "edges", "alignments", "accessibility", "comment", "config"))
+    lines = _g4_frontmatter(v, ir, "architecture", _ARCH_CONFIG)
+    lines.append(keyword)
+    lines += emit_accessibility(v, ir)
+    lines += emit_comment(v, ir)
+    seen: dict[str, str] = {}
 
-    for group in children_by_parent.pop(None, []):
-        emit_group(group)
-    leftover_groups = [g for g in children_by_parent if g is not None]
-    if leftover_groups:
-        raise IRError(f"graph/architecture-beta groups reference undeclared parent group(s): {leftover_groups}")
+    group_ids: set[str] = set()
+    for i, group in enumerate(v.array(ir.get("groups", []), "/groups")):
+        p = f"/groups/{i}"
+        v.fields(group, p, ("id", "label"), ("icon", "group"))
+        _g4_id(v, group["id"], ptr(p, "id"), _ARCH_RESERVED, pattern=_ARCH_ID, seen=seen)
+        icon = _arch_icon(v, group, p)
+        parent = ""
+        if "group" in group:
+            parent = f" in {v.ref(group['group'], ptr(p, 'group'), group_ids)}"  # declared on an earlier line
+        lines.append(f"    group {group['id']}{icon}{_arch_label(v, group['label'], ptr(p, 'label'))}{parent}")
+        group_ids.add(group["id"])
 
-    for node in ir["nodes"]:
-        _require(node, ("id",), "graph/architecture-beta node")
-        kind = node.get("kind", "service")
-        node_id = _identifier(node["id"], "graph/architecture-beta node")
-        group_ref = node.get("group")
-        if group_ref is not None and group_ref not in groups_by_id:
-            raise IRError(f"graph/architecture-beta node {node['id']!r} references undeclared group {group_ref!r}")
-        parent = f" in {_identifier(group_ref, 'graph/architecture-beta node')}" if group_ref else ""
+    node_group: dict[str, str | None] = {}
+    node_kind: dict[str, str] = {}
+    for i, node in enumerate(v.array(ir["nodes"], "/nodes", 1)):
+        p = f"/nodes/{i}"
+        v.fields(node, p, ("id",), ("kind", "label", "icon", "group"))
+        _g4_id(v, node["id"], ptr(p, "id"), _ARCH_RESERVED, pattern=_ARCH_ID, seen=seen)
+        kind = v.enum(node["kind"], ptr(p, "kind"), ("service", "junction")) if "kind" in node else "service"
+        parent = ""
+        if "group" in node:
+            parent = f" in {v.ref(node['group'], ptr(p, 'group'), group_ids)}"
         if kind == "junction":
-            if node.get("label") or node.get("icon"):
-                raise IRError(f"graph/architecture-beta junction {node['id']!r} cannot have a label or icon")
-            lines.append(f"    junction {node_id}{parent}")
-        elif kind == "service":
-            _require(node, ("label",), "graph/architecture-beta service node")
-            icon = node.get("icon")
-            where = f"graph/architecture-beta node {node['id']!r}"
-            icon_part = f"({_arch_icon(icon, where)})" if icon else "()"
-            lines.append(f'    service {node_id}{icon_part}[{_quote(node["label"])}]{parent}')
+            for key in ("label", "icon"):
+                if key in node:
+                    raise v.error(ptr(p, key), "a junction has no label or icon")
+            lines.append(f"    junction {node['id']}{parent}")
         else:
-            raise IRError(f"graph/architecture-beta node {node['id']!r} has unknown kind {kind!r}")
-        known.add(node["id"])
+            if "label" not in node:
+                raise v.error(ptr(p, "label"), "required key is missing for a service")
+            icon = _arch_icon(v, node, p)
+            lines.append(f"    service {node['id']}{icon}{_arch_label(v, node['label'], ptr(p, 'label'))}{parent}")
+        node_group[node["id"]] = node.get("group")
+        node_kind[node["id"]] = kind
 
-    for edge in ir["edges"]:
-        _require(edge, ("from", "to", "from_side", "to_side"), "graph/architecture-beta edge")
-        if edge["from"] not in known or edge["to"] not in known:
-            raise IRError(f"graph/architecture-beta edge references undeclared node: {edge}")
-        if edge["from_side"] not in _ARCH_SIDES or edge["to_side"] not in _ARCH_SIDES:
-            raise IRError(f"graph/architecture-beta edge has unknown side(s): {edge}")
-        arrow_kind = edge.get("arrow", "none")
-        arrow = _ARCH_ARROWS.get(arrow_kind)
-        if arrow is None:
-            raise IRError(f"graph/architecture-beta edge has unknown arrow kind {arrow_kind!r}")
-        left_arrow, right_arrow = arrow
-        from_suffix = "{group}" if edge.get("from_group") else ""
-        to_suffix = "{group}" if edge.get("to_group") else ""
-        lines.append(
-            f'    {edge["from"]}{from_suffix}:{edge["from_side"]} {left_arrow}--{right_arrow} '
-            f'{edge["to_side"]}:{edge["to"]}{to_suffix}'
-        )
+    pairs: dict[tuple[str, str], int] = {}
+    for i, edge in enumerate(v.array(ir.get("edges", []), "/edges")):
+        p = f"/edges/{i}"
+        v.fields(edge, p, ("from", "to", "from_side", "to_side"), ("arrow", "from_group", "to_group"))
+        ends = []
+        for end in ("from", "to"):
+            node_id = v.ref(edge[end], ptr(p, end), node_group)
+            side = v.enum(edge[f"{end}_side"], ptr(p, f"{end}_side"), _ARCH_SIDES)
+            modifier = ""
+            if f"{end}_group" in edge and v.boolean(edge[f"{end}_group"], ptr(p, f"{end}_group")):
+                if node_kind[node_id] != "service" or node_group[node_id] is None:
+                    raise v.error(ptr(p, f"{end}_group"), "the {group} modifier needs a service that is inside a group")
+                modifier = "{group}"
+            ends.append((node_id + modifier, side))
+        if edge["from"] == edge["to"]:
+            raise v.error(ptr(p, "to"), "an edge cannot connect a node to itself")
+        pair = (edge["from"], edge["to"])
+        if pair in pairs:
+            raise v.error(p, f"a second edge from {pair[0]!r} to {pair[1]!r} crashes Mermaid (first at /edges/{pairs[pair]}); reverse it or route it through a junction")
+        pairs[pair] = i
+        left, right = v.enum(edge["arrow"], ptr(p, "arrow"), _ARCH_ARROWS) if "arrow" in edge else _ARCH_ARROWS["none"]
+        (src, src_side), (dst, dst_side) = ends
+        lines.append(f"    {src}:{src_side} {left}--{right} {dst_side}:{dst}")
+
+    for i, align in enumerate(v.array(ir.get("alignments", []), "/alignments")):
+        p = f"/alignments/{i}"
+        v.fields(align, p, ("axis", "members"))
+        axis = v.enum(align["axis"], ptr(p, "axis"), ("row", "column"))
+        members: set[str] = set()
+        for j, member in enumerate(v.array(align["members"], ptr(p, "members"), 2)):
+            v.ref(member, ptr(ptr(p, "members"), j), node_group)
+            v.unique(member, ptr(ptr(p, "members"), j), members, "member")
+        lines.append(f"    align {axis} {' '.join(align['members'])}")
     return "\n".join(lines) + "\n"
 
+
+# --- block ----------------------------------------------------------------------------------
 
 _BLOCK_SHAPES = {
-    "process": ("[", "]"),
-    "terminator": ("([", "])"),
-    "decision": ("{", "}"),
-    "subprocess": ("[[", "]]"),
-    "store": ("[(", ")]"),
-    "connector": ("((", "))"),
-    "io": ("[/", "/]"),
+    "rect": ('["', '"]'),
+    "round": ('("', '")'),
+    "stadium": ('(["', '"])'),
+    "subroutine": ('[["', '"]]'),
+    "cylinder": ('[("', '")]'),
+    "circle": ('(("', '"))'),
+    "asymmetric": ('>"', '"]'),
+    "rhombus": ('{"', '"}'),
+    "hexagon": ('{{"', '"}}'),
+    "parallelogram": ('[/"', '"/]'),
+    "parallelogram-alt": ('[\\"', '"\\]'),
+    "trapezoid": ('[/"', '"\\]'),
+    "trapezoid-alt": ('[\\"', '"/]'),
+    "double-circle": ('((("', '")))'),
 }
+_BLOCK_ARROW_DIRECTIONS = ("right", "left", "up", "down", "x", "y")
+_BLOCK_EDGE_KINDS = {"arrow": "-->", "line": "---"}
+_BLOCK_KINDS = ("block", "space", "arrow", "composite")
+_BLOCK_RESERVED = {"end", "space", "block", "style", "class", "classDef", "default"}
+_BLOCK_CONFIG = {"padding": ("number", 0, 1000), "useMaxWidth": ("boolean",)}
+# Quoted block text decodes entity codes; U+00A0 is written as the HTML entity &nbsp;.
+text_context(
+    "block.label",
+    encode={'"': ENTITY['"'], "#": ENTITY["#"], "<": ENTITY["<"], ">": ENTITY[">"], "&": ENTITY["&"],
+            "`": ENTITY["`"], "\u00a0": "&nbsp;"},
+)
 
 
-def render_graph_block(ir: dict) -> str:
-    _require(ir, ("nodes", "edges"), "graph/block")
-    ids: dict[str, str] = {}
-    lines = ["block"]
-    columns = ir.get("columns")
-    if columns is not None:
-        if not isinstance(columns, int) or isinstance(columns, bool) or columns < 1:
-            raise IRError(f"graph/block 'columns' must be a positive integer, got {columns!r}")
+def _block_serialize(ir: dict, keyword: str) -> str:
+    v = Validator(keyword)
+    v.fields(ir, "", ("blocks",), ("columns", "edges", "styles", "class_defs", "class_assignments", "comment", "config"))
+    lines = _g4_frontmatter(v, ir, "block", _BLOCK_CONFIG)
+    lines.append(keyword)
+    lines += emit_comment(v, ir, indent="  ")
+    if "columns" in ir:
+        columns = "auto" if ir["columns"] == "auto" else v.number(ir["columns"], "/columns", 1, 100, integer=True)
         lines.append(f"  columns {columns}")
-    by_group: dict[str | None, list[dict]] = {}
-    for node in ir["nodes"]:
-        _require(node, ("id", "label"), "graph/block node")
-        by_group.setdefault(node.get("group"), []).append(node)
+    seen: dict[str, str] = {}
 
-    def emit_node(node: dict, indent: str) -> None:
-        node_id = _safe_id(node["id"], ids)
-        shape = _BLOCK_SHAPES.get(node.get("kind", "process"))
-        if shape is None:
-            raise IRError(f"graph/block node {node['id']!r} has unknown kind {node.get('kind')!r}")
-        open_, close = shape
-        lines.append(f"{indent}{node_id}{open_}{_quote(node['label'])}{close}")
+    def label(obj: dict, path: str, shape: str = "rect") -> str:
+        open_, close = _BLOCK_SHAPES[shape]
+        return f"{open_}{v.text(obj['label'], ptr(path, 'label'), 'block.label')}{close}"
 
-    for group in ir.get("groups", []):
-        _require(group, ("id", "label"), "graph/block group")
-        group_id = _safe_id(group["id"], ids)
-        lines.append(f'  block:{group_id}[{_quote(group["label"])}]')
-        for node in by_group.pop(group["id"], []):
-            emit_node(node, "    ")
-        lines.append("  end")
-    for node in by_group.pop(None, []):
-        emit_node(node, "  ")
-    leftover = [group for group in by_group if group is not None]
-    if leftover:
-        raise IRError(f"graph/block nodes reference undeclared group(s): {leftover}")
+    def width(obj: dict, path: str) -> str:
+        return f":{v.number(obj['width'], ptr(path, 'width'), 1, 100, integer=True)}" if "width" in obj else ""
 
-    for edge in ir["edges"]:
-        _require(edge, ("from", "to"), "graph/block edge")
-        kind = edge.get("kind", "normal")
-        if kind not in ("normal", "dependency"):
-            raise IRError(
-                f"graph/block edge has unknown kind {kind!r}; block edges are plain arrows only"
-            )
-        if edge["from"] not in ids or edge["to"] not in ids:
-            raise IRError(f"graph/block edge references undeclared node/group: {edge}")
-        if edge.get("label"):
-            lines.append(f'  {ids[edge["from"]]}-- {_quote(edge["label"])} -->{ids[edge["to"]]}')
+    def walk(items: Any, path: str, indent: str) -> None:
+        for i, item in enumerate(v.array(items, path, 1)):
+            p = ptr(path, i)
+            kind = "block"
+            if isinstance(item, dict) and "kind" in item:
+                kind = v.enum(item["kind"], ptr(p, "kind"), _BLOCK_KINDS)
+            if kind == "block":
+                v.fields(item, p, ("id",), ("kind", "label", "shape", "width"))
+                block_id = _g4_id(v, item["id"], ptr(p, "id"), _BLOCK_RESERVED, seen=seen)
+                text = ""
+                if "shape" in item:
+                    v.enum(item["shape"], ptr(p, "shape"), _BLOCK_SHAPES)
+                    if "label" not in item:
+                        raise v.error(ptr(p, "shape"), "a shape needs a label")
+                    text = label(item, p, item["shape"])
+                elif "label" in item:
+                    text = label(item, p)
+                lines.append(f"{indent}{block_id}{text}{width(item, p)}")
+            elif kind == "space":
+                v.fields(item, p, ("kind",), ("width",))
+                lines.append(f"{indent}space{width(item, p)}")
+            elif kind == "arrow":
+                v.fields(item, p, ("kind", "id", "label", "directions"), ("width",))
+                block_id = _g4_id(v, item["id"], ptr(p, "id"), _BLOCK_RESERVED, seen=seen)
+                text = v.text(item["label"], ptr(p, "label"), "block.label")
+                dirs: set[str] = set()
+                dpath = ptr(p, "directions")
+                for j, direction in enumerate(v.array(item["directions"], dpath, 1)):
+                    v.enum(direction, ptr(dpath, j), _BLOCK_ARROW_DIRECTIONS)
+                    v.unique(direction, ptr(dpath, j), dirs, "direction")
+                lines.append(f'{indent}{block_id}<["{text}"]>({", ".join(item["directions"])}){width(item, p)}')
+            else:
+                v.fields(item, p, ("kind", "children"), ("id", "label", "width", "columns"))
+                head = "block"
+                if "id" in item:
+                    head += ":" + _g4_id(v, item["id"], ptr(p, "id"), _BLOCK_RESERVED, seen=seen)
+                    if "label" in item:
+                        head += label(item, p)
+                    head += width(item, p)
+                else:
+                    for key in ("label", "width"):
+                        if key in item:
+                            raise v.error(ptr(p, key), f"a composite block needs an id to take a {key}")
+                lines.append(f"{indent}{head}")
+                if "columns" in item:
+                    columns = "auto" if item["columns"] == "auto" else v.number(item["columns"], ptr(p, "columns"), 1, 100, integer=True)
+                    lines.append(f"{indent}  columns {columns}")
+                walk(item["children"], ptr(p, "children"), indent + "  ")
+                lines.append(f"{indent}end")
+
+    walk(ir["blocks"], "/blocks", "  ")
+
+    for i, edge in enumerate(v.array(ir.get("edges", []), "/edges")):
+        p = f"/edges/{i}"
+        v.fields(edge, p, ("from", "to"), ("label", "kind"))
+        src = v.ref(edge["from"], ptr(p, "from"), seen)
+        dst = v.ref(edge["to"], ptr(p, "to"), seen)
+        arrow = v.enum(edge["kind"], ptr(p, "kind"), _BLOCK_EDGE_KINDS) if "kind" in edge else _BLOCK_EDGE_KINDS["arrow"]
+        if "label" in edge:
+            text = v.text(edge["label"], ptr(p, "label"), "block.label")
+            lines.append(f'  {src} -- "{text}" {arrow} {dst}')
         else:
-            lines.append(f'  {ids[edge["from"]]}-->{ids[edge["to"]]}')
+            lines.append(f"  {src} {arrow} {dst}")
+
+    classes: set[str] = set()
+    for i, class_def in enumerate(v.array(ir.get("class_defs", []), "/class_defs")):
+        p = f"/class_defs/{i}"
+        v.fields(class_def, p, ("name", "style"))
+        name = v.ident(class_def["name"], ptr(p, "name"))
+        if name in _BLOCK_RESERVED:
+            raise v.error(ptr(p, "name"), f"{json.dumps(name)} is a keyword in block diagrams")
+        v.unique(name, ptr(p, "name"), classes, "class name")
+        lines.append(f"  classDef {name} {_g4_style(v, class_def['style'], ptr(p, 'style'))}")
+    for i, assignment in enumerate(v.array(ir.get("class_assignments", []), "/class_assignments")):
+        p = f"/class_assignments/{i}"
+        v.fields(assignment, p, ("blocks", "class"))
+        targets = [v.ref(b, ptr(ptr(p, "blocks"), j), seen) for j, b in enumerate(v.array(assignment["blocks"], ptr(p, "blocks"), 1))]
+        lines.append(f"  class {','.join(targets)} {v.ref(assignment['class'], ptr(p, 'class'), classes)}")
+    for i, style in enumerate(v.array(ir.get("styles", []), "/styles")):
+        p = f"/styles/{i}"
+        v.fields(style, p, ("block", "style"))
+        lines.append(f"  style {v.ref(style['block'], ptr(p, 'block'), seen)} {_g4_style(v, style['style'], ptr(p, 'style'))}")
     return "\n".join(lines) + "\n"
 
 
-def render_packet(ir: dict) -> str:
-    _require(ir, ("fields",), "packet/packet")
-    if not ir["fields"]:
-        raise IRError("packet/packet requires fields")
-    lines = ["packet"]
+# --- packet ---------------------------------------------------------------------------------
+
+_PACKET_CONFIG = {
+    "bitsPerRow": ("integer", 1, 1024),
+    "bitWidth": ("number", 1, 1000),
+    "rowHeight": ("number", 1, 1000),
+    "showBits": ("boolean",),
+    "paddingX": ("number", 0, 1000),
+    "paddingY": ("number", 0, 1000),
+    "useMaxWidth": ("boolean",),
+}
+text_context("packet.label", encode={'"': ENTITY['"'], "#": ENTITY["#"], "\\": ENTITY["\\"]})
+text_context("packet.title", encode={"#": ENTITY["#"], "%": ENTITY["%"]})
+
+
+def _packet_serialize(ir: dict, keyword: str) -> str:
+    v = Validator(keyword)
+    v.fields(ir, "", ("fields",), ("title", "title_in_frontmatter", "accessibility", "comment", "config"))
+    in_frontmatter = False
+    if "title_in_frontmatter" in ir:
+        in_frontmatter = v.boolean(ir["title_in_frontmatter"], "/title_in_frontmatter")
+        if in_frontmatter and "title" not in ir:
+            raise v.error("/title_in_frontmatter", "is true but there is no title")
+    lines = _g4_frontmatter(v, ir, "packet", _PACKET_CONFIG, ir.get("title") if in_frontmatter else None)
+    lines.append(keyword)
+    lines += emit_comment(v, ir)
+    if "title" in ir and not in_frontmatter:
+        lines.append(f"    title {v.text(ir['title'], '/title', 'packet.title')}")
+    lines += emit_accessibility(v, ir)
     cursor = 0
-    for field in ir["fields"]:
-        _require(field, ("label",), "packet/packet field")
-        label = _quote(field["label"])
-        if "bits" in field:
-            bits = field["bits"]
-            if isinstance(bits, bool) or not isinstance(bits, int) or bits < 1:
-                raise IRError(f"packet/packet field {field['label']!r} bits must be a positive integer")
-            lines.append(f"    +{bits}: {label}")
-            cursor += bits
+    for i, field_ in enumerate(v.array(ir["fields"], "/fields", 1)):
+        p = f"/fields/{i}"
+        v.fields(field_, p, ("label",), ("bits", "bit", "start", "end"))
+        forms = [key for key in ("bits", "bit", "start") if key in field_]
+        if "end" in field_ and "start" not in field_:
+            raise v.error(ptr(p, "end"), "needs start")
+        if len(forms) != 1:
+            raise v.error(p, "give exactly one of: bits, bit, or start with end")
+        label = v.text(field_["label"], ptr(p, "label"), "packet.label")
+        if "bits" in field_:
+            bits = v.number(field_["bits"], ptr(p, "bits"), 1, integer=True)
+            lines.append(f'    +{bits}: "{label}"')
+            cursor += field_["bits"]
             continue
-        _require(field, ("start", "end"), "packet/packet field")
-        start, end = field["start"], field["end"]
-        if isinstance(start, bool) or isinstance(end, bool) or not isinstance(start, int) or not isinstance(end, int):
-            raise IRError(f"packet/packet field {field['label']!r} start and end must be integers")
-        if start < 0 or end < start:
-            raise IRError(f"packet/packet field {field['label']!r} has an invalid range")
-        if start != cursor:
-            raise IRError(
-                f"packet/packet field {field['label']!r} starts at {start}, expected {cursor} for a contiguous layout"
-            )
-        lines.append(f"    {start}: {label}" if start == end else f"    {start}-{end}: {label}")
-        cursor = end + 1
+        key = "bit" if "bit" in field_ else "start"
+        start = v.number(field_[key], ptr(p, key), 0, integer=True)
+        if field_[key] != cursor:
+            raise v.error(ptr(p, key), f"is {start}, but fields must be contiguous: the next free bit is {cursor}")
+        if key == "bit":
+            lines.append(f'    {start}: "{label}"')
+            cursor += 1
+            continue
+        if "end" not in field_:
+            raise v.error(ptr(p, "end"), "required key is missing; use bit for a single-bit field")
+        end = v.number(field_["end"], ptr(p, "end"), field_["start"] + 1, integer=True)
+        lines.append(f'    {start}-{end}: "{label}"')
+        cursor = field_["end"] + 1
     return "\n".join(lines) + "\n"
 
 
-_REQUIREMENT_TYPES = {
+# --- requirementDiagram ---------------------------------------------------------------------
+
+_REQUIREMENT_TYPES = (
     "requirement", "functionalRequirement", "interfaceRequirement",
     "performanceRequirement", "physicalRequirement", "designConstraint",
+)
+_REQUIREMENT_RISKS = ("low", "medium", "high")
+_REQUIREMENT_METHODS = ("analysis", "inspection", "test", "demonstration")
+_REQUIREMENT_LINK_KINDS = ("contains", "copies", "derives", "satisfies", "verifies", "refines", "traces")
+_REQUIREMENT_DIRECTIONS = ("TB", "BT", "LR", "RL")
+# Whole-word, case-insensitive keywords of the 12.0.0 lexer; a bare name equal to one fails to parse.
+_REQUIREMENT_RESERVED = {
+    *(t.lower() for t in _REQUIREMENT_TYPES), "element", *_REQUIREMENT_LINK_KINDS,
+    "style", "class", "classdef", "click", "text", "risk", "type", "id", "docref", "verifymethod",
+    *_REQUIREMENT_RISKS, *_REQUIREMENT_METHODS,
 }
+# Quoted requirement text is Markdown with HTML: encode everything that would be read as markup.
+_REQUIREMENT_ENCODE = {'"': ENTITY['"'], "#": ENTITY["#"], "<": ENTITY["<"], ">": ENTITY[">"], "&": ENTITY["&"],
+                       "\\": ENTITY["\\"]}
+text_context("requirementDiagram.text", encode={**_REQUIREMENT_ENCODE, "*": "#42;", "_": "#95;"})
+text_context("requirementDiagram.markdown", encode=_REQUIREMENT_ENCODE)
 
 
-_REQUIREMENT_RISKS = {"low", "medium", "high"}
+def _requirement_serialize(ir: dict, keyword: str) -> str:
+    v = Validator(keyword)
+    v.fields(ir, "", ("requirements",), ("elements", "links", "title", "direction", "accessibility", "comment",
+                                          "styles", "class_defs", "class_assignments"))
+    lines = _g4_frontmatter(v, ir, "requirement", {}, ir.get("title"))
+    lines.append(keyword)
+    lines += emit_accessibility(v, ir)
+    if "direction" in ir:
+        lines.append(f"    direction {v.enum(ir['direction'], '/direction', _REQUIREMENT_DIRECTIONS)}")
+    lines += emit_comment(v, ir)
 
+    # class names are needed by the `:::` shorthand on definitions, so read classDefs first.
+    classes: dict[str, str] = {}
+    class_lines = []
+    for i, class_def in enumerate(v.array(ir.get("class_defs", []), "/class_defs")):
+        p = f"/class_defs/{i}"
+        v.fields(class_def, p, ("name", "style"))
+        name = v.ident(class_def["name"], ptr(p, "name"))
+        if name.lower() in _REQUIREMENT_RESERVED:
+            raise v.error(ptr(p, "name"), f"{json.dumps(name)} is a keyword in requirement diagrams")
+        v.unique(name, ptr(p, "name"), set(classes), "class name")
+        classes[name] = p
+        class_lines.append(f"    classDef {name} {_g4_style(v, class_def['style'], ptr(p, 'style'))}")
 
-_REQUIREMENT_METHODS = {"analysis", "inspection", "test", "demonstration"}
+    def class_list(value: Any, path: str) -> str:
+        names: set[str] = set()
+        for j, name in enumerate(v.array(value, path, 1)):
+            v.ref(name, ptr(path, j), classes)
+            v.unique(name, ptr(path, j), names, "class")
+        return ",".join(value)
 
+    seen: dict[str, str] = {}
+    refs: dict[str, str] = {}  # IR id -> emitted node name
+    emitted: dict[str, str] = {}  # emitted node name -> path
 
-_REQUIREMENT_LINK_KINDS = {"contains", "copies", "derives", "satisfies", "verifies", "refines", "traces"}
+    def node_name(obj: dict, path: str, context: str) -> str:
+        _g4_id(v, obj["id"], ptr(path, "id"), _REQUIREMENT_RESERVED, fold=True, seen=seen)
+        name = f'"{v.text(obj["name"], ptr(path, "name"), context)}"' if "name" in obj else obj["id"]
+        key = obj.get("name", obj["id"])
+        if key in emitted:
+            raise v.error(ptr(path, "name") if "name" in obj else ptr(path, "id"),
+                          f"node name {json.dumps(key)} is already used at {emitted[key]}")
+        emitted[key] = path
+        refs[obj["id"]] = name
+        return name
 
+    def context_of(obj: dict, path: str) -> str:
+        if "markdown" in obj and v.boolean(obj["markdown"], ptr(path, "markdown")):
+            return "requirementDiagram.markdown"
+        return "requirementDiagram.text"
 
-def render_requirement_links(ir: dict) -> str:
-    _require(ir, ("requirements", "elements", "links"), "requirement-links")
-    lines = ["requirementDiagram"]
-    direction = _direction(ir, "requirement-links", allowed=_CARDINAL_DIRECTIONS)
-    if direction:
-        lines.append(f"    direction {direction}")
-    known = set()
-    for requirement in ir["requirements"]:
-        _require(requirement, ("id", "text"), "requirement-links requirement")
-        rtype = requirement.get("type", "requirement")
-        if rtype not in _REQUIREMENT_TYPES:
-            raise IRError(f"requirement {requirement['id']!r} has unknown type {rtype!r}")
-        risk = requirement.get("risk")
-        if risk is not None and risk not in _REQUIREMENT_RISKS:
-            raise IRError(f"requirement {requirement['id']!r} has unknown risk {risk!r}")
-        method = requirement.get("verify_method")
-        if method is not None and method not in _REQUIREMENT_METHODS:
-            raise IRError(f"requirement {requirement['id']!r} has unknown verify_method {method!r}")
-        req_id = _identifier(requirement["id"], "requirement-links requirement")
-        lines.append(f"    {rtype} {req_id} {{")
-        lines.append(f"        id: {requirement['id']}")
-        lines.append(f"        text: {_quote(requirement['text'])}")
-        if risk:
-            lines.append(f"        risk: {risk}")
-        if method:
-            lines.append(f"        verifymethod: {method}")
+    for i, req in enumerate(v.array(ir["requirements"], "/requirements")):
+        p = f"/requirements/{i}"
+        v.fields(req, p, ("id",), ("type", "name", "req_id", "text", "risk", "verify_method", "classes", "markdown"))
+        context = context_of(req, p)
+        rtype = v.enum(req["type"], ptr(p, "type"), _REQUIREMENT_TYPES) if "type" in req else "requirement"
+        name = node_name(req, p, context)
+        shorthand = f":::{class_list(req['classes'], ptr(p, 'classes'))}" if "classes" in req else ""
+        lines.append(f"    {rtype} {name}{shorthand} {{")
+        if "req_id" in req:
+            lines.append(f'        id: "{v.text(req["req_id"], ptr(p, "req_id"), context)}"')
+        if "text" in req:
+            lines.append(f'        text: "{v.text(req["text"], ptr(p, "text"), context)}"')
+        if "risk" in req:
+            lines.append(f"        risk: {v.enum(req['risk'], ptr(p, 'risk'), _REQUIREMENT_RISKS)}")
+        if "verify_method" in req:
+            lines.append(f"        verifymethod: {v.enum(req['verify_method'], ptr(p, 'verify_method'), _REQUIREMENT_METHODS)}")
         lines.append("    }")
-        known.add(requirement["id"])
-    for element in ir["elements"]:
-        _require(element, ("id", "type"), "requirement-links element")
-        elem_id = _identifier(element["id"], "requirement-links element")
-        lines.append(f"    element {elem_id} {{")
-        lines.append(f"        type: {element['type']}")
-        if element.get("docref"):
-            lines.append(f"        docref: {element['docref']}")
+
+    for i, element in enumerate(v.array(ir.get("elements", []), "/elements")):
+        p = f"/elements/{i}"
+        v.fields(element, p, ("id",), ("name", "type", "docref", "classes", "markdown"))
+        context = context_of(element, p)
+        name = node_name(element, p, context)
+        shorthand = f":::{class_list(element['classes'], ptr(p, 'classes'))}" if "classes" in element else ""
+        lines.append(f"    element {name}{shorthand} {{")
+        if "type" in element:
+            lines.append(f'        type: "{v.text(element["type"], ptr(p, "type"), context)}"')
+        if "docref" in element:
+            lines.append(f'        docRef: "{v.text(element["docref"], ptr(p, "docref"), context)}"')
         lines.append("    }")
-        known.add(element["id"])
-    for link in ir["links"]:
-        _require(link, ("from", "to", "kind"), "requirement-links link")
-        if link["kind"] not in _REQUIREMENT_LINK_KINDS:
-            raise IRError(f"requirement-links link has unknown kind {link['kind']!r}")
-        if link["from"] not in known or link["to"] not in known:
-            raise IRError(f"requirement-links link references an undeclared requirement/element: {link}")
-        lines.append(f'    {link["from"]} - {link["kind"]} -> {link["to"]}')
+
+    for i, link in enumerate(v.array(ir.get("links", []), "/links")):
+        p = f"/links/{i}"
+        v.fields(link, p, ("from", "to", "kind"), ("reverse",))
+        src = refs[v.ref(link["from"], ptr(p, "from"), refs)]
+        dst = refs[v.ref(link["to"], ptr(p, "to"), refs)]
+        kind = v.enum(link["kind"], ptr(p, "kind"), _REQUIREMENT_LINK_KINDS)
+        if "reverse" in link and v.boolean(link["reverse"], ptr(p, "reverse")):
+            lines.append(f"    {dst} <- {kind} - {src}")
+        else:
+            lines.append(f"    {src} - {kind} -> {dst}")
+
+    lines += class_lines
+
+    def node_list(value: Any, path: str) -> str:
+        names: set[str] = set()
+        out = []
+        for j, node in enumerate(v.array(value, path, 1)):
+            v.ref(node, ptr(path, j), refs)
+            v.unique(node, ptr(path, j), names, "node")
+            out.append(refs[node])
+        return ",".join(out)
+
+    for i, assignment in enumerate(v.array(ir.get("class_assignments", []), "/class_assignments")):
+        p = f"/class_assignments/{i}"
+        v.fields(assignment, p, ("nodes", "classes"), ("shorthand",))
+        nodes = node_list(assignment["nodes"], ptr(p, "nodes"))
+        names = class_list(assignment["classes"], ptr(p, "classes"))
+        if "shorthand" in assignment and v.boolean(assignment["shorthand"], ptr(p, "shorthand")):
+            if len(assignment["nodes"]) != 1:
+                raise v.error(ptr(p, "nodes"), "the ::: shorthand takes exactly one node")
+            lines.append(f"    {nodes}:::{names}")
+        else:
+            lines.append(f"    class {nodes} {names}")
+    for i, style in enumerate(v.array(ir.get("styles", []), "/styles")):
+        p = f"/styles/{i}"
+        v.fields(style, p, ("nodes", "style"))
+        lines.append(f"    style {node_list(style['nodes'], ptr(p, 'nodes'))} {_g4_style(v, style['style'], ptr(p, 'style'))}")
     return "\n".join(lines) + "\n"
 
 
-register(Builder('c4', 'graph', ('C4Context', 'C4Container', 'C4Component', 'C4Dynamic', 'C4Deployment'), legacy(render_graph_c4)))
-register(Builder('architecture', 'graph', ('architecture-beta',), legacy(render_graph_architecture)))
-register(Builder('block', 'graph', ('block',), legacy(render_graph_block)))
-register(Builder('packet', 'packet', ('packet',), legacy(render_packet)))
-register(Builder('requirementDiagram', 'requirement-links', ('requirementDiagram',), legacy(render_requirement_links)))
+# --- registration ---------------------------------------------------------------------------
+
+_C4_ELEMENT_TEXT = ("/nodes/*/label", "/nodes/*/description", "/nodes/*/technology")
+register(Builder(
+    "c4", "graph", ("C4Context", "C4Container", "C4Component", "C4Dynamic", "C4Deployment"), _c4_serialize,
+    text_fields=_C4_ELEMENT_TEXT + (
+        "/nodes/*/tags", "/nodes/*/link", "/nodes/*/sprite",
+        "/groups/*/label", "/groups/*/boundary_type", "/groups/*/technology", "/groups/*/description",
+        "/edges/*/label", "/edges/*/technology",
+        "/title", "/comment", "/accessibility/title", "/accessibility/description",
+    ),
+    features={
+        "c4.keyword-c4context": "/target=C4Context",
+        "c4.keyword-c4container": "/target=C4Container",
+        "c4.keyword-c4component": "/target=C4Component",
+        "c4.keyword-c4dynamic": "/target=C4Dynamic",
+        "c4.keyword-c4deployment": "/target=C4Deployment",
+        "c4.title": "/title",
+        "c4.acc-title": "/accessibility/title",
+        "c4.acc-descr": "/accessibility/description=Containers inside the banking system",
+        "c4.acc-descr-block": "/accessibility/description=Customers, the banking system\nand its neighbours.",
+        "c4.comment": "/comment",
+        **{f"c4.{kind.replace('_', '-')}": f"/nodes/*/kind={kind}" for kind in _C4_NODE_KINDS},
+        "c4.boundary": "/groups/*/kind=boundary",
+        "c4.enterprise-boundary": "/groups/*/kind=enterprise_boundary",
+        "c4.system-boundary": "/groups/*/kind=system_boundary",
+        "c4.container-boundary": "/groups/*/kind=container_boundary",
+        "c4.deployment-node": "/groups/*/kind=deployment_node",
+        "c4.node": "/groups/*/kind=node",
+        "c4.node-l": "/groups/*/kind=node_left",
+        "c4.node-r": "/groups/*/kind=node_right",
+        "c4.nested-boundary": "/groups/*/group",
+        "c4.rel": "/edges/*/kind=rel",
+        "c4.birel": "/edges/*/kind=birel",
+        "c4.rel-up": "/edges/*/kind=rel_up",
+        "c4.rel-u": "/edges/*/kind=rel_u",
+        "c4.rel-down": "/edges/*/kind=rel_down",
+        "c4.rel-d": "/edges/*/kind=rel_d",
+        "c4.rel-left": "/edges/*/kind=rel_left",
+        "c4.rel-l": "/edges/*/kind=rel_l",
+        "c4.rel-right": "/edges/*/kind=rel_right",
+        "c4.rel-r": "/edges/*/kind=rel_r",
+        "c4.rel-back": "/edges/*/kind=rel_back",
+        "c4.rel-index": "/edges/*/index",
+        "c4.rel-technology": "/edges/*/technology",
+        "c4.element-description": "/nodes/*/description",
+        "c4.element-technology": "/nodes/*/technology",
+        "c4.boundary-type": "/groups/*/boundary_type",
+        "c4.positional-params": "/rel_styles/*/form=positional",
+        "c4.named-params": "/rel_styles/*/form=named",
+        "c4.param-tags": "/nodes/*/tags",
+        "c4.param-link": "/nodes/*/link",
+        "c4.param-sprite": "/nodes/*/sprite",
+        "c4.label-line-break": "/nodes/0/description=A customer\nwith accounts",
+        "c4.update-element-style": "/element_styles/*/element",
+        "c4.style-bg-color": "/element_styles/*/bg_color",
+        "c4.style-font-color": "/element_styles/*/font_color",
+        "c4.style-border-color": "/element_styles/*/border_color",
+        "c4.update-rel-style": "/rel_styles/*/from",
+        "c4.style-text-color": "/rel_styles/*/text_color",
+        "c4.style-line-color": "/rel_styles/*/line_color",
+        "c4.style-offset-x": "/rel_styles/*/offset_x",
+        "c4.style-offset-y": "/rel_styles/*/offset_y",
+        "c4.update-layout-config": "/layout",
+        "c4.layout-shape-in-row": "/layout/shape_in_row",
+        "c4.layout-boundary-in-row": "/layout/boundary_in_row",
+    },
+    probes={"object": "/nodes/1", "number": "/rel_styles/0/offset_y", "enum": "/edges/1/kind", "ref": "/edges/0/from"},
+))
+register(Builder(
+    "architecture", "graph", ("architecture-beta",), _arch_serialize,
+    text_fields=("/groups/*/label", "/nodes/*/label", "/comment", "/accessibility/title", "/accessibility/description"),
+    features={
+        "architecture.keyword": "/target=architecture-beta",
+        "architecture.group": "/groups/*/icon",
+        "architecture.group-nested": "/groups/*/group",
+        "architecture.group-no-icon": "/groups/2/label=Storage",
+        "architecture.service": "/nodes/*/icon",
+        "architecture.service-in-group": "/nodes/*/group",
+        "architecture.service-no-icon": "/nodes/5/label=Logs",
+        "architecture.junction": "/nodes/*/kind=junction",
+        "architecture.junction-in-group": "/nodes/8/group",
+        "architecture.edge": "/edges/*/arrow=none",
+        "architecture.side-left": "/edges/*/from_side=L",
+        "architecture.side-right": "/edges/*/from_side=R",
+        "architecture.side-top": "/edges/*/from_side=T",
+        "architecture.side-bottom": "/edges/*/from_side=B",
+        "architecture.edge-right-angle": "/edges/3/to_side=L",
+        "architecture.arrow-right": "/edges/*/arrow=forward",
+        "architecture.arrow-left": "/edges/*/arrow=backward",
+        "architecture.arrow-both": "/edges/*/arrow=both",
+        "architecture.edge-group-modifier": "/edges/*/from_group=true",
+        "architecture.align-row": "/alignments/*/axis=row",
+        "architecture.align-column": "/alignments/*/axis=column",
+        "architecture.icon-cloud": "/groups/*/icon=cloud",
+        "architecture.icon-database": "/nodes/*/icon=database",
+        "architecture.icon-disk": "/nodes/*/icon=disk",
+        "architecture.icon-internet": "/nodes/*/icon=internet",
+        "architecture.icon-server": "/nodes/*/icon=server",
+        "architecture.icon-pack": "/nodes/*/icon=logos:aws-ec2",
+        "architecture.acc-title": "/accessibility/title",
+        "architecture.acc-descr": "/accessibility/description",
+        "architecture.comment": "/comment",
+    },
+    probes={"object": "/nodes/1", "number": "/config/padding", "enum": "/edges/0/from_side", "ref": "/edges/0/from"},
+))
+register(Builder(
+    "block", "graph", ("block", "block-beta"), _block_serialize,
+    text_fields=("/blocks/*/label", "/blocks/*/children/*/label", "/edges/*/label", "/comment"),
+    features={
+        "block.keyword": "/target=block",
+        "block.keyword-beta": "/target=block-beta",
+        "block.block-plain": "/blocks/14/id=plain",
+        "block.block-label": "/blocks/*/label",
+        "block.columns": "/columns=4",
+        "block.columns-auto": "/columns=auto",
+        "block.width": "/blocks/*/width",
+        "block.composite": "/blocks/26/children",
+        "block.composite-id": "/blocks/*/kind=composite",
+        "block.composite-width": "/blocks/24/width",
+        "block.composite-columns": "/blocks/*/columns",
+        "block.shape-rect": "/blocks/*/shape=rect",
+        "block.shape-round": "/blocks/*/shape=round",
+        "block.shape-stadium": "/blocks/*/shape=stadium",
+        "block.shape-subroutine": "/blocks/*/shape=subroutine",
+        "block.shape-cylinder": "/blocks/*/shape=cylinder",
+        "block.shape-circle": "/blocks/*/shape=circle",
+        "block.shape-asymmetric": "/blocks/*/shape=asymmetric",
+        "block.shape-rhombus": "/blocks/*/shape=rhombus",
+        "block.shape-hexagon": "/blocks/*/shape=hexagon",
+        "block.shape-parallelogram": "/blocks/*/shape=parallelogram",
+        "block.shape-parallelogram-alt": "/blocks/*/shape=parallelogram-alt",
+        "block.shape-trapezoid": "/blocks/*/shape=trapezoid",
+        "block.shape-trapezoid-alt": "/blocks/*/shape=trapezoid-alt",
+        "block.shape-double-circle": "/blocks/*/shape=double-circle",
+        "block.arrow-right": "/blocks/*/directions/0=right",
+        "block.arrow-left": "/blocks/*/directions/0=left",
+        "block.arrow-up": "/blocks/*/directions/0=up",
+        "block.arrow-down": "/blocks/*/directions/0=down",
+        "block.arrow-x": "/blocks/*/directions/0=x",
+        "block.arrow-y": "/blocks/*/directions/0=y",
+        "block.arrow-combined": "/blocks/*/directions/1",
+        "block.space": "/blocks/*/kind=space",
+        "block.space-width": "/blocks/25/width",
+        "block.edge-arrow": "/edges/*/kind=arrow",
+        "block.edge-line": "/edges/*/kind=line",
+        "block.edge-text": "/edges/*/label",
+        "block.edge-from-composite": "/edges/0/from=ID",
+        "block.style": "/styles/*/style",
+        "block.class-def": "/class_defs/*/style",
+        "block.class": "/class_assignments/*/class",
+        "block.html-entity": "/blocks/22/label=both\u00a0ways",
+        "block.comment": "/comment",
+    },
+    probes={"object": "/blocks/15", "number": "/blocks/15/width", "enum": "/blocks/0/shape", "ref": "/edges/0/from"},
+))
+register(Builder(
+    "packet", "packet", ("packet", "packet-beta"), _packet_serialize,
+    text_fields=("/fields/*/label", "/title", "/comment", "/accessibility/title", "/accessibility/description"),
+    features={
+        "packet.keyword": "/target=packet",
+        "packet.keyword-beta": "/target=packet-beta",
+        "packet.field-range": "/fields/*/end",
+        "packet.field-single-bit": "/fields/*/bit",
+        "packet.field-bit-count": "/fields/*/bits",
+        "packet.field-bit-count-single": "/fields/*/bits=1",
+        "packet.mixed-notation": "/fields/1/start=16",
+        "packet.row-wrap": "/fields/*/end=255",
+        "packet.title": "/title",
+        "packet.frontmatter-title": "/title_in_frontmatter=true",
+        "packet.comment": "/comment",
+        "packet.acc-title": "/accessibility/title",
+        "packet.acc-descr": "/accessibility/description=Fields of a UDP header",
+        "packet.acc-descr-block": "/accessibility/description=Fields of a TCP header,\nbit by bit.",
+    },
+    probes={"object": "/fields/1", "number": "/fields/1/end", "enum": None, "ref": None},
+))
+register(Builder(
+    "requirementDiagram", "requirement-links", ("requirementDiagram",), _requirement_serialize,
+    text_fields=(
+        "/requirements/*/name", "/requirements/*/req_id", "/requirements/*/text",
+        "/elements/*/name", "/elements/*/type", "/elements/*/docref",
+        "/title", "/comment", "/accessibility/title", "/accessibility/description",
+    ),
+    features={
+        "requirementDiagram.keyword": "/target=requirementDiagram",
+        "requirementDiagram.type-requirement": "/requirements/0/id",
+        "requirementDiagram.type-functional": "/requirements/*/type=functionalRequirement",
+        "requirementDiagram.type-interface": "/requirements/*/type=interfaceRequirement",
+        "requirementDiagram.type-performance": "/requirements/*/type=performanceRequirement",
+        "requirementDiagram.type-physical": "/requirements/*/type=physicalRequirement",
+        "requirementDiagram.type-design-constraint": "/requirements/*/type=designConstraint",
+        "requirementDiagram.field-id": "/requirements/*/req_id",
+        "requirementDiagram.field-text": "/requirements/*/text",
+        "requirementDiagram.risk-low": "/requirements/*/risk=low",
+        "requirementDiagram.risk-medium": "/requirements/*/risk=medium",
+        "requirementDiagram.risk-high": "/requirements/*/risk=high",
+        "requirementDiagram.verify-analysis": "/requirements/*/verify_method=analysis",
+        "requirementDiagram.verify-inspection": "/requirements/*/verify_method=inspection",
+        "requirementDiagram.verify-test": "/requirements/*/verify_method=test",
+        "requirementDiagram.verify-demonstration": "/requirements/*/verify_method=demonstration",
+        "requirementDiagram.element": "/elements/*/id",
+        "requirementDiagram.element-type": "/elements/*/type",
+        "requirementDiagram.element-docref": "/elements/*/docref",
+        "requirementDiagram.quoted-text": "/elements/*/type=test suite",
+        "requirementDiagram.markdown-text": "/requirements/*/markdown=true",
+        "requirementDiagram.quoted-name": "/requirements/*/name",
+        "requirementDiagram.rel-contains": "/links/*/kind=contains",
+        "requirementDiagram.rel-copies": "/links/*/kind=copies",
+        "requirementDiagram.rel-derives": "/links/*/kind=derives",
+        "requirementDiagram.rel-satisfies": "/links/*/kind=satisfies",
+        "requirementDiagram.rel-verifies": "/links/*/kind=verifies",
+        "requirementDiagram.rel-refines": "/links/*/kind=refines",
+        "requirementDiagram.rel-traces": "/links/*/kind=traces",
+        "requirementDiagram.rel-reverse": "/links/*/reverse=true",
+        "requirementDiagram.direction-tb": "/direction=TB",
+        "requirementDiagram.direction-bt": "/direction=BT",
+        "requirementDiagram.direction-lr": "/direction=LR",
+        "requirementDiagram.direction-rl": "/direction=RL",
+        "requirementDiagram.style": "/styles/*/style",
+        "requirementDiagram.class-def": "/class_defs/*/name=important",
+        "requirementDiagram.class-def-default": "/class_defs/*/name=default",
+        "requirementDiagram.class": "/class_assignments/0/classes",
+        "requirementDiagram.class-shorthand-definition": "/requirements/*/classes",
+        "requirementDiagram.class-shorthand-statement": "/class_assignments/*/shorthand=true",
+        "requirementDiagram.acc-title": "/accessibility/title",
+        "requirementDiagram.acc-descr": "/accessibility/description=Left to right",
+        "requirementDiagram.acc-descr-block": "/accessibility/description=Six requirement kinds, three elements,\nevery relationship.",
+        "requirementDiagram.comment": "/comment",
+    },
+    probes={"object": "/requirements/0", "number": None, "enum": "/requirements/0/risk", "ref": "/links/0/from"},
+))
 
 # === end group 4 ===
 

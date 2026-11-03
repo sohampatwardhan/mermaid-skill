@@ -156,4 +156,17 @@ architecture-beta
 Covers: every feature id. `architecture.icon-pack` renders as a `?` placeholder unless the `logos` pack is registered.
 
 ## Builder
-`candidate`: `scripts/render.py` has an IR builder for this type (target keyword(s) `architecture-beta`). It has not been through the reliability bar yet; see [coverage.md](../coverage.md).
+`builder`: family `graph`, keyword `architecture-beta`.
+
+| Key | Type | Meaning |
+|---|---|---|
+| `groups[]` | `{id, label, icon?, group?}` | `group id(icon)[label] in parent`; a parent group must come earlier in the array |
+| `nodes[]` | `{id, kind?, label?, icon?, group?}` | `kind` `service` (default, needs `label`) or `junction` (no label or icon) |
+| `icon` | enum or `pack:name` | `cloud`, `database`, `disk`, `internet`, `server`, or a registered pack icon such as `logos:aws-ec2` |
+| `label` | text | bracket title; a title with `[` or `]` uses the quoted `["..."]` form |
+| `edges[]` | `{from, from_side, to, to_side, arrow?, from_group?, to_group?}` | sides `T`, `B`, `L`, `R`; `arrow` `none`, `forward`, `backward`, `both`; `*_group` adds `{group}` |
+| `alignments[]` | `{axis, members[]}` | `align row` / `align column` with two or more declared nodes |
+| `config` | object | typed `config.architecture`: `padding`, `iconSize`, `fontSize`, `randomize`, `nodeSeparation`, `idealEdgeLengthMultiplier`, `edgeElasticity`, `numIter`, `seed`, `useMaxWidth` |
+| `accessibility`, `comment` | | `accTitle` / `accDescr`, `%%` line |
+
+Rejected: ids that start with `L`, `R`, `T`, `B` or `title`, or equal a keyword (`service`, `group`, `junction`, `in`, `align`, `row`, `column`, ...); a group as an edge end; a second edge with the same `from` and `to`; `{group}` on a node outside a group; titles with `*`, `_`, `~`, `` ` ``, a backslash before punctuation, entity codes or repeated spaces (Markdown or entities would change them), and `"` in a bracketed title. Architecture draws no title, so the IR has none. Example: [maximal.json](../../tests/fixtures/architecture/maximal.json).

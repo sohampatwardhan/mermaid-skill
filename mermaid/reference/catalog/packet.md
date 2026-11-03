@@ -125,4 +125,19 @@ accDescr: Fields of a UDP header
 Covers: `packet.keyword-beta`, `packet.title`, `packet.acc-descr`, `packet.field-bit-count`, `packet.field-range`, `packet.mixed-notation`.
 
 ## Builder
-`candidate`: `scripts/render.py` has an IR builder for this type (target keyword(s) `packet`). It has not been through the reliability bar yet; see [coverage.md](../coverage.md).
+`builder`: family `packet`, keywords `packet`, `packet-beta` (the IR `target` is emitted as the opener).
+
+| Key | Type | Meaning |
+|---|---|---|
+| `fields[]` | array, required | fields in bit order; each has `label` and exactly one of `bits`, `bit`, or `start` + `end` |
+| `fields[].label` | text | field name, emitted quoted; `"`, `#` and `\` become entity codes |
+| `fields[].bits` | integer >= 1 | `+N:` field of N bits after the previous one |
+| `fields[].bit` | integer | single-bit field `N:` |
+| `fields[].start`, `.end` | integers, `end > start` | inclusive range `start-end:` |
+| `title` | text | `title` statement, or frontmatter `title:` when `title_in_frontmatter` is true |
+| `title_in_frontmatter` | boolean | move `title` into frontmatter |
+| `config` | object | typed `config.packet`: `bitsPerRow`, `bitWidth`, `rowHeight`, `showBits`, `paddingX`, `paddingY`, `useMaxWidth` |
+| `accessibility` | `{title, description}` | `accTitle`; a description with a newline uses `accDescr { }` |
+| `comment` | text | `%%` line after the opener |
+
+Rejected: a field that does not start at the next free bit (gap or overlap), `bits: 0`, `end <= start`, and more than one width form in a field. Example: [maximal.json](../../tests/fixtures/packet/maximal.json), plus `maximal.packet-beta.json` for the title statement and one-line `accDescr`.

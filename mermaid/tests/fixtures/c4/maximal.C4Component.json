@@ -1,0 +1,136 @@
+{
+  "diagram": "graph",
+  "target": "C4Component",
+  "title": "Component diagram for the API Application",
+  "comment": "API components",
+  "accessibility": {
+    "description": "Components of the API application"
+  },
+  "groups": [
+    {
+      "id": "apiB",
+      "label": "API Application",
+      "kind": "container_boundary"
+    },
+    {
+      "id": "vendor",
+      "label": "Vendor",
+      "kind": "boundary",
+      "boundary_type": "third party",
+      "group": "apiB"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "spa",
+      "label": "Single Page App",
+      "kind": "container",
+      "technology": "Angular",
+      "description": "Banking UI"
+    },
+    {
+      "id": "sign",
+      "label": "Sign In Controller",
+      "kind": "component",
+      "technology": "Spring MVC",
+      "description": "Signs users in",
+      "group": "apiB",
+      "tags": "v2",
+      "link": "https://example.com/sign",
+      "sprite": "lock"
+    },
+    {
+      "id": "cache",
+      "label": "Session Cache",
+      "kind": "component_db",
+      "technology": "Redis",
+      "description": "Sessions",
+      "group": "apiB"
+    },
+    {
+      "id": "jobs",
+      "label": "Job Queue",
+      "kind": "component_queue",
+      "technology": "Kafka",
+      "description": "Background jobs",
+      "group": "apiB"
+    },
+    {
+      "id": "sdk",
+      "label": "Vendor SDK",
+      "kind": "component_ext",
+      "technology": "Java",
+      "description": "Fraud checks",
+      "group": "vendor"
+    },
+    {
+      "id": "vdb",
+      "label": "Vendor DB",
+      "kind": "component_db_ext",
+      "technology": "Oracle",
+      "description": "Vendor data",
+      "group": "vendor"
+    },
+    {
+      "id": "vq",
+      "label": "Vendor Queue",
+      "kind": "component_queue_ext",
+      "description": "Vendor events",
+      "group": "vendor"
+    }
+  ],
+  "edges": [
+    {
+      "from": "spa",
+      "to": "sign",
+      "label": "Uses",
+      "technology": "JSON/HTTPS"
+    },
+    {
+      "from": "sign",
+      "to": "cache",
+      "label": "Stores sessions",
+      "kind": "rel"
+    },
+    {
+      "from": "sign",
+      "to": "jobs",
+      "label": "Enqueues"
+    },
+    {
+      "from": "sign",
+      "to": "sdk",
+      "label": "Checks"
+    },
+    {
+      "from": "sdk",
+      "to": "vdb",
+      "label": "Reads"
+    },
+    {
+      "from": "sdk",
+      "to": "vq",
+      "label": "Publishes"
+    }
+  ],
+  "element_styles": [
+    {
+      "element": "sign",
+      "bg_color": "grey",
+      "font_color": "white",
+      "border_color": "black"
+    }
+  ],
+  "rel_styles": [
+    {
+      "from": "spa",
+      "to": "sign",
+      "text_color": "red",
+      "offset_y": -20
+    }
+  ],
+  "layout": {
+    "shape_in_row": 3,
+    "boundary_in_row": 2
+  }
+}

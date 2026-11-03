@@ -1,0 +1,13 @@
+{
+  "diagram": "packet",
+  "target": "packet-beta",
+  "title": "UDP Packet",
+  "accessibility": {"description": "Fields of a UDP header"},
+  "fields": [
+    {"bits": 16, "label": "Source Port"},
+    {"bits": 16, "label": "Destination Port"},
+    {"start": 32, "end": 47, "label": "Length"},
+    {"start": 48, "end": 63, "label": "Checksum"},
+    {"start": 64, "end": 95, "label": "Data (variable length)"}
+  ]
+}

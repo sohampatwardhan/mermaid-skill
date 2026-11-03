@@ -1,0 +1,5 @@
+{
+  "diagram": "graph",
+  "target": "architecture-beta",
+  "nodes": [{"id": "api", "label": "API", "icon": "server"}]
+}
