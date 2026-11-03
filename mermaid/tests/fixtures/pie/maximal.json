@@ -1,0 +1,46 @@
+{
+  "diagram": "chart",
+  "target": "pie",
+  "title": "Key elements in Product X",
+  "titlePlacement": "statement",
+  "showData": true,
+  "accessibility": {
+    "title": "Element shares",
+    "description": "Calcium, potassium, magnesium and iron shares in product X"
+  },
+  "slices": [
+    {"label": "Calcium", "value": 42.96},
+    {"label": "Potassium", "value": 50.05},
+    {"label": "Magnesium", "value": 10.01},
+    {"label": "Iron", "value": 5},
+    {"label": "Trace", "value": 0}
+  ],
+  "config": {
+    "theme": "base",
+    "pie": {
+      "textPosition": 0.5,
+      "donutHole": 0.3,
+      "legendPosition": "bottom",
+      "highlightSlice": "Potassium",
+      "useMaxWidth": true
+    },
+    "themeVariables": {
+      "pieOuterStrokeWidth": "5px",
+      "pie1": "#4e79a7",
+      "pie2": "#f28e2b",
+      "pie3": "#e15759",
+      "pie4": "#76b7b2",
+      "pie5": "#59a14f",
+      "pieOpacity": 0.8,
+      "pieStrokeColor": "#333333",
+      "pieStrokeWidth": "2px",
+      "pieOuterStrokeColor": "#000000",
+      "pieTitleTextSize": "25px",
+      "pieTitleTextColor": "#111111",
+      "pieSectionTextSize": "17px",
+      "pieSectionTextColor": "#ffffff",
+      "pieLegendTextSize": "17px",
+      "pieLegendTextColor": "#222222"
+    }
+  }
+}

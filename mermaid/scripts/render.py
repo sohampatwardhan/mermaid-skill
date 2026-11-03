@@ -3960,204 +3960,859 @@ register(Builder(
 
 
 # === group 3: chart: pie, quadrantChart, xyChart, sankey, radar, treemap, venn ========
+#
+# Free text in every chart type is encoded with the full ENTITY table: each code was rendered
+# with CLI 12.0.0 and comes back as the original character in the SVG text, while the raw
+# characters break (`"`, `%%`, backtick, `\`) in at least one position. Chart options that
+# Mermaid reads from frontmatter are a typed `config` object (validate_config), never a string.
+# sankey is hand-author-only: its CSV lexer accepts printable ASCII only, so ordinary text such
+# as `Ünïcode 日本` cannot be a node name, and no entity code survives it either.
 
-def render_chart_pie(ir: dict) -> str:
-    _require(ir, ("slices",), "chart/pie")
-    if not ir["slices"]:
-        raise IRError("chart/pie requires at least one slice")
-    header = "pie showData" if ir.get("showData") else "pie"
-    lines = [header]
-    if ir.get("title"):
-        lines.append(f"    title {_no_colon(ir['title'], 'chart/pie title')}")
-    for slice_ in ir["slices"]:
-        _require(slice_, ("label", "value"), "chart/pie slice")
-        label = _no_colon(slice_["label"], "chart/pie label")
-        value = float(_positive_number(slice_["value"], "chart/pie value"))
-        if value <= 0:
-            raise IRError(f"chart/pie slice {label!r} value must be greater than 0")
-        lines.append(f"    {_quote(label)} : {value}")
-    return "\n".join(lines) + "\n"
+_CHART_THEMES = (
+    "default", "base", "dark", "forest", "neutral", "neo", "neo-dark",
+    "redux", "redux-dark", "redux-color", "redux-dark-color",
+)
+_CHART_LOOKS = ("classic", "handDrawn", "neo")
+_CHART_HEX = r"#(?:[0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})"
 
 
-def render_chart_quadrant(ir: dict) -> str:
-    _require(ir, ("xAxis", "yAxis", "quadrants", "points"), "chart/quadrantChart")
-    _require(ir["xAxis"], ("left", "right"), "chart/quadrantChart xAxis")
-    _require(ir["yAxis"], ("bottom", "top"), "chart/quadrantChart yAxis")
-    lines = ["quadrantChart"]
-    if ir.get("title"):
-        lines.append(f"    title {_no_colon(ir['title'], 'chart/quadrantChart title')}")
-    lines.append(
-        f"    x-axis {_no_colon(ir['xAxis']['left'], 'quadrant x')} --> {_no_colon(ir['xAxis']['right'], 'quadrant x')}"
+def _chart_text_contexts(type_id: str) -> None:
+    """`<type>.text` (free text, ENTITY-encoded) and `<type>.css-length` (frontmatter sizes)."""
+    text_context(f"{type_id}.text", encode=ENTITY)
+    text_context(
+        f"{type_id}.css-length",
+        reject_patterns=((r"^(?![0-9]+(\.[0-9]+)?(px|em|rem|%)?$)", "must be a CSS length such as 12px"),),
     )
-    lines.append(
-        f"    y-axis {_no_colon(ir['yAxis']['bottom'], 'quadrant y')} --> {_no_colon(ir['yAxis']['top'], 'quadrant y')}"
-    )
-    for index in ("1", "2", "3", "4"):
-        if index not in ir["quadrants"] and int(index) not in ir["quadrants"]:
-            raise IRError(f"chart/quadrantChart missing quadrant {index}")
-        label = ir["quadrants"].get(index, ir["quadrants"].get(int(index)))
-        lines.append(f"    quadrant-{index} {_no_colon(label, 'quadrant label')}")
-    for point in ir["points"]:
-        _require(point, ("label", "x", "y"), "chart/quadrantChart point")
-        x_value = float(_positive_number(point["x"], "quadrant x"))
-        y_value = float(_positive_number(point["y"], "quadrant y"))
-        if not 0 <= x_value <= 1 or not 0 <= y_value <= 1:
-            raise IRError(f"chart/quadrantChart point {point['label']!r} must be inside 0..1")
-        lines.append(f"    {_quote(_no_colon(point['label'], 'quadrant point'))}: [{x_value}, {y_value}]")
-    return "\n".join(lines) + "\n"
 
 
-def _xy_token(value: Any, where: str) -> str:
-    text = str(value)
-    if "," in text or "\n" in text:
-        raise IRError(f"{where} must not contain commas or newlines")
-    if re.fullmatch(r"[A-Za-z0-9_]+", text):
-        return text
-    return _quote(text)
+def _chart_colors(*names: str) -> dict:
+    return {name: ("color",) for name in names}
 
 
-def render_chart_xy(ir: dict) -> str:
-    _require(ir, ("xAxis",), "chart/xychart")
-    if not ir.get("bar") and not ir.get("line"):
-        raise IRError("chart/xychart requires 'bar' and/or 'line'")
-    orientation = ir.get("orientation", "vertical")
-    if orientation not in ("vertical", "horizontal"):
-        raise IRError(f"chart/xychart has unknown orientation {orientation!r}")
-    header = "xychart horizontal" if orientation == "horizontal" else "xychart"
-    lines = [header]
-    if ir.get("title"):
-        lines.append(f"    title {_quote(ir['title'])}")
-    categories = [_xy_token(item, "chart/xychart x category") for item in ir["xAxis"]]
-    if not categories:
-        raise IRError("chart/xychart xAxis must not be empty")
-    lines.append(f"    x-axis [{', '.join(categories)}]")
-    y_axis = ir.get("yAxis")
-    if y_axis is not None:
-        _require(y_axis, ("label", "min", "max"), "chart/xychart yAxis")
-        low = float(_positive_number(y_axis["min"], "chart/xychart y min"))
-        high = float(_positive_number(y_axis["max"], "chart/xychart y max"))
-        if low >= high:
-            raise IRError("chart/xychart yAxis min must be less than max")
-        lines.append(f"    y-axis {_quote(y_axis['label'])} {low} --> {high}")
-    for series_name in ("bar", "line"):
-        series = ir.get(series_name)
-        if series is None:
+def _chart_no_empty(v: Validator, value: dict, path: str) -> None:
+    """An empty nested config object would emit `key:` (YAML null) and reset Mermaid's defaults."""
+    for key, item in value.items():
+        if isinstance(item, dict):
+            if not item:
+                raise v.error(ptr(path, key), "must not be empty; omit the key instead")
+            _chart_no_empty(v, item, ptr(path, key))
+
+
+def _chart_config(v: Validator, ir: dict, schema: dict) -> tuple[list[str], dict]:
+    """Validate `config` and return (frontmatter lines, config)."""
+    if "config" not in ir:
+        return [], {}
+    config = validate_config(v, ir["config"], "/config", schema)
+    _chart_no_empty(v, config, "/config")
+    return emit_frontmatter(None, config), config
+
+
+def _chart_style(v: Validator, style: Any, path: str, keys: dict[str, tuple[str, Any]], sep: str, colon: str) -> str:
+    """A typed style object -> `key: value` pairs in a fixed key order.
+
+    `keys` maps IR key -> (Mermaid property, check) where check is a text context name,
+    or ("number", min, max).
+    """
+    v.fields(style, path, (), tuple(keys))
+    if not style:
+        raise v.error(path, "must set at least one style key")
+    parts = []
+    for key, (prop, check) in keys.items():
+        if key not in style:
             continue
-        if len(series) != len(categories):
-            raise IRError(f"chart/xychart {series_name} length must match xAxis")
-        numbers = [_positive_number(item, f"chart/xychart {series_name}") for item in series]
-        lines.append(f"    {series_name} [{', '.join(numbers)}]")
-    return "\n".join(lines) + "\n"
-
-
-def _sankey_cell(value: str) -> str:
-    if "," in value or "\n" in value:
-        return "'" + value.replace("'", "") + "'"
-    return value
-
-
-def render_chart_sankey(ir: dict) -> str:
-    _require(ir, ("links",), "chart/sankey")
-    if not ir["links"]:
-        raise IRError("chart/sankey requires at least one link")
-    lines = ["sankey"]
-    for link in ir["links"]:
-        _require(link, ("from", "to", "value"), "chart/sankey link")
-        amount = float(_positive_number(link["value"], "chart/sankey value"))
-        if amount < 0:
-            raise IRError("chart/sankey value must not be negative")
-        lines.append(f"{_sankey_cell(str(link['from']))},{_sankey_cell(str(link['to']))},{amount}")
-    return "\n".join(lines) + "\n"
-
-
-def render_chart_radar(ir: dict) -> str:
-    _require(ir, ("axes", "curves"), "chart/radar-beta")
-    if not ir["axes"] or not ir["curves"]:
-        raise IRError("chart/radar-beta requires axes and curves")
-    lines = ["radar-beta"]
-    if ir.get("title"):
-        lines.append(f"    title {_quote(ir['title'])}")
-    axis_bits = []
-    for axis in ir["axes"]:
-        _require(axis, ("id", "label"), "chart/radar-beta axis")
-        axis_id = _identifier(axis["id"], "chart/radar-beta axis")
-        axis_bits.append(f'{axis_id}[{_quote(axis["label"])}]')
-    lines.append("    axis " + ", ".join(axis_bits))
-    for curve in ir["curves"]:
-        _require(curve, ("id", "label", "values"), "chart/radar-beta curve")
-        if len(curve["values"]) != len(ir["axes"]):
-            raise IRError(f"chart/radar-beta curve {curve['id']!r} value count must match axes")
-        curve_id = _identifier(curve["id"], "chart/radar-beta curve")
-        numbers = [_positive_number(item, "chart/radar-beta value") for item in curve["values"]]
-        lines.append(f"    curve {curve_id}[{_quote(curve['label'])}]{{{', '.join(numbers)}}}")
-    if ir.get("max") is not None:
-        lines.append(f"    max {_positive_number(ir['max'], 'chart/radar-beta max')}")
-    if ir.get("min") is not None:
-        lines.append(f"    min {_positive_number(ir['min'], 'chart/radar-beta min')}")
-    return "\n".join(lines) + "\n"
-
-
-def _emit_treemap(node: dict, lines: list[str], depth: int) -> None:
-    _require(node, ("label",), "chart/treemap node")
-    indent = "    " * (depth + 1)
-    children = node.get("children", [])
-    if children:
-        lines.append(f"{indent}{_quote(node['label'])}")
-        for child in children:
-            _emit_treemap(child, lines, depth + 1)
-        return
-    _require(node, ("value",), "chart/treemap leaf")
-    value = float(_positive_number(node["value"], "chart/treemap value"))
-    if value < 0:
-        raise IRError("chart/treemap leaf value must not be negative")
-    lines.append(f"{indent}{_quote(node['label'])}: {value}")
-
-
-def render_chart_treemap(ir: dict) -> str:
-    _require(ir, ("nodes",), "chart/treemap")
-    if not ir["nodes"]:
-        raise IRError("chart/treemap requires nodes")
-    lines = ["treemap-beta"]
-    for node in ir["nodes"]:
-        _emit_treemap(node, lines, 0)
-    return "\n".join(lines) + "\n"
-
-
-def render_chart_venn(ir: dict) -> str:
-    _require(ir, ("sets",), "chart/venn")
-    lines = ["venn-beta"]
-    if ir.get("title"):
-        lines.append(f"    title {_quote(ir['title'])}")
-    known: set[str] = set()
-    for item in ir["sets"]:
-        if isinstance(item, str):
-            set_id, label = item, None
+        sub = ptr(path, key)
+        if isinstance(check, tuple):
+            value = v.number(style[key], sub, check[1], check[2], integer=check[0] == "integer")
         else:
-            _require(item, ("id",), "chart/venn set")
-            set_id, label = item["id"], item.get("label")
-        if not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", str(set_id)):
-            raise IRError(f"chart/venn set id {set_id!r} must be a bare identifier")
-        known.add(str(set_id))
-        suffix = f"[{_quote(label)}]" if label else ""
-        lines.append(f"    set {set_id}{suffix}")
-    for union in ir.get("unions", []):
-        _require(union, ("sets", "label"), "chart/venn union")
-        if len(union["sets"]) < 2:
-            raise IRError("chart/venn union requires at least two sets")
-        unknown = [name for name in union["sets"] if name not in known]
-        if unknown:
-            raise IRError(f"chart/venn union references undeclared set(s): {unknown}")
-        lines.append(f"    union {','.join(union['sets'])}[{_quote(union['label'])}]")
+            value = v.text(style[key], sub, check)
+        parts.append(f"{prop}{colon}{value}")
+    return sep.join(parts)
+
+
+# --- pie -----------------------------------------------------------------------------------
+
+_chart_text_contexts("pie")
+
+_PIE_CONFIG = {
+    "theme": ("enum", _CHART_THEMES),
+    "pie": {
+        "textPosition": ("number", 0, 1),
+        "donutHole": ("number", 0, 0.9),
+        "legendPosition": ("enum", ("top", "bottom", "left", "right", "center")),
+        "highlightSlice": ("string", "pie.text"),
+        "useMaxWidth": ("boolean",),
+    },
+    "themeVariables": {
+        "pieOuterStrokeWidth": ("string", "pie.css-length"),
+        **_chart_colors(*(f"pie{i}" for i in range(1, 13))),
+        "pieOpacity": ("number", 0, 1),
+        "pieStrokeColor": ("color",),
+        "pieStrokeWidth": ("string", "pie.css-length"),
+        "pieOuterStrokeColor": ("color",),
+        "pieTitleTextSize": ("string", "pie.css-length"),
+        "pieTitleTextColor": ("color",),
+        "pieSectionTextSize": ("string", "pie.css-length"),
+        "pieSectionTextColor": ("color",),
+        "pieLegendTextSize": ("string", "pie.css-length"),
+        "pieLegendTextColor": ("color",),
+    },
+}
+
+
+def _pie_serialize(ir: dict, keyword: str) -> str:
+    v = Validator(keyword)
+    v.fields(ir, "", ("slices",), ("title", "titlePlacement", "showData", "accessibility", "config"))
+    front, config = _chart_config(v, ir, _PIE_CONFIG)
+    title = v.text(ir["title"], "/title", "pie.text") if "title" in ir else None
+    placement = "statement"
+    if "titlePlacement" in ir:
+        placement = v.enum(ir["titlePlacement"], "/titlePlacement", ("statement", "inline"))
+        if title is None:
+            raise v.error("/titlePlacement", "needs a 'title'")
+    show_data = v.boolean(ir["showData"], "/showData") if "showData" in ir else False
+    body: list[str] = []
+    labels: set[str] = set()
+    for i, item in enumerate(v.array(ir["slices"], "/slices", 1)):
+        path = ptr("/slices", i)
+        v.fields(item, path, ("label", "value"))
+        label = v.text(item["label"], ptr(path, "label"), "pie.text")
+        # Mermaid keeps the first of two equal labels and silently drops the second.
+        v.unique(item["label"], ptr(path, "label"), labels, "slice label")
+        value = v.number(item["value"], ptr(path, "value"), 0)
+        body.append(f'    "{label}" : {value}')
+    highlight = config.get("pie", {}).get("highlightSlice")
+    if highlight is not None and highlight != "hover":
+        where = "/config/pie/highlightSlice"
+        v.ref(highlight, where, labels)
+        if v.text(highlight, where, "pie.text") != highlight:
+            raise v.error(where, "Mermaid compares it to the parsed label, which differs when the label needs entity codes")
+    head = "pie" + (" showData" if show_data else "")
+    if title is not None and placement == "inline":
+        head += f" title {title}"
+    lines = [*front, head]
+    if title is not None and placement == "statement":
+        lines.append(f"    title {title}")
+    lines += emit_accessibility(v, ir)
+    lines += body
     return "\n".join(lines) + "\n"
 
 
-register(Builder('pie', 'chart', ('pie',), legacy(render_chart_pie)))
-register(Builder('quadrantChart', 'chart', ('quadrantChart',), legacy(render_chart_quadrant)))
-register(Builder('xyChart', 'chart', ('xychart',), legacy(render_chart_xy)))
-register(Builder('sankey', 'chart', ('sankey',), legacy(render_chart_sankey)))
-register(Builder('radar', 'chart', ('radar-beta',), legacy(render_chart_radar)))
-register(Builder('treemap', 'chart', ('treemap-beta',), legacy(render_chart_treemap)))
-register(Builder('venn', 'chart', ('venn-beta',), legacy(render_chart_venn)))
+register(Builder(
+    "pie", "chart", ("pie",), _pie_serialize,
+    text_fields=("/title", "/slices/*/label", "/accessibility/title", "/accessibility/description"),
+    features={
+        "pie.keyword": "/target=pie",
+        "pie.show-data": "/showData=true",
+        "pie.title-inline": "/titlePlacement=inline",
+        "pie.title-statement": "/titlePlacement=statement",
+        "pie.slice": "/slices/*/label",
+        "pie.slice-decimal": "/slices/*/value=42.96",
+    },
+    probes={
+        "object": "/slices/0",
+        "number": "/slices/0/value",
+        "enum": "/titlePlacement",
+        "ref": "/config/pie/highlightSlice",
+    },
+))
+
+
+# --- quadrantChart -------------------------------------------------------------------------
+
+_chart_text_contexts("quadrantChart")
+text_context(
+    "quadrantChart.color",
+    reject_patterns=((rf"^(?!{_CHART_HEX}$)", "must be a #rgb or #rrggbb hex colour"),),
+)
+text_context(
+    "quadrantChart.stroke-width",
+    reject_patterns=((r"^(?![0-9]+px$)", "must be a whole number of px, e.g. 2px"),),
+)
+_QUADRANT_CLASS = re.compile(r"[A-Za-z][A-Za-z0-9]*")
+_QUADRANT_STYLE = {
+    "radius": ("radius", ("integer", 0, None)),
+    "color": ("color", "quadrantChart.color"),
+    "strokeColor": ("stroke-color", "quadrantChart.color"),
+    "strokeWidth": ("stroke-width", "quadrantChart.stroke-width"),
+}
+_QUADRANT_NUMBERS = (
+    "chartWidth", "chartHeight", "titlePadding", "titleFontSize", "quadrantPadding",
+    "quadrantTextTopPadding", "quadrantLabelFontSize", "quadrantInternalBorderStrokeWidth",
+    "quadrantExternalBorderStrokeWidth", "xAxisLabelPadding", "xAxisLabelFontSize",
+    "yAxisLabelPadding", "yAxisLabelFontSize", "pointTextPadding", "pointLabelFontSize", "pointRadius",
+)
+_QUADRANT_CONFIG = {
+    "theme": ("enum", _CHART_THEMES),
+    "quadrantChart": {
+        **{name: ("number", 0, None) for name in _QUADRANT_NUMBERS},
+        "xAxisPosition": ("enum", ("top", "bottom")),
+        "yAxisPosition": ("enum", ("left", "right")),
+        "useMaxWidth": ("boolean",),
+    },
+    "themeVariables": _chart_colors(
+        *(f"quadrant{i}Fill" for i in range(1, 5)),
+        *(f"quadrant{i}TextFill" for i in range(1, 5)),
+        "quadrantPointFill", "quadrantPointTextFill", "quadrantXAxisTextFill", "quadrantYAxisTextFill",
+        "quadrantInternalBorderStrokeFill", "quadrantExternalBorderStrokeFill", "quadrantTitleFill",
+    ),
+}
+
+
+def _quadrant_serialize(ir: dict, keyword: str) -> str:
+    v = Validator(keyword)
+    v.fields(ir, "", (), ("title", "xAxis", "yAxis", "quadrants", "points", "classes", "accessibility", "config"))
+    front, _config = _chart_config(v, ir, _QUADRANT_CONFIG)
+    lines = [*front, "quadrantChart"]
+    if "title" in ir:
+        lines.append(f"    title {v.text(ir['title'], '/title', 'quadrantChart.text')}")
+    lines += emit_accessibility(v, ir)
+
+    def quoted(value: Any, path: str) -> str:
+        return f'"{v.text(value, path, "quadrantChart.text")}"'
+
+    for key, statement, first, second in (("xAxis", "x-axis", "left", "right"), ("yAxis", "y-axis", "bottom", "top")):
+        if key not in ir:
+            continue
+        path = f"/{key}"
+        axis = v.fields(ir[key], path, (first,), (second,))
+        text = f"    {statement} {quoted(axis[first], ptr(path, first))}"
+        if second in axis:
+            text += f" --> {quoted(axis[second], ptr(path, second))}"
+        lines.append(text)
+    if "quadrants" in ir:
+        quadrants = v.fields(ir["quadrants"], "/quadrants", (), ("1", "2", "3", "4"))
+        for index in ("1", "2", "3", "4"):
+            if index in quadrants:
+                lines.append(f"    quadrant-{index} {quoted(quadrants[index], ptr('/quadrants', index))}")
+
+    classes: dict[str, set[str]] = {}
+    class_lines: list[str] = []
+    if "classes" in ir:
+        for name, style in v.obj_map(ir["classes"], "/classes").items():
+            path = ptr("/classes", name)
+            v.ident(name, path, _QUADRANT_CLASS)
+            class_lines.append(f"    classDef {name} {_chart_style(v, style, path, _QUADRANT_STYLE, ', ', ': ')}")
+            classes[name] = set(style)
+
+    for i, point in enumerate(v.array(ir.get("points", []), "/points")):
+        path = ptr("/points", i)
+        v.fields(point, path, ("label", "x", "y"), ("class", "style"))
+        text = f"    {quoted(point['label'], ptr(path, 'label'))}"
+        effective: set[str] = set()
+        if "class" in point:
+            effective |= classes.get(v.ref(point["class"], ptr(path, "class"), classes), set())
+            text += f":::{point['class']}"
+        x_value = v.number(point["x"], ptr(path, "x"), 0, 1)
+        y_value = v.number(point["y"], ptr(path, "y"), 0, 1)
+        text += f": [{x_value}, {y_value}]"
+        if "style" in point:
+            text += " " + _chart_style(v, point["style"], ptr(path, "style"), _QUADRANT_STYLE, ", ", ": ")
+            effective |= set(point["style"])
+        if "strokeColor" in effective and "strokeWidth" not in effective:
+            where = ptr(ptr(path, "style"), "strokeColor") if "strokeColor" in point.get("style", {}) else ptr(path, "class")
+            raise v.error(where, "stroke colour has no effect without strokeWidth on the same point")
+        lines.append(text)
+    lines += class_lines
+    return "\n".join(lines) + "\n"
+
+
+register(Builder(
+    "quadrantChart", "chart", ("quadrantChart",), _quadrant_serialize,
+    text_fields=(
+        "/title", "/xAxis/left", "/xAxis/right", "/yAxis/bottom", "/yAxis/top",
+        "/quadrants/1", "/quadrants/2", "/quadrants/3", "/quadrants/4", "/points/*/label",
+        "/accessibility/title", "/accessibility/description",
+    ),
+    features={
+        "quadrantChart.keyword": "/target=quadrantChart",
+        "quadrantChart.title": "/title",
+        "quadrantChart.x-axis-both": "/xAxis/right",
+        "quadrantChart.x-axis-left-only": "/xAxis/left",
+        "quadrantChart.y-axis-both": "/yAxis/top",
+        "quadrantChart.y-axis-bottom-only": "/yAxis/bottom",
+        "quadrantChart.quadrant-1": "/quadrants/1",
+        "quadrantChart.quadrant-2": "/quadrants/2",
+        "quadrantChart.quadrant-3": "/quadrants/3",
+        "quadrantChart.quadrant-4": "/quadrants/4",
+        "quadrantChart.quoted-text": "/points/*/label",
+        "quadrantChart.point": "/points/*/x",
+        "quadrantChart.point-radius": "/points/*/style/radius",
+        "quadrantChart.point-color": "/points/*/style/color",
+        "quadrantChart.point-stroke-color": "/points/*/style/strokeColor",
+        "quadrantChart.point-stroke-width": "/points/*/style/strokeWidth",
+        "quadrantChart.point-class": "/points/*/class",
+        "quadrantChart.class-def": "/classes/*",
+    },
+    probes={
+        "object": "/points/0/style",
+        "number": "/points/0/x",
+        "enum": "/config/quadrantChart/xAxisPosition",
+        "ref": "/points/1/class",
+    },
+))
+
+
+# --- xyChart -------------------------------------------------------------------------------
+
+_chart_text_contexts("xyChart")
+text_context(
+    "xyChart.palette",
+    reject_patterns=((rf"^(?!{_CHART_HEX}(, ?{_CHART_HEX})*$)", "must be hex colours separated by ', '"),),
+)
+_XY_AXIS_CONFIG = {
+    "showLabel": ("boolean",),
+    "labelFontSize": ("number", 0, None),
+    "labelPadding": ("number", 0, None),
+    "showTitle": ("boolean",),
+    "titleFontSize": ("number", 0, None),
+    "titlePadding": ("number", 0, None),
+    "showTick": ("boolean",),
+    "tickLength": ("number", 0, None),
+    "tickWidth": ("number", 0, None),
+    "showAxisLine": ("boolean",),
+    "axisLineWidth": ("number", 0, None),
+    "labelRotation": ("number", -360, 360),
+}
+_XY_CONFIG = {
+    "theme": ("enum", _CHART_THEMES),
+    "xyChart": {
+        "width": ("number", 0, None),
+        "height": ("number", 0, None),
+        "titlePadding": ("number", 0, None),
+        "titleFontSize": ("number", 0, None),
+        "showTitle": ("boolean",),
+        "showLegend": ("boolean",),
+        "legendFontSize": ("number", 0, None),
+        "legendPadding": ("number", 0, None),
+        "xAxis": _XY_AXIS_CONFIG,
+        "yAxis": _XY_AXIS_CONFIG,
+        "chartOrientation": ("enum", ("vertical", "horizontal")),
+        "plotReservedSpacePercent": ("number", 0, 100),
+        "showDataLabel": ("boolean",),
+        "showDataLabelOutsideBar": ("boolean",),
+        "useMaxWidth": ("boolean",),
+    },
+    "themeVariables": {
+        "xyChart": {
+            **_chart_colors(
+                "backgroundColor", "titleColor", "dataLabelColor", "legendTextColor",
+                "xAxisLabelColor", "xAxisTitleColor", "xAxisTickColor", "xAxisLineColor",
+                "yAxisLabelColor", "yAxisTitleColor", "yAxisTickColor", "yAxisLineColor",
+            ),
+            "plotColorPalette": ("string", "xyChart.palette"),
+        },
+    },
+}
+
+
+def _xy_range(v: Validator, axis: dict, path: str) -> str | None:
+    """`min --> max`, both or neither."""
+    if "min" not in axis and "max" not in axis:
+        return None
+    for key in ("min", "max"):
+        if key not in axis:
+            raise v.error(ptr(path, key), "required key is missing ('min' and 'max' go together)")
+    low = v.number(axis["min"], ptr(path, "min"))
+    high = v.number(axis["max"], ptr(path, "max"))
+    if not axis["min"] < axis["max"]:
+        raise v.error(ptr(path, "max"), "must be greater than min")
+    return f"{low} --> {high}"
+
+
+def _xy_serialize(ir: dict, keyword: str) -> str:
+    v = Validator(keyword)
+    v.fields(ir, "", ("series",), ("orientation", "title", "xAxis", "yAxis", "comment", "accessibility", "config"))
+    front, _config = _chart_config(v, ir, _XY_CONFIG)
+
+    def quoted(value: Any, path: str) -> str:
+        return f'"{v.text(value, path, "xyChart.text")}"'
+
+    head = keyword
+    if "orientation" in ir:
+        head += " " + v.enum(ir["orientation"], "/orientation", ("vertical", "horizontal"))
+    lines = [*front, head]
+    if "title" in ir:
+        lines.append(f"    title {quoted(ir['title'], '/title')}")
+    lines += emit_accessibility(v, ir)
+
+    categories: list[Any] | None = None
+    if "xAxis" in ir:
+        axis = v.fields(ir["xAxis"], "/xAxis", (), ("title", "categories", "min", "max"))
+        if not axis:
+            raise v.error("/xAxis", "must set title, categories, or min and max")
+        parts = [quoted(axis["title"], "/xAxis/title")] if "title" in axis else []
+        if "categories" in axis:
+            if "min" in axis or "max" in axis:
+                raise v.error("/xAxis/categories", "use categories or min and max, not both")
+            categories = v.array(axis["categories"], "/xAxis/categories", 1)
+            seen: set[str] = set()
+            names = []
+            for i, name in enumerate(categories):
+                names.append(quoted(name, ptr("/xAxis/categories", i)))
+                v.unique(name, ptr("/xAxis/categories", i), seen, "category")
+            parts.append(f"[{', '.join(names)}]")
+        else:
+            span = _xy_range(v, axis, "/xAxis")
+            if span:
+                parts.append(span)
+        lines.append("    x-axis " + " ".join(parts))
+    if "yAxis" in ir:
+        axis = v.fields(ir["yAxis"], "/yAxis", (), ("title", "min", "max"))
+        if not axis:
+            raise v.error("/yAxis", "must set title, or min and max")
+        parts = [quoted(axis["title"], "/yAxis/title")] if "title" in axis else []
+        span = _xy_range(v, axis, "/yAxis")
+        if span:
+            parts.append(span)
+        lines.append("    y-axis " + " ".join(parts))
+    lines += emit_comment(v, ir)
+
+    for i, series in enumerate(v.array(ir["series"], "/series", 1)):
+        path = ptr("/series", i)
+        v.fields(series, path, ("type", "values"), ("name",))
+        kind = v.enum(series["type"], ptr(path, "type"), ("bar", "line"))
+        values = v.array(series["values"], ptr(path, "values"), 1)
+        if categories is not None and len(values) != len(categories):
+            raise v.error(ptr(path, "values"), f"has {len(values)} values for {len(categories)} categories")
+        items = []
+        for j, value in enumerate(values):
+            at = ptr(ptr(path, "values"), j)
+            if isinstance(value, dict):
+                v.fields(value, at, ("value", "label"))
+                if kind != "line":
+                    raise v.error(ptr(at, "label"), "point labels render only on line series")
+                items.append(f"{v.number(value['value'], ptr(at, 'value'))} {quoted(value['label'], ptr(at, 'label'))}")
+            else:
+                items.append(v.number(value, at))
+        name = f" {quoted(series['name'], ptr(path, 'name'))}" if "name" in series else ""
+        lines.append(f"    {kind}{name} [{', '.join(items)}]")
+    return "\n".join(lines) + "\n"
+
+
+register(Builder(
+    "xyChart", "chart", ("xychart", "xychart-beta"), _xy_serialize,
+    text_fields=(
+        "/title", "/xAxis/title", "/xAxis/categories/*", "/yAxis/title", "/series/*/name",
+        "/series/*/values/*/label", "/comment", "/accessibility/title", "/accessibility/description",
+    ),
+    features={
+        "xyChart.keyword": "/target=xychart",
+        "xyChart.keyword-beta": "/target=xychart-beta",
+        "xyChart.orientation-vertical": "/orientation=vertical",
+        "xyChart.orientation-horizontal": "/orientation=horizontal",
+        "xyChart.title": "/title",
+        "xyChart.x-axis-categories": "/xAxis/categories",
+        "xyChart.x-axis-title": "/xAxis/title",
+        "xyChart.x-axis-range": "/xAxis/min",
+        "xyChart.y-axis-range": "/yAxis/min",
+        "xyChart.y-axis-title-only": "/yAxis/title",
+        "xyChart.bar": "/series/1/type=bar",
+        "xyChart.bar-named": "/series/0/name",
+        "xyChart.line": "/series/3/type=line",
+        "xyChart.line-named": "/series/2/name",
+        "xyChart.line-point-label": "/series/*/values/*/label",
+        "xyChart.number-forms": "/series/*/values/*=-5.34",
+        "xyChart.comment": "/comment",
+    },
+    probes={"object": "/yAxis", "number": "/yAxis/min", "enum": "/orientation", "ref": None},
+))
+
+
+# --- sankey --------------------------------------------------------------------------------
+
+hand_author_only("sankey", "sankey", "sankey-beta")
+
+
+# --- radar ---------------------------------------------------------------------------------
+
+_chart_text_contexts("radar")
+# Grammar keywords that cannot be axis or curve ids (each fails with CLI 12.0.0).
+_RADAR_RESERVED = frozenset((
+    "axis", "curve", "title", "max", "min", "ticks", "graticule", "showLegend",
+    "true", "false", "circle", "polygon",
+))
+_RADAR_CONFIG = {
+    "theme": ("enum", _CHART_THEMES),
+    "radar": {
+        name: ("number", 0, None)
+        for name in (
+            "width", "height", "marginTop", "marginBottom", "marginLeft", "marginRight",
+            "axisScaleFactor", "axisLabelFactor", "curveTension",
+        )
+    },
+    "themeVariables": {
+        "fontSize": ("string", "radar.css-length"),
+        "titleColor": ("color",),
+        **_chart_colors(*(f"cScale{i}" for i in range(12))),
+        "radar": {
+            "axisColor": ("color",),
+            "axisStrokeWidth": ("number", 0, None),
+            "axisLabelFontSize": ("string", "radar.css-length"),
+            "curveOpacity": ("number", 0, 1),
+            "curveStrokeWidth": ("number", 0, None),
+            "graticuleColor": ("color",),
+            "graticuleOpacity": ("number", 0, 1),
+            "graticuleStrokeWidth": ("number", 0, None),
+            "legendBoxSize": ("number", 0, None),
+            "legendFontSize": ("string", "radar.css-length"),
+        },
+    },
+}
+
+
+def _radar_id(v: Validator, value: Any, path: str, seen: set[str], what: str) -> str:
+    v.ident(value, path)
+    if value in _RADAR_RESERVED:
+        raise v.error(path, f"{value!r} is a radar keyword and cannot be an id")
+    return v.unique(value, path, seen, what)
+
+
+def _radar_serialize(ir: dict, keyword: str) -> str:
+    v = Validator(keyword)
+    v.fields(
+        ir, "", ("axes", "curves"),
+        ("title", "showLegend", "max", "min", "graticule", "ticks", "accessibility", "config"),
+    )
+    front, _config = _chart_config(v, ir, _RADAR_CONFIG)
+    lines = [*front, "radar-beta"]
+    if "title" in ir:
+        lines.append(f"    title {v.text(ir['title'], '/title', 'radar.text')}")
+    lines += emit_accessibility(v, ir)
+
+    def named(item: dict, path: str, seen: set[str], what: str) -> str:
+        text = _radar_id(v, item["id"], ptr(path, "id"), seen, what)
+        if "label" in item:
+            text += f'["{v.text(item["label"], ptr(path, "label"), "radar.text")}"]'
+        return text
+
+    axis_ids: list[str] = []
+    axis_bits = []
+    seen_axes: set[str] = set()
+    for i, axis in enumerate(v.array(ir["axes"], "/axes", 1)):
+        path = ptr("/axes", i)
+        v.fields(axis, path, ("id",), ("label",))
+        axis_bits.append(named(axis, path, seen_axes, "axis id"))
+        axis_ids.append(axis["id"])
+    lines.append("    axis " + ", ".join(axis_bits))
+
+    curve_bits = []
+    seen_curves: set[str] = set()
+    for i, curve in enumerate(v.array(ir["curves"], "/curves", 1)):
+        path = ptr("/curves", i)
+        v.fields(curve, path, ("id",), ("label", "values", "entries"))
+        text = named(curve, path, seen_curves, "curve id")
+        if ("values" in curve) == ("entries" in curve):
+            raise v.error(path, "needs exactly one of 'values' (in axis order) or 'entries' (keyed by axis)")
+        if "values" in curve:
+            values = v.array(curve["values"], ptr(path, "values"))
+            if len(values) != len(axis_ids):
+                # Mermaid renders the chart but silently omits such a curve.
+                raise v.error(ptr(path, "values"), f"has {len(values)} values for {len(axis_ids)} axes")
+            numbers = [v.number(value, ptr(ptr(path, "values"), j), 0) for j, value in enumerate(values)]
+            text += "{" + ", ".join(numbers) + "}"
+        else:
+            entries = v.array(curve["entries"], ptr(path, "entries"))
+            named_axes: set[str] = set()
+            pairs = []
+            for j, entry in enumerate(entries):
+                at = ptr(ptr(path, "entries"), j)
+                v.fields(entry, at, ("axis", "value"))
+                v.ref(entry["axis"], ptr(at, "axis"), seen_axes)
+                v.unique(entry["axis"], ptr(at, "axis"), named_axes, "axis")
+                pairs.append(f"{entry['axis']}: {v.number(entry['value'], ptr(at, 'value'), 0)}")
+            missing = [axis for axis in axis_ids if axis not in named_axes]
+            if missing:
+                raise v.error(ptr(path, "entries"), f"must name every axis; missing: {', '.join(missing)}")
+            text += "{ " + ", ".join(pairs) + " }"
+        curve_bits.append(text)
+    lines.append("    curve " + ", ".join(curve_bits))
+
+    if "showLegend" in ir:
+        lines.append(f"    showLegend {'true' if v.boolean(ir['showLegend'], '/showLegend') else 'false'}")
+    if "max" in ir:
+        lines.append(f"    max {v.number(ir['max'], '/max', 0)}")
+    if "min" in ir:
+        lines.append(f"    min {v.number(ir['min'], '/min', 0)}")
+        if "max" in ir and not ir["min"] < ir["max"]:
+            raise v.error("/min", "must be less than max")
+    if "graticule" in ir:
+        lines.append(f"    graticule {v.enum(ir['graticule'], '/graticule', ('circle', 'polygon'))}")
+    if "ticks" in ir:
+        lines.append(f"    ticks {v.number(ir['ticks'], '/ticks', 1, integer=True)}")
+    return "\n".join(lines) + "\n"
+
+
+register(Builder(
+    "radar", "chart", ("radar-beta",), _radar_serialize,
+    text_fields=("/title", "/axes/*/label", "/curves/*/label", "/accessibility/title", "/accessibility/description"),
+    features={
+        "radar.keyword": "/target=radar-beta",
+        "radar.title": "/title",
+        "radar.axis": "/axes/*/id",
+        "radar.axis-label": "/axes/*/label",
+        "radar.axis-multi": "/axes/1/id",
+        "radar.curve": "/curves/*/values",
+        "radar.curve-label": "/curves/*/label",
+        "radar.curve-multi": "/curves/1/id",
+        "radar.curve-key-value": "/curves/*/entries",
+        "radar.show-legend": "/showLegend",
+        "radar.max": "/max",
+        "radar.min": "/min",
+        "radar.graticule-circle": "/graticule=circle",
+        "radar.graticule-polygon": "/graticule=polygon",
+        "radar.ticks": "/ticks",
+    },
+    probes={
+        "object": "/curves/2/entries/0",
+        "number": "/max",
+        "enum": "/graticule",
+        "ref": "/curves/2/entries/0/axis",
+    },
+))
+
+
+# --- treemap -------------------------------------------------------------------------------
+
+_chart_text_contexts("treemap")
+text_context(
+    "treemap.color",
+    reject_patterns=((rf"^(?!{_CHART_HEX}$|[a-z]+$)", "must be a #rgb or #rrggbb hex colour or a CSS colour name"),),
+)
+text_context(
+    "treemap.stroke-width",
+    reject_patterns=((r"^(?![0-9]+(\.[0-9]+)?px$)", "must be a number of px, e.g. 2px"),),
+)
+_TREEMAP_STYLE = {
+    "fill": ("fill", "treemap.color"),
+    "color": ("color", "treemap.color"),
+    "stroke": ("stroke", "treemap.color"),
+    "strokeWidth": ("stroke-width", "treemap.stroke-width"),
+}
+_TREEMAP_CONFIG = {
+    "theme": ("enum", _CHART_THEMES),
+    "treemap": {
+        "useMaxWidth": ("boolean",),
+        "padding": ("number", 0, None),
+        "diagramPadding": ("number", 0, None),
+        "showValues": ("boolean",),
+        "nodeWidth": ("number", 0, None),
+        "nodeHeight": ("number", 0, None),
+        "borderWidth": ("number", 0, None),
+        "valueFontSize": ("number", 0, None),
+        "labelFontSize": ("number", 0, None),
+        # The patterns the syntax page lists, minus `$,.2f` (12.0.0 renders it as `$1.2e+3`).
+        "valueFormat": ("enum", (",", "$", ".1f", ".1%", "$0,0", "$.2f")),
+    },
+    "themeVariables": _chart_colors(*(f"cScale{i}" for i in range(12)), *(f"cScalePeer{i}" for i in range(12))),
+}
+
+
+def _treemap_serialize(ir: dict, keyword: str) -> str:
+    v = Validator(keyword)
+    v.fields(ir, "", ("nodes",), ("classes", "indent", "accessibility", "config"))
+    front, _config = _chart_config(v, ir, _TREEMAP_CONFIG)
+    tabs = "indent" in ir and v.enum(ir["indent"], "/indent", ("spaces", "tabs")) == "tabs"
+    unit, base = ("\t", "") if tabs else ("    ", "    ")
+
+    classes: set[str] = set()
+    class_lines: list[str] = []
+    if "classes" in ir:
+        for name, style in v.obj_map(ir["classes"], "/classes").items():
+            path = ptr("/classes", name)
+            v.ident(name, path)
+            class_lines.append(f"classDef {name} {_chart_style(v, style, path, _TREEMAP_STYLE, ',', ':')};")
+            classes.add(name)
+
+    body: list[str] = []
+
+    def node(item: Any, path: str, depth: int) -> None:
+        v.fields(item, path, ("label",), ("value", "children", "class"))
+        text = f'{base}{unit * depth}"{v.text(item["label"], ptr(path, "label"), "treemap.text")}"'
+        suffix = ""
+        if "class" in item:
+            suffix = f":::{v.ref(item['class'], ptr(path, 'class'), classes)}"
+        if ("value" in item) == ("children" in item):
+            # Lines under a node with a value become siblings, not children, in Mermaid.
+            raise v.error(path, "needs exactly one of 'value' (a leaf) or 'children' (a section)")
+        if "value" in item:
+            body.append(f"{text}: {v.number(item['value'], ptr(path, 'value'), 0)}{suffix}")
+            return
+        body.append(text + suffix)
+        for i, child in enumerate(v.array(item["children"], ptr(path, "children"), 1)):
+            node(child, ptr(ptr(path, "children"), i), depth + 1)
+
+    for i, item in enumerate(v.array(ir["nodes"], "/nodes", 1)):
+        node(item, ptr("/nodes", i), 0)
+    lines = [*front, keyword, *emit_accessibility(v, ir, indent=base), *body, *class_lines]
+    return "\n".join(lines) + "\n"
+
+
+register(Builder(
+    "treemap", "chart", ("treemap-beta", "treemap"), _treemap_serialize,
+    text_fields=("/nodes/*/label", "/nodes/*/children/*/label", "/accessibility/title", "/accessibility/description"),
+    features={
+        "treemap.keyword": "/target=treemap-beta",
+        "treemap.keyword-alias": "/target=treemap",
+        "treemap.section": "/nodes/*/children",
+        "treemap.leaf": "/nodes/*/children/*/value",
+        "treemap.nested-section": "/nodes/*/children/*/children",
+        "treemap.indent-tabs": "/indent=tabs",
+        "treemap.section-class": "/nodes/0/children/1/class",
+        "treemap.leaf-class": "/nodes/0/children/0/children/1/class",
+        "treemap.class-def": "/classes/*",
+    },
+    probes={
+        "object": "/nodes/0",
+        "number": "/nodes/0/children/0/children/0/value",
+        "enum": "/indent",
+        "ref": "/nodes/0/children/1/class",
+    },
+))
+
+
+# --- venn ----------------------------------------------------------------------------------
+
+_chart_text_contexts("venn")
+text_context(
+    "venn.color",
+    reject_patterns=((rf"^(?!{_CHART_HEX}$|[a-z]+$)", "must be a #rgb or #rrggbb hex colour or a CSS colour name"),),
+)
+text_context(
+    "venn.stroke-width",
+    reject_patterns=((r"^(?![0-9]+(\.[0-9]+)?px$)", "must be a number of px, e.g. 3px"),),
+)
+# Statement keywords; a bare id equal to one of them fails, so such ids are quoted.
+_VENN_KEYWORDS = frozenset(("set", "union", "text", "style", "title"))
+_VENN_STYLE = {
+    "fill": ("fill", "venn.color"),
+    "color": ("color", "venn.color"),
+    "stroke": ("stroke", "venn.color"),
+    "strokeWidth": ("stroke-width", "venn.stroke-width"),
+    "fillOpacity": ("fill-opacity", ("number", 0, 1)),
+}
+_VENN_CONFIG = {
+    "theme": ("enum", _CHART_THEMES),
+    "look": ("enum", _CHART_LOOKS),
+    "venn": {
+        "theme": ("enum", _CHART_THEMES),
+        "look": ("enum", _CHART_LOOKS),
+        "width": ("number", 0, None),
+        "height": ("number", 0, None),
+        "padding": ("number", 0, None),
+        "useMaxWidth": ("boolean",),
+        "useDebugLayout": ("boolean",),
+    },
+    "themeVariables": _chart_colors(*(f"venn{i}" for i in range(1, 9)), "vennSetTextColor", "vennTitleTextColor"),
+}
+
+
+def _venn_serialize(ir: dict, keyword: str) -> str:
+    v = Validator(keyword)
+    v.fields(ir, "", ("sets",), ("title", "unions", "styles", "config"))
+    front, _config = _chart_config(v, ir, _VENN_CONFIG)
+    lines = [*front, "venn-beta"]
+    if "title" in ir:
+        lines.append(f"    title {v.text(ir['title'], '/title', 'venn.text')}")
+
+    ids: set[str] = set()  # set and text ids share one namespace (style targets either)
+    set_ids: dict[str, str] = {}  # IR id -> emitted token
+    text_ids: dict[str, str] = {}
+
+    def token(value: Any, path: str) -> str:
+        encoded = v.text(value, path, "venn.text")
+        v.unique(value, path, ids)
+        if _IDENT.fullmatch(value) and value.lower() not in _VENN_KEYWORDS:
+            return value
+        return f'"{encoded}"'
+
+    def tail(item: dict, path: str) -> str:
+        text = ""
+        if "label" in item:
+            text += f'["{v.text(item["label"], ptr(path, "label"), "venn.text")}"]'
+        if "size" in item:
+            text += f":{v.number(item['size'], ptr(path, 'size'), 0)}"
+        return text
+
+    def texts(item: dict, path: str) -> None:
+        for i, text_node in enumerate(v.array(item.get("texts", []), ptr(path, "texts"))):
+            at = ptr(ptr(path, "texts"), i)
+            v.fields(text_node, at, ("id",), ("label",))
+            emitted = token(text_node["id"], ptr(at, "id"))
+            text_ids[text_node["id"]] = emitted
+            lines.append(f"        text {emitted}{tail(text_node, at)}")
+
+    for i, item in enumerate(v.array(ir["sets"], "/sets", 1)):
+        path = ptr("/sets", i)
+        v.fields(item, path, ("id",), ("label", "size", "texts"))
+        emitted = token(item["id"], ptr(path, "id"))
+        set_ids[item["id"]] = emitted
+        lines.append(f"    set {emitted}{tail(item, path)}")
+        texts(item, path)
+
+    unions: set[frozenset[str]] = set()
+    for i, item in enumerate(v.array(ir.get("unions", []), "/unions")):
+        path = ptr("/unions", i)
+        v.fields(item, path, ("sets",), ("label", "size", "texts"))
+        members = v.array(item["sets"], ptr(path, "sets"), 2)
+        seen: set[str] = set()
+        for j, member in enumerate(members):
+            v.ref(member, ptr(ptr(path, "sets"), j), set_ids)
+            v.unique(member, ptr(ptr(path, "sets"), j), seen, "set in this union")
+        key = frozenset(members)
+        if key in unions:
+            raise v.error(ptr(path, "sets"), "another union already covers these sets")
+        unions.add(key)
+        lines.append(f"    union {','.join(set_ids[m] for m in members)}{tail(item, path)}")
+        texts(item, path)
+
+    for i, item in enumerate(v.array(ir.get("styles", []), "/styles")):
+        path = ptr("/styles", i)
+        v.fields(item, path, ("targets", "style"))
+        targets = v.array(item["targets"], ptr(path, "targets"), 1)
+        known = {**set_ids, **text_ids} if len(targets) == 1 else set_ids
+        seen = set()
+        for j, target in enumerate(targets):
+            v.ref(target, ptr(ptr(path, "targets"), j), known)
+            v.unique(target, ptr(ptr(path, "targets"), j), seen, "target")
+        if len(targets) > 1 and frozenset(targets) not in unions:
+            raise v.error(ptr(path, "targets"), "no union declares exactly these sets")
+        names = ",".join({**set_ids, **text_ids}[t] for t in targets)
+        lines.append(f"    style {names} {_chart_style(v, item['style'], ptr(path, 'style'), _VENN_STYLE, ',', ':')}")
+    return "\n".join(lines) + "\n"
+
+
+register(Builder(
+    "venn", "chart", ("venn-beta",), _venn_serialize,
+    text_fields=(
+        "/title", "/sets/*/id", "/sets/*/label", "/sets/*/texts/*/id", "/sets/*/texts/*/label",
+        "/unions/*/label", "/unions/*/texts/*/id", "/unions/*/texts/*/label",
+    ),
+    features={
+        "venn.keyword": "/target=venn-beta",
+        "venn.title": "/title",
+        "venn.set": "/sets/*/id",
+        "venn.set-quoted-id": "/sets/*/id=Feasible tech",
+        "venn.set-label": "/sets/*/label",
+        "venn.union": "/unions/*/sets",
+        "venn.union-higher-arity": "/unions/*/sets/2",
+        "venn.set-size": "/sets/*/size",
+        "venn.union-size": "/unions/*/size",
+        "venn.text": "/sets/*/texts/*/id",
+        "venn.text-label": "/sets/*/texts/*/label",
+        "venn.style-fill": "/styles/*/style/fill",
+        "venn.style-color": "/styles/*/style/color",
+        "venn.style-stroke": "/styles/*/style/stroke",
+        "venn.style-stroke-width": "/styles/*/style/strokeWidth",
+        "venn.style-fill-opacity": "/styles/*/style/fillOpacity",
+        "venn.style-union-target": "/styles/*/targets/1",
+    },
+    probes={
+        "object": "/styles/0/style",
+        "number": "/sets/1/size",
+        "enum": "/config/venn/look",
+        "ref": "/unions/0/sets/0",
+    },
+))
 
 # === end group 3 ===
 

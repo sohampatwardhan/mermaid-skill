@@ -26,13 +26,13 @@ CI pins `@mermaid-js/mermaid-cli@12.0.0` with Mermaid `12.0.0` on Node 22.
 | `gitgraph` | `gitGraph` | [gitgraph.md](catalog/gitgraph.md) | builder | `test_builders.py::gitgraph` | — |
 | `kanban` | `kanban` | [kanban.md](catalog/kanban.md) | builder | `test_builders.py::kanban` | — |
 | `mindmap` | `mindmap` | [mindmap.md](catalog/mindmap.md) | builder | `test_builders.py::mindmap` | — |
-| `pie` | `pie` | [pie.md](catalog/pie.md) | candidate | `test_render_legacy` | Donut / highlight / legend are frontmatter, not IR |
-| `quadrantChart` | `quadrantChart` | [quadrantChart.md](catalog/quadrantChart.md) | candidate | `test_render_legacy` | Point styling |
-| `xyChart` | `xychart` | [xyChart.md](catalog/xyChart.md) | candidate | `test_render_legacy` | `line` and `bar` together are supported; chart config is not |
-| `sankey` | `sankey` | [sankey.md](catalog/sankey.md) | candidate | `test_render_legacy` | — |
-| `radar` | `radar-beta` | [radar.md](catalog/radar.md) | candidate | `test_render_legacy` | Per-axis range, curve options beyond min/max |
-| `treemap` | `treemap-beta` | [treemap.md](catalog/treemap.md) | candidate | `test_render_legacy` | Class styles on leaves |
-| `venn` | `venn-beta` | [venn.md](catalog/venn.md) | candidate | `test_render_legacy` | — |
+| `pie` | `pie` | [pie.md](catalog/pie.md) | builder | `test_builders.py::pie` | — |
+| `quadrantChart` | `quadrantChart` | [quadrantChart.md](catalog/quadrantChart.md) | builder | `test_builders.py::quadrantChart` | — |
+| `xyChart` | `xychart`, `xychart-beta` | [xyChart.md](catalog/xyChart.md) | builder | `test_builders.py::xyChart` | — |
+| `sankey` | `sankey`, `sankey-beta` | [sankey.md](catalog/sankey.md) | hand-author-only | `test_catalog.py::sankey` | n/a |
+| `radar` | `radar-beta` | [radar.md](catalog/radar.md) | builder | `test_builders.py::radar` | — |
+| `treemap` | `treemap-beta`, `treemap` | [treemap.md](catalog/treemap.md) | builder | `test_builders.py::treemap` | — |
+| `venn` | `venn-beta` | [venn.md](catalog/venn.md) | builder | `test_builders.py::venn` | — |
 | `c4` | `C4Context`, `C4Container`, `C4Component`, `C4Dynamic`, `C4Deployment` | [c4.md](catalog/c4.md) | candidate | `test_render_legacy` | Sprites, tags, `UpdateElementStyle`, `UpdateRelStyle` |
 | `architecture` | `architecture-beta` | [architecture.md](catalog/architecture.md) | candidate | `test_render_legacy` | Group-edge `{group}` modifier, edge labels |
 | `block` | `block` | [block.md](catalog/block.md) | candidate | `test_render_legacy` | Nested `block` groups, `blockArrow`, columns only as a top-level int |

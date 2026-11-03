@@ -1,0 +1,12 @@
+{
+  "diagram": "chart",
+  "target": "xychart-beta",
+  "orientation": "horizontal",
+  "title": "Ranges",
+  "xAxis": {"title": "Day", "min": 0, "max": 30},
+  "yAxis": {"title": "Units"},
+  "series": [
+    {"type": "bar", "name": "Sales", "values": [5, 9, 14, 11]},
+    {"type": "line", "name": "Trend", "values": [6, 8, 12, 13]}
+  ]
+}

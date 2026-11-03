@@ -210,4 +210,19 @@ xychart-beta horizontal
 Covers: `xyChart.keyword-beta`, `xyChart.orientation-horizontal`, `xyChart.x-axis-range`, `xyChart.y-axis-title-only`, `xyChart.bar-named`, `xyChart.line-named`.
 
 ## Builder
-`candidate`: `scripts/render.py` has an IR builder for this type (target keyword(s) `xychart`). It has not been through the reliability bar yet; see [coverage.md](../coverage.md).
+`builder`: family `chart`, keywords `xychart`, `xychart-beta` (emitted as given).
+
+| Key | Type | Meaning |
+|---|---|---|
+| `series` | array, 1+ | `{type: bar\|line, name?, values}`; a value is a number or, on `line`, `{value, label}` |
+| `orientation` | `vertical` \| `horizontal` | Written after the keyword when present |
+| `title` | string | Chart title |
+| `xAxis` | object | `{title?, categories?}` or `{title?, min, max}` |
+| `yAxis` | object | `{title?, min?, max?}`; `min` and `max` go together, `min < max` |
+| `comment` | string | `%% comment` line |
+| `accessibility` | object | `{title, description}` |
+| `config` | object | Frontmatter: `theme`, `xyChart.*` (with `xAxis`/`yAxis` AxisConfig), `themeVariables.xyChart.*` |
+
+Example: [maximal.json](../../tests/fixtures/xyChart/maximal.json). Rejected: a series whose length
+differs from the categories, duplicate categories, a point label on a `bar` series (it would not
+render), and `categories` together with `min`/`max`. Free text is written with Mermaid entity codes (`#quot;`, `#59;`, `#lt;`, ...), which render back to the original characters; leading or trailing spaces, control characters and line breaks (except in `accessibility.description`) are rejected.

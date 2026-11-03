@@ -203,4 +203,21 @@ quadrantChart
 Covers: `quadrantChart.keyword`, `quadrantChart.x-axis-left-only`, `quadrantChart.y-axis-bottom-only`, `quadrantChart.quadrant-1` to `quadrantChart.quadrant-4` (no points, so texts render centred).
 
 ## Builder
-`candidate`: `scripts/render.py` has an IR builder for this type (target keyword(s) `quadrantChart`). It has not been through the reliability bar yet; see [coverage.md](../coverage.md).
+`builder`: family `chart`, keyword `quadrantChart`.
+
+| Key | Type | Meaning |
+|---|---|---|
+| `title` | string | Chart title |
+| `xAxis` | `{left, right?}` | `x-axis left [--> right]` |
+| `yAxis` | `{bottom, top?}` | `y-axis bottom [--> top]` |
+| `quadrants` | `{"1".."4": string}` | Quadrant texts (1 top right, 2 top left, 3 bottom left, 4 bottom right) |
+| `points` | array | `{label, x, y, class?, style?}`; `x`, `y` in 0..1 |
+| `points[].style`, `classes.<id>` | object | `{radius, color, strokeColor, strokeWidth}` |
+| `classes` | object | Class id -> style, emitted as `classDef`; `points[].class` must name one |
+| `accessibility` | object | `{title, description}` |
+| `config` | object | Frontmatter: `theme`, `quadrantChart.*` (sizes, `xAxisPosition`, `yAxisPosition`, `useMaxWidth`), `themeVariables.quadrant*` |
+
+Example: [maximal.json](../../tests/fixtures/quadrantChart/maximal.json). Text is always quoted.
+Rejected: `radius` that is not a whole number, `color`/`strokeColor` other than `#rgb`/`#rrggbb`,
+`strokeWidth` other than `<n>px`, class ids other than `[A-Za-z][A-Za-z0-9]*`, and `strokeColor`
+without a `strokeWidth` on the same point (Mermaid ignores it). Free text is written with Mermaid entity codes (`#quot;`, `#59;`, `#lt;`, ...), which render back to the original characters; leading or trailing spaces, control characters and line breaks (except in `accessibility.description`) are rejected.

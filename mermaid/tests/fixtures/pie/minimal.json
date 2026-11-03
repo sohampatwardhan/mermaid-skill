@@ -1,0 +1,5 @@
+{
+  "diagram": "chart",
+  "target": "pie",
+  "slices": [{"label": "Dogs", "value": 386}]
+}

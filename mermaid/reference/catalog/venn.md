@@ -129,4 +129,17 @@ venn-beta
 Covers: every feature id, plus every `config.venn` key and the theme variables listed above.
 
 ## Builder
-`candidate`: `scripts/render.py` has an IR builder for this type (target keyword(s) `venn-beta`). It has not been through the reliability bar yet; see [coverage.md](../coverage.md).
+`builder`: family `chart`, keyword `venn-beta`.
+
+| Key | Type | Meaning |
+|---|---|---|
+| `sets` | array, 1+ | `{id, label?, size?, texts?}`; `id` is written bare when it is an identifier, else quoted |
+| `unions` | array | `{sets: [2+ set ids], label?, size?, texts?}` |
+| `sets[].texts`, `unions[].texts` | array | `{id, label?}` text nodes inside the region |
+| `styles` | array | `{targets, style}`; one target is a set or text id, several name a declared union; `style` is `{fill, color, stroke, strokeWidth, fillOpacity}` |
+| `title` | string | Diagram title |
+| `config` | object | Frontmatter: `theme`, `look`, `venn.*`, `themeVariables.{venn1..venn8, vennSetTextColor, vennTitleTextColor}` |
+
+Example: [maximal.json](../../tests/fixtures/venn/maximal.json). No `accessibility` (venn has no
+`accTitle`). Rejected: duplicate ids across sets and texts, unions of undeclared or repeated sets,
+two unions over the same sets, style targets that name no set, text or union. Free text is written with Mermaid entity codes (`#quot;`, `#59;`, `#lt;`, ...), which render back to the original characters; leading or trailing spaces, control characters and line breaks (except in `accessibility.description`) are rejected.

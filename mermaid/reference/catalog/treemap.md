@@ -137,4 +137,16 @@ treemap
 Covers: `treemap.keyword-alias`, `treemap.indent-tabs`, `treemap.section`, `treemap.leaf`, `treemap.nested-section`.
 
 ## Builder
-`candidate`: `scripts/render.py` has an IR builder for this type (target keyword(s) `treemap-beta`). It has not been through the reliability bar yet; see [coverage.md](../coverage.md).
+`builder`: family `chart`, keywords `treemap-beta`, `treemap` (emitted as given).
+
+| Key | Type | Meaning |
+|---|---|---|
+| `nodes` | array, 1+ | Node: `{label, value}` (leaf, number >= 0) or `{label, children}` (section, 1+ children); optional `class` |
+| `classes` | object | Class id -> `{fill, color, stroke, strokeWidth}`, emitted as `classDef` |
+| `indent` | `spaces` (default) \| `tabs` | Indentation of the tree |
+| `accessibility` | object | `{title, description}` |
+| `config` | object | Frontmatter: `theme`, `treemap.*` (`valueFormat` is one of the listed patterns), `themeVariables.{cScale0..11, cScalePeer0..11}` |
+
+Example: [maximal.json](../../tests/fixtures/treemap/maximal.json). Rejected: a node with both or
+neither of `value` and `children`, an undeclared `class`, colours other than `#rgb`/`#rrggbb` or a
+lowercase name, `strokeWidth` other than `<n>px`. Free text is written with Mermaid entity codes (`#quot;`, `#59;`, `#lt;`, ...), which render back to the original characters; leading or trailing spaces, control characters and line breaks (except in `accessibility.description`) are rejected.

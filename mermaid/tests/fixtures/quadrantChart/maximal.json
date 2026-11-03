@@ -1,0 +1,63 @@
+{
+  "diagram": "chart",
+  "target": "quadrantChart",
+  "title": "Reach and engagement of campaigns",
+  "accessibility": {"title": "Campaign quadrant", "description": "Six campaigns placed by reach and engagement"},
+  "xAxis": {"left": "Low Reach", "right": "High Reach"},
+  "yAxis": {"bottom": "Low Engagement", "top": "High Engagement ❤"},
+  "quadrants": {"1": "We should expand", "2": "Need to promote", "3": "Re-evaluate", "4": "May be improved"},
+  "points": [
+    {"label": "Campaign A", "x": 0.9, "y": 0.05, "style": {"radius": 12}},
+    {"label": "Campaign B", "x": 0.8, "y": 0.15, "class": "class1", "style": {"color": "#ff3300", "radius": 10}},
+    {"label": "Campaign C", "x": 0.7, "y": 0.25, "style": {"radius": 20, "color": "#00ff33", "strokeColor": "#10f0f0", "strokeWidth": "2px"}},
+    {"label": "Campaign D", "x": 0.6, "y": 0.35, "style": {"radius": 15, "strokeColor": "#00ff0f", "strokeWidth": "5px", "color": "#ff33f0"}},
+    {"label": "Campaign E", "x": 0.5, "y": 0.45, "class": "class2"},
+    {"label": "Campaign (F)", "x": 0.35, "y": 0.78, "class": "class3", "style": {"color": "#0000ff"}}
+  ],
+  "classes": {
+    "class1": {"color": "#109060"},
+    "class2": {"color": "#908342", "radius": 10, "strokeColor": "#310085", "strokeWidth": "10px"},
+    "class3": {"color": "#f00fff", "radius": 10}
+  },
+  "config": {
+    "theme": "base",
+    "quadrantChart": {
+      "chartWidth": 500,
+      "chartHeight": 500,
+      "titlePadding": 10,
+      "titleFontSize": 20,
+      "quadrantPadding": 5,
+      "quadrantTextTopPadding": 5,
+      "quadrantLabelFontSize": 16,
+      "quadrantInternalBorderStrokeWidth": 1,
+      "quadrantExternalBorderStrokeWidth": 2,
+      "xAxisLabelPadding": 5,
+      "xAxisLabelFontSize": 16,
+      "xAxisPosition": "bottom",
+      "yAxisLabelPadding": 5,
+      "yAxisLabelFontSize": 16,
+      "yAxisPosition": "left",
+      "pointTextPadding": 5,
+      "pointLabelFontSize": 12,
+      "pointRadius": 5,
+      "useMaxWidth": true
+    },
+    "themeVariables": {
+      "quadrant1Fill": "#e8f5e9",
+      "quadrant2Fill": "#e3f2fd",
+      "quadrant3Fill": "#fce4ec",
+      "quadrant4Fill": "#fff8e1",
+      "quadrant1TextFill": "#1b5e20",
+      "quadrant2TextFill": "#0d47a1",
+      "quadrant3TextFill": "#880e4f",
+      "quadrant4TextFill": "#e65100",
+      "quadrantPointFill": "#455a64",
+      "quadrantPointTextFill": "#263238",
+      "quadrantXAxisTextFill": "#37474f",
+      "quadrantYAxisTextFill": "#37474f",
+      "quadrantInternalBorderStrokeFill": "#90a4ae",
+      "quadrantExternalBorderStrokeFill": "#455a64",
+      "quadrantTitleFill": "#000000"
+    }
+  }
+}

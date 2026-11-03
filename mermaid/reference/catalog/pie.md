@@ -119,4 +119,17 @@ pie title Pets adopted by volunteers
 Covers: `pie.keyword`, `pie.title-inline`, `pie.slice`.
 
 ## Builder
-`candidate`: `scripts/render.py` has an IR builder for this type (target keyword(s) `pie`). It has not been through the reliability bar yet; see [coverage.md](../coverage.md).
+`builder`: family `chart`, keyword `pie`.
+
+| Key | Type | Meaning |
+|---|---|---|
+| `slices` | array, 1+ | `{label, value}`; `value` is a number >= 0 |
+| `title` | string | Chart title |
+| `titlePlacement` | `statement` (default) \| `inline` | Own `title` line, or `pie title ...` |
+| `showData` | boolean | `pie showData` |
+| `accessibility` | object | `{title, description}` -> `accTitle`, `accDescr` |
+| `config` | object | Frontmatter: `theme`, `pie.{textPosition, donutHole, legendPosition, highlightSlice, useMaxWidth}`, `themeVariables.{pieOuterStrokeWidth, pie1..pie12, ...}` |
+
+Example: [maximal.json](../../tests/fixtures/pie/maximal.json). Rejected: a duplicate slice label
+(Mermaid would drop it), a negative value, and a `highlightSlice` that is not `hover` or the label
+of a slice (a label that needs entity codes cannot be highlighted). Free text is written with Mermaid entity codes (`#quot;`, `#59;`, `#lt;`, ...), which render back to the original characters; leading or trailing spaces, control characters and line breaks (except in `accessibility.description`) are rejected.

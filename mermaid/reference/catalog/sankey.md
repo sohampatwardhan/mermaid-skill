@@ -129,4 +129,6 @@ Pumped heat,"Heating and cooling, commercial",70.672
 Covers: `sankey.keyword-beta`, `sankey.link-row`, `sankey.empty-line`, `sankey.quoted-comma`.
 
 ## Builder
-`candidate`: `scripts/render.py` has an IR builder for this type (target keyword(s) `sankey`). It has not been through the reliability bar yet; see [coverage.md](../coverage.md).
+`hand-author-only`: the CSV lexer of 12.0.0 accepts printable ASCII only, so a node name such as
+`Ünïcode 日本` is a parse error, and entity codes (`#35;`, `#220;`) fail too. A builder could not
+carry ordinary text, so write sankey source by hand from the Syntax section.

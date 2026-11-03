@@ -1,0 +1,7 @@
+{
+  "diagram": "chart",
+  "target": "quadrantChart",
+  "xAxis": {"left": "Urgent"},
+  "yAxis": {"bottom": "Not Important"},
+  "quadrants": {"1": "Plan", "2": "Do", "3": "Delegate", "4": "Delete"}
+}

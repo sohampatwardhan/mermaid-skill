@@ -176,4 +176,21 @@ radar-beta
 Covers: `radar.keyword`, `radar.title`, `radar.axis-label`, `radar.curve-label`, `radar.show-legend`, `radar.max`, `radar.graticule-circle`, `radar.ticks`.
 
 ## Builder
-`candidate`: `scripts/render.py` has an IR builder for this type (target keyword(s) `radar-beta`). It has not been through the reliability bar yet; see [coverage.md](../coverage.md).
+`builder`: family `chart`, keyword `radar-beta`.
+
+| Key | Type | Meaning |
+|---|---|---|
+| `axes` | array, 1+ | `{id, label?}`, all written on one `axis` line |
+| `curves` | array, 1+ | `{id, label?, values}` (one number >= 0 per axis, in axis order) or `{id, label?, entries: [{axis, value}]}`; all on one `curve` line |
+| `title` | string | Chart title |
+| `showLegend` | boolean | `showLegend true\|false` |
+| `max`, `min` | number >= 0 | Scale range, `min < max` |
+| `graticule` | `circle` \| `polygon` | Grid shape |
+| `ticks` | integer >= 1 | Number of rings |
+| `accessibility` | object | `{title, description}` |
+| `config` | object | Frontmatter: `theme`, `radar.*`, `themeVariables.{fontSize, titleColor, cScale0..11, radar.*}` |
+
+Example: [maximal.json](../../tests/fixtures/radar/maximal.json). Ids are bare identifiers and must
+not be a radar keyword (`axis`, `curve`, `max`, `min`, `title`, `ticks`, `graticule`, `showLegend`,
+`true`, `false`, `circle`, `polygon`). Rejected: a value count that differs from the axis count
+(Mermaid would drop the curve), `entries` that miss or repeat an axis, negative values. Free text is written with Mermaid entity codes (`#quot;`, `#59;`, `#lt;`, ...), which render back to the original characters; leading or trailing spaces, control characters and line breaks (except in `accessibility.description`) are rejected.
