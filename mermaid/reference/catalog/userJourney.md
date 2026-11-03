@@ -120,4 +120,17 @@ journey
 Covers: `userJourney.acc-descr-block`, plus `userJourney.title`, `userJourney.section`, `userJourney.task-multiple-actors`.
 
 ## Builder
-`candidate`: `scripts/render.py` has an IR builder for this type (target keyword(s) `journey`). It has not been through the reliability bar yet; see [coverage.md](../coverage.md).
+`builder`: family `journey`, keyword `journey`.
+
+| IR key | Type | Meaning |
+|---|---|---|
+| `title`, `comment` | string | `title` line, `%%` comment |
+| `accessibility` | `{title, description}` | `accTitle`, `accDescr` (a newline gives the block form) |
+| `config.journey` | object | typed layout keys from Configuration |
+| `sections[].name` | string | section |
+| `sections[].tasks[]` | `{name, score, actors}` | task; `score` is an integer 1-5, `actors` has at least one name |
+
+Example: [maximal.json](../../tests/fixtures/userJourney/maximal.json) (plus `maximal.block.json`).
+
+Rejected: a score outside 1-5 or not an integer, an empty actor list, a task name that starts with `title `,
+`section ` or `journey`. `: # ; % " < > &` (and `,` in actors) are written as entity codes and render as typed.

@@ -20,12 +20,12 @@ CI pins `@mermaid-js/mermaid-cli@12.0.0` with Mermaid `12.0.0` on Node 22.
 | `classDiagram` | `classDiagram` | [classDiagram.md](catalog/classDiagram.md) | builder | `test_builders.py::classDiagram` | — |
 | `stateDiagram` | `stateDiagram-v2`, `stateDiagram` | [stateDiagram.md](catalog/stateDiagram.md) | builder | `test_builders.py::stateDiagram` | — |
 | `entityRelationshipDiagram` | `erDiagram` | [entityRelationshipDiagram.md](catalog/entityRelationshipDiagram.md) | builder | `test_builders.py::entityRelationshipDiagram` | — |
-| `gantt` | `gantt` | [gantt.md](catalog/gantt.md) | candidate | `test_render_legacy` | `until`, `excludes` weekends only as emitted, tick intervals |
-| `timeline` | `timeline` | [timeline.md](catalog/timeline.md) | candidate | `test_render_legacy` | — |
-| `userJourney` | `journey` | [userJourney.md](catalog/userJourney.md) | candidate | `test_render_legacy` | — |
-| `gitgraph` | `gitGraph` | [gitgraph.md](catalog/gitgraph.md) | candidate | `test_render_legacy` | `cherry-pick`; branch order options |
-| `kanban` | `kanban` | [kanban.md](catalog/kanban.md) | candidate | `test_render_legacy` | `ticketBaseUrl` frontmatter |
-| `mindmap` | `mindmap` | [mindmap.md](catalog/mindmap.md) | candidate | `test_render_legacy` | `::icon()` decorations |
+| `gantt` | `gantt` | [gantt.md](catalog/gantt.md) | builder | `test_builders.py::gantt` | — |
+| `timeline` | `timeline` | [timeline.md](catalog/timeline.md) | builder | `test_builders.py::timeline` | — |
+| `userJourney` | `journey` | [userJourney.md](catalog/userJourney.md) | builder | `test_builders.py::userJourney` | — |
+| `gitgraph` | `gitGraph` | [gitgraph.md](catalog/gitgraph.md) | builder | `test_builders.py::gitgraph` | — |
+| `kanban` | `kanban` | [kanban.md](catalog/kanban.md) | builder | `test_builders.py::kanban` | — |
+| `mindmap` | `mindmap` | [mindmap.md](catalog/mindmap.md) | builder | `test_builders.py::mindmap` | — |
 | `pie` | `pie` | [pie.md](catalog/pie.md) | candidate | `test_render_legacy` | Donut / highlight / legend are frontmatter, not IR |
 | `quadrantChart` | `quadrantChart` | [quadrantChart.md](catalog/quadrantChart.md) | candidate | `test_render_legacy` | Point styling |
 | `xyChart` | `xychart` | [xyChart.md](catalog/xyChart.md) | candidate | `test_render_legacy` | `line` and `bar` together are supported; chart config is not |

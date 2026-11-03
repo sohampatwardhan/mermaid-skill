@@ -143,4 +143,21 @@ timeline TD
 Covers: `timeline.direction-td`, `timeline.acc-descr-block`, plus `timeline.title`, `timeline.period-event`, `timeline.multiple-events-inline`.
 
 ## Builder
-`candidate`: `scripts/render.py` has an IR builder for this type (target keyword(s) `timeline`). It has not been through the reliability bar yet; see [coverage.md](../coverage.md).
+`builder`: family `timeline`, keyword `timeline`.
+
+| IR key | Type | Meaning |
+|---|---|---|
+| `direction` | enum | `LR`, `TD` |
+| `title`, `comment` | string | `title` line, `%%` comment |
+| `accessibility` | `{title, description}` | `accTitle`, `accDescr` (parsed, not in the 12.0.0 SVG) |
+| `config.timeline`, `config.themeVariables` | object | typed keys from Configuration; `cScale0`..`11`, `cScaleLabel0`..`11` colors |
+| `events` | event[] | periods without sections |
+| `sections[].name`, `sections[].events` | string, event[] | sections |
+| event `period` | string | period text |
+| event `text` | string[] | events of the period; a newline becomes `<br>` |
+| event `layout` | enum | `inline` (default, `a : b`) or `lines` (continuation lines) |
+
+Example: [maximal.json](../../tests/fixtures/timeline/maximal.json) (plus `maximal.td.json`).
+
+Rejected: `events` together with `sections` (Mermaid 12.0.0 drops periods before the first section), a period
+that starts with `title `, `section ` or `timeline`. `: # ; % " < > &` are written as entity codes and render as typed.

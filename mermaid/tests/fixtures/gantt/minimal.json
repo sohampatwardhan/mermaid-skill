@@ -1,0 +1,11 @@
+{
+  "diagram": "timeline",
+  "target": "gantt",
+  "bars": [
+    {
+      "label": "Write spec",
+      "start": "2024-01-01",
+      "duration": "3d"
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "diagram": "board",
+  "target": "kanban",
+  "columns": [
+    {
+      "id": "todo",
+      "label": "To Do"
+    }
+  ]
+}

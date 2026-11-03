@@ -1,0 +1,68 @@
+{
+  "diagram": "timeline",
+  "target": "timeline",
+  "config": {
+    "timeline": {
+      "disableMulticolor": false,
+      "leftMargin": 150
+    },
+    "themeVariables": {
+      "cScale0": "#ff0000",
+      "cScaleLabel0": "#ffffff"
+    }
+  },
+  "direction": "LR",
+  "accessibility": {
+    "title": "Industrial revolutions",
+    "description": "Four industrial ages grouped by century"
+  },
+  "title": "Timeline of Industrial Revolution",
+  "comment": "sections group the periods below them",
+  "sections": [
+    {
+      "name": "17th-20th century",
+      "events": [
+        {
+          "period": "Industry 1.0",
+          "text": [
+            "Machinery, Water power",
+            "Steam\npower"
+          ]
+        },
+        {
+          "period": "Industry 2.0",
+          "text": [
+            "Electricity",
+            "Mass production"
+          ]
+        },
+        {
+          "period": "Industry 3.0",
+          "text": [
+            "Electronics",
+            "Computers",
+            "Automation"
+          ],
+          "layout": "lines"
+        }
+      ]
+    },
+    {
+      "name": "21st century",
+      "events": [
+        {
+          "period": "2010",
+          "text": [
+            "Internet of Things"
+          ]
+        },
+        {
+          "period": "2020",
+          "text": [
+            "Artificial intelligence"
+          ]
+        }
+      ]
+    }
+  ]
+}

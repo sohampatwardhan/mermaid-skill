@@ -1,0 +1,12 @@
+{
+  "diagram": "graph",
+  "target": "mindmap",
+  "root": "r",
+  "nodes": [
+    {
+      "id": "r",
+      "label": "Idea"
+    }
+  ],
+  "edges": []
+}

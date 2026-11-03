@@ -228,4 +228,31 @@ gantt
 Covers: `gantt.date-format-unix`.
 
 ## Builder
-`candidate`: `scripts/render.py` has an IR builder for this type (target keyword(s) `gantt`). It has not been through the reliability bar yet; see [coverage.md](../coverage.md).
+`builder`: family `timeline`, keyword `gantt`. Tasks are rendered in input order; every value is validated before any line is emitted.
+
+| IR key | Type | Meaning |
+|---|---|---|
+| `title`, `comment` | string | `title` line, `%%` comment |
+| `accessibility` | `{title, description}` | `accTitle`, `accDescr` (a newline gives the block form) |
+| `dateFormat`, `axisFormat` | string | header statements; `#` and `;` rejected |
+| `tickInterval` | string | `<N><millisecond\|second\|minute\|hour\|day\|week\|month>` |
+| `weekday` / `weekend` | enum | `monday`..`sunday` / `friday`, `saturday` |
+| `excludes` | string[] | one `excludes` line each: `weekends`, a day name, or `YYYY-MM-DD` |
+| `todayMarker` | `"off"` or `{stroke, strokeWidth, opacity}` | typed style (`#hex` color, `Npx`, 0..1) |
+| `config.gantt` | object | typed keys from Configuration (`displayMode`, `topAxis`, `barHeight`, ...) |
+| `bars` | task[] | tasks before any section |
+| `sections[].name`, `sections[].bars` | string, task[] | sections |
+| task `label` | string | task title |
+| task `id` | identifier | needs `start` or `after` |
+| task `tags` | enum[] | `active`, `done`, `crit`, `milestone`, `vert` |
+| task `start` / `after` | date / id[] | start date, or the latest end of earlier tasks |
+| task `end` / `duration` / `until` | date / length / id | exactly one; length is `<n>(ms\|s\|m\|h\|d\|w\|M\|y)`, decimals allowed |
+| task `href`, `call` | URL, `{function, args[]}` | `click` lines; need an `id` |
+
+Example: [maximal.json](../../tests/fixtures/gantt/maximal.json) (plus `maximal.unix.json` for `dateFormat X`,
+`weekend saturday`, `todayMarker off` and the block description).
+
+Rejected: a label that starts with a statement keyword (`title `, `section `, `excludes `, a `YYYY-MM-DD` date, ...),
+the first task without `start`, an `id` without `start`/`after`, `after` naming a later task, an `until` chain that
+makes a task depend on itself, `active` with `done`, `milestone` with `active`/`done`. `: # ; % " < > &` in text are
+written as entity codes and render as typed.

@@ -1,0 +1,179 @@
+{
+  "diagram": "timeline",
+  "target": "gantt",
+  "config": {
+    "gantt": {
+      "displayMode": "compact",
+      "topAxis": false
+    }
+  },
+  "accessibility": {
+    "title": "Release plan",
+    "description": "Build, test and ship tasks for the release"
+  },
+  "title": "Execution",
+  "dateFormat": "YYYY-MM-DDTHH:mm:ss",
+  "axisFormat": "%m-%d %H:%M",
+  "tickInterval": "1week",
+  "weekday": "monday",
+  "excludes": [
+    "weekends",
+    "2026-08-12",
+    "friday"
+  ],
+  "weekend": "friday",
+  "todayMarker": {
+    "strokeWidth": "5px",
+    "stroke": "#0f0",
+    "opacity": 0.5
+  },
+  "comment": "Stage 1 is the old maximal example",
+  "bars": [
+    {
+      "label": "Kickoff",
+      "start": "2026-08-03T09:00:00",
+      "duration": "1d"
+    }
+  ],
+  "sections": [
+    {
+      "name": "Stage 1",
+      "bars": [
+        {
+          "id": "t1_1",
+          "label": "1.1 (verified)",
+          "start": "2026-08-09T10:00:00",
+          "end": "2026-08-09T10:14:00",
+          "tags": [
+            "done"
+          ]
+        },
+        {
+          "id": "t1_2",
+          "label": "1.2 (critical, active)",
+          "start": "2026-08-09T10:14:00",
+          "end": "2026-08-09T10:20:00",
+          "tags": [
+            "crit",
+            "active"
+          ]
+        },
+        {
+          "id": "t1_3",
+          "label": "Checkpoint reached",
+          "start": "2026-08-09T10:20:00",
+          "end": "2026-08-09T10:20:00",
+          "tags": [
+            "milestone"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Build",
+      "bars": [
+        {
+          "id": "impl",
+          "label": "Implement",
+          "tags": [
+            "active"
+          ],
+          "after": [
+            "t1_1"
+          ],
+          "duration": "1w",
+          "href": "https://example.com/impl"
+        },
+        {
+          "label": "Polish",
+          "duration": "24d"
+        },
+        {
+          "id": "rev",
+          "label": "Review",
+          "tags": [
+            "crit"
+          ],
+          "after": [
+            "impl"
+          ],
+          "duration": "36h",
+          "call": {
+            "function": "showTask",
+            "args": [
+              "rev"
+            ]
+          }
+        },
+        {
+          "id": "doc",
+          "label": "Docs",
+          "tags": [
+            "crit",
+            "active"
+          ],
+          "after": [
+            "t1_2",
+            "impl"
+          ],
+          "duration": "2d"
+        },
+        {
+          "label": "Freeze",
+          "until": "ship"
+        },
+        {
+          "label": "Short checks",
+          "start": "2026-08-20T09:00:00",
+          "duration": "90m"
+        },
+        {
+          "label": "Smoke test",
+          "duration": "30s"
+        },
+        {
+          "label": "Done",
+          "end": "2026-09-01T00:00:00"
+        },
+        {
+          "label": "Soak",
+          "duration": "500ms"
+        },
+        {
+          "label": "Long tail",
+          "duration": "1M"
+        },
+        {
+          "label": "Hotfix window",
+          "duration": "1.5d"
+        },
+        {
+          "label": "Support",
+          "duration": "1y"
+        },
+        {
+          "label": "Design",
+          "duration": "3d"
+        },
+        {
+          "id": "ship",
+          "label": "Ship",
+          "tags": [
+            "milestone"
+          ],
+          "start": "2026-09-20T00:00:00",
+          "duration": "0d"
+        },
+        {
+          "id": "v1",
+          "label": "Code freeze",
+          "tags": [
+            "vert"
+          ],
+          "start": "2026-09-10T00:00:00",
+          "duration": "0d"
+        }
+      ]
+    }
+  ]
+}

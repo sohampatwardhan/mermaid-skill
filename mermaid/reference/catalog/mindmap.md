@@ -138,4 +138,22 @@ Covers: every feature id. The root uses the circle shape; `Strategic planning` s
 (it attaches to `Uses`).
 
 ## Builder
-`candidate`: `scripts/render.py` has an IR builder for this type (target keyword(s) `mindmap`). It has not been through the reliability bar yet; see [coverage.md](../coverage.md).
+`builder`: family `graph`, keyword `mindmap`. The IR is a node list plus parent edges; the builder emits
+canonical indentation, so the unclear-indentation rule never applies to its output. Accessibility is not accepted.
+
+| IR key | Type | Meaning |
+|---|---|---|
+| `root` | node id | the single root (circle unless `kind` says otherwise) |
+| `nodes[]` | `{id, label}` | node; `id` is an identifier |
+| node `kind` | enum | `default`, `square`, `rounded`, `circle`, `bang`, `cloud`, `hexagon` |
+| node `icon` | string | `::icon(...)` classes |
+| node `classes` | identifier[] | `:::a b` |
+| node `markdown` | boolean | label is a markdown string (needs a shape) |
+| `edges[]` | `{from, to}` | parent to child, children in edge order |
+| `comment`, `config.mindmap` | string, object | `%%` comment, `padding`, `maxNodeWidth`, `useMaxWidth` |
+
+A newline in a plain label becomes `<br/>`. Example: [maximal.json](../../tests/fixtures/mindmap/maximal.json).
+
+Rejected: a node that is unreachable, has two parents, or closes a cycle; an edge to an undeclared node;
+`markdown` on the default shape; a default-shape label starting with `mindmap`. Shaped labels are quoted;
+`" # ; : % < > &` and backticks are written as entity codes. Default-shape labels encode every delimiter.

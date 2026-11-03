@@ -202,4 +202,24 @@ gitGraph:
 Covers: `gitgraph.keyword-colon`.
 
 ## Builder
-`candidate`: `scripts/render.py` has an IR builder for this type (target keyword(s) `gitGraph`). It has not been through the reliability bar yet; see [coverage.md](../coverage.md).
+`builder`: family `git`, keyword `gitGraph`. The builder replays the operations and rejects any sequence
+Mermaid 12.0.0 would throw on.
+
+| IR key | Type | Meaning |
+|---|---|---|
+| `title` | string | frontmatter `title:` |
+| `orientation` / `colon` | enum / boolean | `gitGraph LR:`, `TB:`, `BT:` / bare `gitGraph:` |
+| `comment`, `accessibility` | string, `{title, description}` | `%%` comment, `accTitle`, `accDescr` |
+| `config.gitGraph`, `config.themeVariables` | object | typed keys from Configuration; `git0`..`7` and label colors |
+| `ops[]` | op | `type` is `commit`, `branch`, `checkout`, `switch`, `merge`, `cherry-pick` |
+| commit `id`, `tag`, `commitType` | string, string, enum | `NORMAL`, `REVERSE`, `HIGHLIGHT` |
+| branch `name`, `order` | string, integer | always emitted quoted |
+| checkout / switch `name` | branch | must exist |
+| merge `name`, `id`, `tag`, `commitType` | branch, ... | merge attributes |
+| cherry-pick `id`, `parent` | commit id | `parent` is required for a merge commit |
+
+Example: [maximal.json](../../tests/fixtures/gitgraph/maximal.json) (plus `maximal.tb.json`, `maximal.bt.json`, `maximal.colon.json`).
+
+Rejected: an unknown branch or commit id, a branch created twice, merging a branch into itself, into an empty
+branch, or with the same head, a duplicate commit id, cherry-picking a commit already on the current branch.
+`" \ # ; : % < > &` in ids, tags and branch names are written as entity codes and render as typed.

@@ -1,0 +1,34 @@
+{
+  "diagram": "timeline",
+  "target": "gantt",
+  "accessibility": {
+    "description": "A short schedule\nwithout sections"
+  },
+  "title": "Days since last update",
+  "dateFormat": "X",
+  "axisFormat": "%s",
+  "weekend": "saturday",
+  "todayMarker": "off",
+  "sections": [
+    {
+      "name": "Issue19062",
+      "bars": [
+        {
+          "label": "71",
+          "start": "0",
+          "end": "71"
+        }
+      ]
+    },
+    {
+      "name": "Issue19401",
+      "bars": [
+        {
+          "label": "36",
+          "start": "0",
+          "end": "36"
+        }
+      ]
+    }
+  ]
+}

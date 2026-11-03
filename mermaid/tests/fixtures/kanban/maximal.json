@@ -1,0 +1,82 @@
+{
+  "diagram": "board",
+  "target": "kanban",
+  "config": {
+    "kanban": {
+      "ticketBaseUrl": "https://mermaidchart.atlassian.net/browse/#TICKET#",
+      "padding": 8
+    }
+  },
+  "comment": "columns at one level, cards indented",
+  "columns": [
+    {
+      "label": "Todo",
+      "plain": true,
+      "cards": [
+        {
+          "label": "Create Documentation"
+        },
+        {
+          "id": "docs",
+          "label": "Create Blog about the new diagram"
+        }
+      ]
+    },
+    {
+      "label": "In progress",
+      "cards": [
+        {
+          "id": "id6",
+          "label": "Create renderer",
+          "priority": "Low"
+        }
+      ]
+    },
+    {
+      "id": "id9",
+      "label": "Ready for deploy",
+      "cards": [
+        {
+          "id": "id8",
+          "label": "Design grammar",
+          "assigned": "knsv"
+        }
+      ]
+    },
+    {
+      "id": "id10",
+      "label": "Ready for test",
+      "cards": [
+        {
+          "id": "id4",
+          "label": "Create parsing tests",
+          "ticket": "MC-2038",
+          "assigned": "K.Sveidqvist",
+          "priority": "High"
+        },
+        {
+          "id": "id66",
+          "label": "last item",
+          "priority": "Very Low",
+          "assigned": "knsv"
+        }
+      ]
+    },
+    {
+      "id": "id11",
+      "label": "Done",
+      "cards": [
+        {
+          "id": "id5",
+          "label": "define getData"
+        },
+        {
+          "id": "id2",
+          "label": "Title longer than 100 chars",
+          "ticket": "MC-2036",
+          "priority": "Very High"
+        }
+      ]
+    }
+  ]
+}

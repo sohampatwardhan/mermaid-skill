@@ -94,9 +94,9 @@ flowchart TB
   classDef critical fill:#fde68a,stroke:#b45309,color:#1c1917
   classDef parallel fill:#dbeafe,stroke:#1d4ed8,color:#1e3a8a
   classDef done fill:#dcfce7,stroke:#15803d,color:#14532d
-  class t1,t2_1,t2_2,t2_3,t3,t4,t5_1,t5_2,t5_3,t5_4,t5_5,t5_6,t6_1,t6_2,t6_3,t7_1,ld done
+  class t1,t2_1,t2_2,t2_3,t3,t4,t5_1,t5_2,t5_3,t5_4,t5_5,t5_6,t6_1,t6_2,t6_3,t7_1,t7_2,ld done
   class t8,lc critical
-  class t7_2,t7_3,t7_4,t7_5,t7_6,lp parallel
+  class t7_3,t7_4,t7_5,t7_6,lp parallel
 ```
 
 Type groups used by tasks 5 and 7:
@@ -200,7 +200,7 @@ If the 12.0.0 refresh in task 3 adds or removes a syntax page, task 3 adds or re
   - Move each serializer onto `Validator`, declare `text_fields` and `features`, and close every gap until the parity and corpus tests pass; if a type cannot reach the bar, remove its builder and add its keywords to `HAND_AUTHOR_ONLY`
   - Set the `coverage.md` row to `builder` with Gaps `—` or to `hand-author-only`, write the catalog Builder section to match, and move the group's cases out of `test_render.py`
   - _Requirements: 1.8, 4.1, 4.2, 4.3, 4.4, 4.5, 4.6, 4.7, 4.8, 4.9, 4.10, 6.2, 6.3_
-- [ ] 7.2 Builder group 2: time and tree builders
+- [x] 7.2 Builder group 2: time and tree builders
   - Do 7.1 for `gantt`, `timeline`, `userJourney`, `gitgraph`, `kanban`, `mindmap`; only `gantt` and `mindmap` have old-branch examples, the others get fixtures written from their catalog Features tables
   - _Requirements: 1.8, 4.1, 4.2, 4.3, 4.4, 4.5, 4.6, 4.7, 4.8, 4.9, 4.10, 6.2, 6.3_
 - [ ] 7.3 Builder group 3: chart builders

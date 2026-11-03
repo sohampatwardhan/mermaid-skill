@@ -3034,239 +3034,927 @@ register(Builder(
 
 
 # === group 2: time and tree: gantt, timeline, userJourney, gitgraph, kanban, mindmap ====
-
-_GANTT_TAGS = {"active", "done", "crit", "milestone"}
-
-
-def _gantt_tags(bar: dict) -> list[str]:
-    tags = bar.get("tags", [])
-    unknown = [tag for tag in tags if tag not in _GANTT_TAGS]
-    if unknown:
-        raise IRError(f"timeline/gantt bar {bar['id']!r} has unknown tag(s) {unknown!r}")
-    if len(set(tags)) != len(tags):
-        raise IRError(f"timeline/gantt bar {bar['id']!r} repeats a tag: {tags!r}")
-    if {"active", "done"}.issubset(tags):
-        raise IRError(f"timeline/gantt bar {bar['id']!r} cannot be both active and done")
-    if "milestone" in tags and ({"active", "done"} & set(tags)):
-        raise IRError(f"timeline/gantt bar {bar['id']!r} cannot combine milestone with active/done")
-    return list(tags)
+#
+# Every text context below was checked against the 12.0.0 SVG: each encoded character
+# renders back as the original character. These types decode Mermaid entity codes before
+# lexing, so `#` (comment start in timeline and journey), `;`, `:` (field separators), `%`
+# (comment start), quotes and `<`/`>` (HTML) are always encoded, never emitted raw.
 
 
-def render_timeline_gantt(ir: dict) -> str:
-    _require(ir, ("dateFormat", "sections"), "timeline/gantt")
-    lines = ["gantt"]
-    if ir.get("title"):
-        lines.append(f"    title {ir['title']}")
-    lines.append(f"    dateFormat {ir['dateFormat']}")
-    if ir.get("axisFormat"):
-        lines.append(f"    axisFormat {ir['axisFormat']}")
-    for exclude in ir.get("excludes", []):
-        lines.append(f"    excludes {exclude}")
-    for section in ir["sections"]:
-        _require(section, ("name", "bars"), "timeline/gantt section")
-        lines.append(f"    section {section['name']}")
-        for bar in section["bars"]:
-            _require(bar, ("id", "label", "start", "end"), "timeline/gantt bar")
-            label = str(bar["label"])
-            if not label.strip() or ":" in label:
-                raise IRError(
-                    f"timeline/gantt bar {bar['id']!r} label must be non-empty and must not contain ':'; "
-                    "Mermaid treats the first colon as the start of task metadata "
-                    "(a colon in the title crashes the renderer with TypeError)"
-                )
-            bar_id = _identifier(bar["id"], "timeline/gantt bar")
-            fields = _gantt_tags(bar) + [bar_id, bar["start"], bar["end"]]
-            lines.append(f"    {label} :{', '.join(fields)}")
-    return "\n".join(lines) + "\n"
+def _g2_encode(chars: str, **extra: str) -> dict[str, str]:
+    table = {char: ENTITY[char] for char in chars}
+    table.update(extra)
+    return table
 
 
-def render_timeline_events(ir: dict) -> str:
-    if not ir.get("sections") and not ir.get("events"):
-        raise IRError("timeline/timeline requires 'sections' or 'events'")
-    direction = ir.get("direction")
-    if direction is not None and direction not in ("LR", "TD"):
-        raise IRError(f"timeline/timeline has unknown direction {direction!r}; use LR or TD")
-    lines = [f"timeline {direction}" if direction else "timeline"]
-    if ir.get("title"):
-        lines.append(f"    title {_no_colon(ir['title'], 'timeline/timeline title')}")
-
-    def emit_event(event: dict, indent: str) -> None:
-        _require(event, ("period", "text"), "timeline/timeline event")
-        period = _no_colon(event["period"], "timeline/timeline period")
-        texts = event["text"] if isinstance(event["text"], list) else [event["text"]]
-        if not texts:
-            raise IRError("timeline/timeline event requires at least one text value")
-        rendered = [_no_colon(text, "timeline/timeline event text") for text in texts]
-        lines.append(f"{indent}{period} : " + " : ".join(rendered))
-
-    if ir.get("sections"):
-        for section in ir["sections"]:
-            _require(section, ("name", "events"), "timeline/timeline section")
-            lines.append(f"    section {_no_colon(section['name'], 'timeline/timeline section')}")
-            for event in section["events"]:
-                emit_event(event, "        ")
-    else:
-        for event in ir["events"]:
-            emit_event(event, "    ")
-    return "\n".join(lines) + "\n"
+_G2_BASE = '#;:%"<>&'
+_G2_ALL = "".join(ENTITY)
 
 
-def render_journey(ir: dict) -> str:
-    _require(ir, ("sections",), "journey/journey")
-    lines = ["journey"]
-    if ir.get("title"):
-        lines.append(f"    title {_no_colon(ir['title'], 'journey/journey title')}")
-    for section in ir["sections"]:
-        _require(section, ("name", "tasks"), "journey/journey section")
-        lines.append(f"    section {_no_colon(section['name'], 'journey/journey section')}")
-        for task in section["tasks"]:
-            _require(task, ("name", "score", "actors"), "journey/journey task")
-            score = task["score"]
-            if isinstance(score, bool) or not isinstance(score, int) or not 1 <= score <= 5:
-                raise IRError(f"journey/journey task {task['name']!r} score must be an integer from 1 to 5")
-            if not task["actors"]:
-                raise IRError(f"journey/journey task {task['name']!r} requires actors")
-            actors = [_no_colon(actor, "journey actor") for actor in task["actors"]]
-            lines.append(
-                f"        {_no_colon(task['name'], 'journey task')}: {score}: {', '.join(actors)}"
-            )
-    return "\n".join(lines) + "\n"
+def _g2_keyword_start(*words: str) -> tuple[tuple[str, str], ...]:
+    """Reject text whose first word the type's lexer reads as a statement keyword."""
+    return ((rf"(?i)^({'|'.join(words)})", "starts with a statement keyword the lexer would read instead of the text"),)
 
 
-def render_git(ir: dict) -> str:
-    _require(ir, ("ops",), "git/gitGraph")
-    if not ir["ops"]:
-        raise IRError("git/gitGraph requires ops")
-    lines: list[str] = []
-    if ir.get("title"):
-        lines.extend(["---", f"title: {_quote(ir['title'])}", "---"])
-    lines.append("gitGraph")
-    for op in ir["ops"]:
-        _require(op, ("type",), "git/gitGraph op")
-        kind = op["type"]
-        if kind == "commit":
-            parts = ["    commit"]
-            if op.get("id"):
-                parts.append(f"id: {_quote(_identifier(op['id'], 'git/gitGraph commit'))}")
-            if op.get("tag"):
-                parts.append(f"tag: {_quote(_no_colon(op['tag'], 'git/gitGraph tag'))}")
-            lines.append(" ".join(parts))
-        elif kind == "branch":
-            _require(op, ("name",), "git/gitGraph branch")
-            lines.append(f"    branch {_identifier(op['name'], 'git/gitGraph branch')}")
-        elif kind in ("checkout", "switch"):
-            _require(op, ("name",), "git/gitGraph checkout")
-            lines.append(f"    checkout {_identifier(op['name'], 'git/gitGraph checkout')}")
-        elif kind == "merge":
-            _require(op, ("name",), "git/gitGraph merge")
-            lines.append(f"    merge {_identifier(op['name'], 'git/gitGraph merge')}")
-        else:
-            raise IRError(f"git/gitGraph op has unknown type {kind!r}")
-    return "\n".join(lines) + "\n"
+def _g2_config(v: Validator, ir: dict, schema: dict) -> dict | None:
+    if "config" not in ir:
+        return None
+    return validate_config(v, ir["config"], "/config", schema)
 
 
-_KANBAN_PRIORITIES = {"Very High", "High", "Low", "Very Low"}
+def _g2_min_one(v: Validator, value: Any, path: str) -> list:
+    return v.array(value, path, min_items=1)
 
 
-def render_kanban(ir: dict) -> str:
-    _require(ir, ("columns",), "board/kanban")
-    if not ir["columns"]:
-        raise IRError("board/kanban requires columns")
-    lines = ["kanban"]
-    seen: set[str] = set()
-    for column in ir["columns"]:
-        _require(column, ("id", "label", "cards"), "board/kanban column")
-        column_id = _identifier(column["id"], "board/kanban column")
-        if "]" in str(column["label"]):
-            raise IRError(f"board/kanban column {column_id!r} label must not contain ']'")
-        lines.append(f"    {column_id}[{column['label']}]")
-        seen.add(column_id)
-        for card in column["cards"]:
-            _require(card, ("id", "label"), "board/kanban card")
-            card_id = _identifier(card["id"], "board/kanban card")
-            if card_id in seen:
-                raise IRError(f"board/kanban duplicate id {card_id!r}")
-            seen.add(card_id)
-            if "]" in str(card["label"]):
-                raise IRError(f"board/kanban card {card_id!r} label must not contain ']'")
-            meta = []
-            for key in ("assigned", "ticket"):
-                if card.get(key):
-                    meta.append(f"{key}: {_quote(card[key])}")
-            if card.get("priority"):
-                if card["priority"] not in _KANBAN_PRIORITIES:
-                    raise IRError(f"board/kanban card {card_id!r} has unknown priority {card['priority']!r}")
-                meta.append(f"priority: {_quote(card['priority'])}")
-            suffix = f"@{{ {', '.join(meta)} }}" if meta else ""
-            lines.append(f"        {card_id}[{card['label']}]{suffix}")
-    return "\n".join(lines) + "\n"
+_G2_LAYOUT_CONFIG = {
+    "useMaxWidth": ("boolean",),
+    "diagramMarginX": ("number", 0, 10000),
+    "diagramMarginY": ("number", 0, 10000),
+    "leftMargin": ("number", 0, 10000),
+    "width": ("number", 1, 10000),
+    "height": ("number", 1, 10000),
+    "boxMargin": ("number", 0, 10000),
+    "boxTextMargin": ("number", 0, 10000),
+    "taskFontSize": ("number", 1, 200),
+    "taskMargin": ("number", 0, 10000),
+}
 
+# --- gantt -----------------------------------------------------------------------------------
 
-_MINDMAP_SHAPES = {
-    "root": ("((", "))"),
-    "circle": ("((", "))"),
-    "square": ("[", "]"),
-    "bang": ("))", "(("),
-    "cloud": (")", "("),
+text_context("gantt.text", encode=_g2_encode(_G2_BASE))
+text_context(
+    "gantt.task",
+    encode=_g2_encode(_G2_BASE),
+    reject_patterns=_g2_keyword_start(
+        r"gantt\b", r"dateformat\s", r"inclusiveenddates\b", r"topaxis\b", r"axisformat\s",
+        r"tickinterval\s", r"includes\s", r"excludes\s", r"todaymarker\s", r"weekday\s", r"weekend\s",
+        r"title\s", r"accdescription\s", r"section\s", r"click\s", r"acctitle\s*:", r"accdescr\s*[:{]",
+        r"\d{4}-\d\d-\d\d\b",
+    ),
+)
+text_context(
+    "gantt.date",
+    reject_patterns=(
+        (r"[^0-9A-Za-z:./+ -]", "a date may contain only letters, digits, space and : . / + -"),
+        (r"^[^0-9A-Za-z]", "a date must start with a letter or digit"),
+        (r"(?i)^(after|until)\b", "use 'after' or 'until' instead of writing the keyword"),
+        (r"^\d+(\.\d+)?(ms|s|m|h|d|w|M|y)$", "looks like a length; use 'duration'"),
+    ),
+)
+text_context("gantt.format", reject_patterns=((r"[#;]", "'#' and ';' end the statement"),))
+text_context("gantt.url", reject_patterns=((r"[\s\"]", "a URL must not contain whitespace or '\"'"),))
+text_context("gantt.arg", reject_patterns=((r"[^A-Za-z0-9_ .\-]", "a callback argument may contain only letters, digits, space, _ . -"),))
+
+_GANTT_TAGS = ("active", "done", "crit", "milestone", "vert")
+_GANTT_DAYS = ("monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday")
+_GANTT_DURATION = re.compile(r"\d+(\.\d+)?(ms|s|m|h|d|w|M|y)")
+_GANTT_TICK = re.compile(r"[1-9][0-9]*(millisecond|second|minute|hour|day|week|month)")
+_GANTT_EXCLUDE = re.compile(rf"weekends|{'|'.join(_GANTT_DAYS)}|\d{{4}}-\d\d-\d\d")
+_GANTT_CSS_LENGTH = re.compile(r"\d+(\.\d+)?px")
+_GANTT_TASK_ID = re.compile(r"[A-Za-z_][A-Za-z0-9_]*")
+_GANTT_CONFIG = {
+    "gantt": {
+        "useMaxWidth": ("boolean",),
+        "titleTopMargin": ("number", 0, 10000),
+        "barHeight": ("number", 1, 10000),
+        "barGap": ("number", 0, 10000),
+        "topPadding": ("number", 0, 10000),
+        "leftPadding": ("number", 0, 10000),
+        "rightPadding": ("number", 0, 10000),
+        "gridLineStartPadding": ("number", 0, 10000),
+        "fontSize": ("number", 1, 200),
+        "sectionFontSize": ("number", 1, 200),
+        "numberSectionStyles": ("integer", 1, 100),
+        "topAxis": ("boolean",),
+        "displayMode": ("enum", ("", "compact")),
+        "weekday": ("enum", _GANTT_DAYS),
+    },
 }
 
 
-def render_graph_mindmap(ir: dict) -> str:
-    _require(ir, ("nodes", "edges", "root"), "graph/mindmap")
-    nodes: dict[str, dict] = {}
-    for node in ir["nodes"]:
-        _require(node, ("id", "label"), "graph/mindmap node")
-        if node["id"] in nodes:
-            raise IRError(f"graph/mindmap has duplicate node id {node['id']!r}")
-        nodes[node["id"]] = node
-    if ir["root"] not in nodes:
-        raise IRError(f"graph/mindmap root {ir['root']!r} is not a declared node")
-    children: dict[str, list[str]] = {}
-    for edge in ir["edges"]:
-        _require(edge, ("from", "to"), "graph/mindmap edge")
-        if edge["from"] not in nodes or edge["to"] not in nodes:
-            raise IRError(f"graph/mindmap edge references undeclared node: {edge}")
-        children.setdefault(edge["from"], []).append(edge["to"])
+def _gantt_tags(v: Validator, bar: dict, path: str) -> list[str]:
+    if "tags" not in bar:
+        return []
+    tags_path = ptr(path, "tags")
+    tags = v.array(bar["tags"], tags_path)
+    seen: set[str] = set()
+    for i, tag in enumerate(tags):
+        v.enum(tag, ptr(tags_path, i), _GANTT_TAGS)
+        v.unique(tag, ptr(tags_path, i), seen, "tag")
+    if {"active", "done"} <= seen:
+        raise v.error(tags_path, "a task cannot be both active and done")
+    if "milestone" in seen and seen & {"active", "done"}:
+        raise v.error(tags_path, "milestone cannot be combined with active or done")
+    return list(tags)
 
-    lines = ["mindmap"]
-    visited: set[str] = set()
 
-    def emit(node_id: str, depth: int) -> None:
-        if node_id in visited:
-            raise IRError(
-                f"graph/mindmap node {node_id!r} is reached more than once; mindmap requires a tree"
-            )
-        visited.add(node_id)
-        node = nodes.get(node_id)
-        if node is None:
-            raise IRError(f"graph/mindmap edge references undeclared node {node_id!r}")
-        kind = "root" if node_id == ir["root"] else node.get("kind", "default")
-        if kind == "default":
-            text = str(node["label"])
+def _gantt_serialize(ir: dict, keyword: str) -> str:
+    v = Validator(keyword)
+    v.fields(ir, "", optional=(
+        "config", "title", "accessibility", "comment", "dateFormat", "axisFormat", "tickInterval",
+        "weekday", "excludes", "weekend", "todayMarker", "bars", "sections",
+    ))
+    config = _g2_config(v, ir, _GANTT_CONFIG)
+    head: list[str] = emit_accessibility(v, ir)
+    if "title" in ir:
+        head.append(f"    title {v.text(ir['title'], '/title', 'gantt.text')}")
+    for key in ("dateFormat", "axisFormat"):
+        if key in ir:
+            head.append(f"    {key} {v.text(ir[key], ptr('', key), 'gantt.format')}")
+    if "tickInterval" in ir:
+        head.append(f"    tickInterval {v.ident(ir['tickInterval'], '/tickInterval', _GANTT_TICK)}")
+    if "weekday" in ir:
+        head.append(f"    weekday {v.enum(ir['weekday'], '/weekday', _GANTT_DAYS)}")
+    if "excludes" in ir:
+        for i, item in enumerate(_g2_min_one(v, ir["excludes"], "/excludes")):
+            head.append(f"    excludes {v.ident(item, ptr('/excludes', i), _GANTT_EXCLUDE)}")
+    if "weekend" in ir:
+        head.append(f"    weekend {v.enum(ir['weekend'], '/weekend', ('friday', 'saturday'))}")
+    if "todayMarker" in ir:
+        head.append(f"    todayMarker {_gantt_today_marker(v, ir['todayMarker'])}")
+    head += emit_comment(v, ir)
+
+    # Collect every task first so `until` can name a later task and cycles can be checked.
+    groups: list[tuple[str | None, str, list]] = []
+    if "bars" in ir:
+        groups.append((None, "/bars", _g2_min_one(v, ir["bars"], "/bars")))
+    if "sections" in ir:
+        for s, section in enumerate(_g2_min_one(v, ir["sections"], "/sections")):
+            spath = ptr("/sections", s)
+            v.fields(section, spath, ("name", "bars"))
+            name = v.text(section["name"], ptr(spath, "name"), "gantt.text")
+            groups.append((name, ptr(spath, "bars"), _g2_min_one(v, section["bars"], ptr(spath, "bars"))))
+    if not groups:
+        raise v.error("/sections", "a gantt chart needs 'bars' or 'sections' with at least one task")
+
+    tasks: list[tuple[str, dict]] = []
+    for _name, bars_path, bars in groups:
+        for i, bar in enumerate(bars):
+            path = ptr(bars_path, i)
+            v.fields(bar, path, ("label",), ("id", "tags", "start", "after", "end", "duration", "until", "href", "call"))
+            tasks.append((path, bar))
+    ids: dict[str, int] = {}
+    seen_ids: set[str] = set()
+    for index, (path, bar) in enumerate(tasks):
+        if "id" in bar:
+            ids[v.unique(v.ident(bar["id"], ptr(path, "id"), _GANTT_TASK_ID), ptr(path, "id"), seen_ids)] = index
+
+    deps: list[list[tuple[int, str]]] = []
+    rendered: list[str] = []
+    clicks: list[str] = []
+    for index, (path, bar) in enumerate(tasks):
+        label = v.text(bar["label"], ptr(path, "label"), "gantt.task")
+        meta = _gantt_tags(v, bar, path)
+        edges: list[tuple[int, str]] = []
+        if "start" in bar and "after" in bar:
+            raise v.error(ptr(path, "after"), "use either 'start' or 'after', not both")
+        if "start" in bar:
+            start = v.text(bar["start"], ptr(path, "start"), "gantt.date")
+        elif "after" in bar:
+            after_path = ptr(path, "after")
+            refs = []
+            for j, ref in enumerate(_g2_min_one(v, bar["after"], after_path)):
+                ref_path = ptr(after_path, j)
+                v.ref(ref, ref_path, ids)
+                if ids[ref] >= index:
+                    raise v.error(ref_path, f"'after' must name a task declared earlier, got {ref!r}")
+                edges.append((ids[ref], ref_path))
+                refs.append(ref)
+            start = "after " + " ".join(refs)
         else:
-            open_, close = _MINDMAP_SHAPES.get(kind, ("", ""))
-            if kind not in _MINDMAP_SHAPES:
-                raise IRError(f"graph/mindmap node {node_id!r} has unknown kind {kind!r}")
-            text = f'{open_}{node["label"]}{close}'
-        lines.append("  " * (depth + 1) + text)
-        for child in children.get(node_id, []):
-            emit(child, depth + 1)
+            start = None
+            if index == 0:
+                raise v.error(path, "the first task needs 'start' (there is no preceding task to follow)")
+            edges.append((index - 1, path))
+        if "id" in bar:
+            if start is None:
+                raise v.error(ptr(path, "id"), "a task with an id needs 'start' or 'after' (Mermaid reads two items as start, end)")
+            meta.append(bar["id"])
+        if start is not None:
+            meta.append(start)
+        ends = [key for key in ("end", "duration", "until") if key in bar]
+        if len(ends) != 1:
+            where = ptr(path, ends[1]) if ends else ptr(path, "duration")
+            raise v.error(where, "a task needs exactly one of 'end', 'duration' or 'until'")
+        if "end" in bar:
+            meta.append(v.text(bar["end"], ptr(path, "end"), "gantt.date"))
+        elif "duration" in bar:
+            meta.append(v.ident(bar["duration"], ptr(path, "duration"), _GANTT_DURATION))
+        else:
+            until_path = ptr(path, "until")
+            target = v.ref(bar["until"], until_path, ids)
+            if ids[target] == index:
+                raise v.error(until_path, "a task cannot end at its own start")
+            edges.append((ids[target], until_path))
+            meta.append(f"until {target}")
+        deps.append(edges)
+        rendered.append(f"{label} :{', '.join(meta)}")
+        if "href" in bar or "call" in bar:
+            if "id" not in bar:
+                key = "href" if "href" in bar else "call"
+                raise v.error(ptr(path, key), "'click' needs the task to have an 'id'")
+            if "href" in bar:
+                url = v.text(bar["href"], ptr(path, "href"), "gantt.url")
+                clicks.append(f'    click {bar["id"]} href "{url}"')
+            if "call" in bar:
+                clicks.append(f"    click {bar['id']} call {_gantt_call(v, bar['call'], ptr(path, 'call'))}")
+    _gantt_no_cycle(v, deps)
 
-    emit(ir["root"], 0)
-    unreachable = [node_id for node_id in nodes if node_id not in visited]
-    if unreachable:
-        raise IRError(
-            f"graph/mindmap node(s) are not reachable from root {ir['root']!r}: {unreachable}"
-        )
-    return "\n".join(lines) + "\n"
+    lines = ["gantt", *head]
+    position = 0
+    for name, _bars_path, bars in groups:
+        indent = "    "
+        if name is not None:
+            lines.append(f"    section {name}")
+            indent = "        "
+        for _ in bars:
+            lines.append(indent + rendered[position])
+            position += 1
+    lines += clicks
+    return "\n".join(emit_frontmatter(None, config) + lines) + "\n"
 
 
-register(Builder('gantt', 'timeline', ('gantt',), legacy(render_timeline_gantt)))
-register(Builder('timeline', 'timeline', ('timeline',), legacy(render_timeline_events)))
-register(Builder('userJourney', 'journey', ('journey',), legacy(render_journey)))
-register(Builder('gitgraph', 'git', ('gitGraph',), legacy(render_git)))
-register(Builder('kanban', 'board', ('kanban',), legacy(render_kanban)))
-register(Builder('mindmap', 'graph', ('mindmap',), legacy(render_graph_mindmap)))
+def _gantt_today_marker(v: Validator, value: Any) -> str:
+    path = "/todayMarker"
+    if value == "off":
+        return "off"
+    if not isinstance(value, dict):
+        raise v.error(path, 'must be "off" or a style object {stroke, strokeWidth, opacity}')
+    v.fields(value, path, optional=("stroke", "strokeWidth", "opacity"))
+    if not value:
+        raise v.error(path, "a style object needs at least one property")
+    parts = []
+    if "strokeWidth" in value:
+        parts.append(f"stroke-width:{v.ident(value['strokeWidth'], ptr(path, 'strokeWidth'), _GANTT_CSS_LENGTH)}")
+    if "stroke" in value:
+        parts.append(f"stroke:{v.text(value['stroke'], ptr(path, 'stroke'), 'common.color')}")
+    if "opacity" in value:
+        parts.append(f"opacity:{v.number(value['opacity'], ptr(path, 'opacity'), 0, 1)}")
+    return ",".join(parts)
+
+
+def _gantt_call(v: Validator, value: Any, path: str) -> str:
+    v.fields(value, path, ("function",), ("args",))
+    name = v.ident(value["function"], ptr(path, "function"))
+    args = []
+    if "args" in value:
+        for i, arg in enumerate(v.array(value["args"], ptr(path, "args"))):
+            args.append(f'"{v.text(arg, ptr(ptr(path, "args"), i), "gantt.arg")}"')
+    return f"{name}({', '.join(args)})"
+
+
+def _gantt_no_cycle(v: Validator, deps: list[list[tuple[int, str]]]) -> None:
+    """Reject `until` chains that make a task's dates depend on themselves."""
+    state = [0] * len(deps)  # 0 new, 1 on stack, 2 done
+    for root in range(len(deps)):
+        if state[root]:
+            continue
+        stack = [(root, iter(deps[root]))]
+        state[root] = 1
+        while stack:
+            node, edges = stack[-1]
+            step = next(edges, None)
+            if step is None:
+                state[node] = 2
+                stack.pop()
+                continue
+            target, where = step
+            if state[target] == 1:
+                raise v.error(where, "this dependency makes the task's dates depend on themselves (cycle)")
+            if state[target] == 0:
+                state[target] = 1
+                stack.append((target, iter(deps[target])))
+
+
+register(Builder(
+    "gantt", "timeline", ("gantt",), _gantt_serialize,
+    text_fields=(
+        "/title", "/comment", "/accessibility/title", "/accessibility/description",
+        "/sections/*/name", "/sections/*/bars/*/label", "/bars/*/label",
+    ),
+    features={
+        "gantt.title": "/title",
+        "gantt.date-format": "/dateFormat",
+        "gantt.date-format-unix": "/dateFormat=X",
+        "gantt.axis-format": "/axisFormat",
+        "gantt.tick-interval": "/tickInterval",
+        "gantt.weekday": "/weekday",
+        "gantt.excludes-weekends": "/excludes/*=weekends",
+        "gantt.excludes-date": "/excludes/*=2026-08-12",
+        "gantt.excludes-dayname": "/excludes/*=friday",
+        "gantt.excludes-multiple-lines": "/excludes/2",
+        "gantt.weekend-friday": "/weekend=friday",
+        "gantt.weekend-saturday": "/weekend=saturday",
+        "gantt.section": "/sections/*/name",
+        "gantt.task": "/sections/*/bars/*/label",
+        "gantt.task-no-section": "/bars/*/label",
+        "gantt.tag-done": "/sections/*/bars/*/tags/*=done",
+        "gantt.tag-active": "/sections/*/bars/*/tags/*=active",
+        "gantt.tag-crit": "/sections/*/bars/*/tags/*=crit",
+        "gantt.tag-combined": "/sections/*/bars/*/tags/1",
+        "gantt.milestone": "/sections/*/bars/*/tags/*=milestone",
+        "gantt.vert": "/sections/*/bars/*/tags/*=vert",
+        "gantt.task-id": "/sections/*/bars/*/id",
+        "gantt.start-date": "/sections/*/bars/*/start",
+        "gantt.end-date": "/sections/*/bars/*/end",
+        "gantt.end-only": "/sections/1/bars/7/end",
+        "gantt.length-only": "/sections/1/bars/1/duration",
+        "gantt.after": "/sections/*/bars/*/after/0",
+        "gantt.after-multiple": "/sections/*/bars/*/after/1",
+        "gantt.until": "/sections/*/bars/*/until",
+        "gantt.duration-ms": "/sections/*/bars/*/duration=500ms",
+        "gantt.duration-s": "/sections/*/bars/*/duration=30s",
+        "gantt.duration-m": "/sections/*/bars/*/duration=90m",
+        "gantt.duration-h": "/sections/*/bars/*/duration=36h",
+        "gantt.duration-d": "/sections/*/bars/*/duration=3d",
+        "gantt.duration-w": "/sections/*/bars/*/duration=1w",
+        "gantt.duration-month": "/sections/*/bars/*/duration=1M",
+        "gantt.duration-y": "/sections/*/bars/*/duration=1y",
+        "gantt.duration-decimal": "/sections/*/bars/*/duration=1.5d",
+        "gantt.today-marker-style": "/todayMarker/stroke",
+        "gantt.today-marker-off": "/todayMarker=off",
+        "gantt.click-href": "/sections/*/bars/*/href",
+        "gantt.click-call": "/sections/*/bars/*/call/function",
+        "gantt.comment": "/comment",
+        "gantt.acc-title": "/accessibility/title",
+        "gantt.acc-descr": "/accessibility/description=Build, test and ship tasks for the release",
+        "gantt.acc-descr-block": "/accessibility/description=A short schedule\nwithout sections",
+    },
+    probes={
+        "object": "/sections/1/bars/0",
+        "number": "/todayMarker/opacity",
+        "enum": "/weekend",
+        "ref": "/sections/1/bars/0/after/0",
+    },
+))
+
+# --- timeline --------------------------------------------------------------------------------
+
+text_context("timeline.text", encode=_g2_encode(_G2_BASE))
+text_context(
+    "timeline.period",
+    encode=_g2_encode(_G2_BASE),
+    reject_patterns=_g2_keyword_start(r"timeline\b", r"title\s", r"section\s", r"acctitle\s*:", r"accdescr\s*[:{]"),
+)
+text_context("timeline.event", encode=_g2_encode(_G2_BASE, **{"\n": "<br>"}), allow_newline=True)
+
+_TIMELINE_CONFIG = {
+    "timeline": {"disableMulticolor": ("boolean",), **_G2_LAYOUT_CONFIG},
+    "themeVariables": {
+        **{f"cScale{i}": ("color",) for i in range(12)},
+        **{f"cScaleLabel{i}": ("color",) for i in range(12)},
+    },
+}
+
+
+def _timeline_events(v: Validator, events: Any, path: str, indent: str) -> list[str]:
+    lines: list[str] = []
+    for i, event in enumerate(_g2_min_one(v, events, path)):
+        epath = ptr(path, i)
+        v.fields(event, epath, ("period", "text"), ("layout",))
+        period = v.text(event["period"], ptr(epath, "period"), "timeline.period")
+        layout = v.enum(event["layout"], ptr(epath, "layout"), ("inline", "lines")) if "layout" in event else "inline"
+        tpath = ptr(epath, "text")
+        if isinstance(event["text"], str):  # one event, kept for older IR documents
+            texts = [v.text(event["text"], tpath, "timeline.event")]
+        else:
+            texts = [v.text(t, ptr(tpath, j), "timeline.event") for j, t in enumerate(_g2_min_one(v, event["text"], tpath))]
+        if layout == "inline":
+            lines.append(f"{indent}{period} : " + " : ".join(texts))
+        else:
+            lines.append(f"{indent}{period} : {texts[0]}")
+            lines.extend(f"{indent}    : {text}" for text in texts[1:])
+    return lines
+
+
+def _timeline_serialize(ir: dict, keyword: str) -> str:
+    v = Validator(keyword)
+    v.fields(ir, "", optional=("config", "direction", "title", "accessibility", "comment", "events", "sections"))
+    config = _g2_config(v, ir, _TIMELINE_CONFIG)
+    header = "timeline"
+    if "direction" in ir:
+        header += " " + v.enum(ir["direction"], "/direction", ("LR", "TD"))
+    lines = [header, *emit_accessibility(v, ir)]
+    if "title" in ir:
+        lines.append(f"    title {v.text(ir['title'], '/title', 'timeline.text')}")
+    lines += emit_comment(v, ir)
+    if "events" in ir and "sections" in ir:
+        # Periods before the first section are dropped by Mermaid 12.0.0 when sections follow.
+        raise v.error("/events", "use either 'events' or 'sections', not both (Mermaid drops periods outside sections)")
+    if "events" in ir:
+        lines += _timeline_events(v, ir["events"], "/events", "    ")
+    elif "sections" in ir:
+        for s, section in enumerate(_g2_min_one(v, ir["sections"], "/sections")):
+            spath = ptr("/sections", s)
+            v.fields(section, spath, ("name", "events"))
+            lines.append(f"    section {v.text(section['name'], ptr(spath, 'name'), 'timeline.text')}")
+            lines += _timeline_events(v, section["events"], ptr(spath, "events"), "        ")
+    else:
+        raise v.error("/events", "a timeline needs 'events' or 'sections'")
+    return "\n".join(emit_frontmatter(None, config) + lines) + "\n"
+
+
+register(Builder(
+    "timeline", "timeline", ("timeline",), _timeline_serialize,
+    text_fields=(
+        "/title", "/comment", "/accessibility/title", "/accessibility/description",
+        "/sections/*/name", "/sections/*/events/*/period", "/sections/*/events/*/text/*",
+        "/events/*/period", "/events/*/text/*",
+    ),
+    features={
+        "timeline.title": "/title",
+        "timeline.direction-lr": "/direction=LR",
+        "timeline.direction-td": "/direction=TD",
+        "timeline.period-event": "/sections/*/events/*/text/0",
+        "timeline.multiple-events-inline": "/sections/*/events/*/text/1",
+        "timeline.multiple-events-continuation": "/sections/*/events/*/layout=lines",
+        "timeline.text-period": "/sections/*/events/*/period=Industry 1.0",
+        "timeline.section": "/sections/*/name",
+        "timeline.line-break": "/sections/*/events/*/text/*=Steam\npower",
+        "timeline.comment": "/comment",
+        "timeline.acc-title": "/accessibility/title",
+        "timeline.acc-descr": "/accessibility/description=Four industrial ages grouped by century",
+        "timeline.acc-descr-block": "/accessibility/description=Social platforms\nby launch year",
+    },
+    probes={
+        "object": "/sections/0/events/0",
+        "number": "/config/timeline/leftMargin",
+        "enum": "/direction",
+        "ref": None,
+    },
+))
+
+# --- userJourney -----------------------------------------------------------------------------
+
+text_context("journey.text", encode=_g2_encode(_G2_BASE))
+text_context(
+    "journey.task",
+    encode=_g2_encode(_G2_BASE),
+    reject_patterns=_g2_keyword_start(r"journey\b", r"title\s", r"section\s", r"acctitle\s*:", r"accdescr\s*[:{]"),
+)
+text_context("journey.actor", encode=_g2_encode(_G2_BASE + ","))
+
+_JOURNEY_CONFIG = {"journey": {**_G2_LAYOUT_CONFIG, "maxLabelWidth": ("number", 1, 10000)}}
+
+
+def _journey_serialize(ir: dict, keyword: str) -> str:
+    v = Validator(keyword)
+    v.fields(ir, "", ("sections",), ("config", "title", "accessibility", "comment"))
+    config = _g2_config(v, ir, _JOURNEY_CONFIG)
+    lines = ["journey", *emit_accessibility(v, ir)]
+    if "title" in ir:
+        lines.append(f"    title {v.text(ir['title'], '/title', 'journey.text')}")
+    lines += emit_comment(v, ir)
+    for s, section in enumerate(_g2_min_one(v, ir["sections"], "/sections")):
+        spath = ptr("/sections", s)
+        v.fields(section, spath, ("name", "tasks"))
+        lines.append(f"    section {v.text(section['name'], ptr(spath, 'name'), 'journey.text')}")
+        for t, task in enumerate(_g2_min_one(v, section["tasks"], ptr(spath, "tasks"))):
+            tpath = ptr(ptr(spath, "tasks"), t)
+            v.fields(task, tpath, ("name", "score", "actors"))
+            name = v.text(task["name"], ptr(tpath, "name"), "journey.task")
+            score = v.number(task["score"], ptr(tpath, "score"), 1, 5, integer=True)
+            apath = ptr(tpath, "actors")
+            actors = [v.text(a, ptr(apath, i), "journey.actor") for i, a in enumerate(_g2_min_one(v, task["actors"], apath))]
+            lines.append(f"        {name}: {score}: {', '.join(actors)}")
+    return "\n".join(emit_frontmatter(None, config) + lines) + "\n"
+
+
+register(Builder(
+    "userJourney", "journey", ("journey",), _journey_serialize,
+    text_fields=(
+        "/title", "/comment", "/accessibility/title", "/accessibility/description",
+        "/sections/*/name", "/sections/*/tasks/*/name", "/sections/*/tasks/*/actors/*",
+    ),
+    features={
+        "userJourney.title": "/title",
+        "userJourney.section": "/sections/*/name",
+        "userJourney.task": "/sections/*/tasks/*/name",
+        "userJourney.task-multiple-actors": "/sections/*/tasks/*/actors/1",
+        "userJourney.score-1": "/sections/*/tasks/*/score=1",
+        "userJourney.score-3": "/sections/*/tasks/*/score=3",
+        "userJourney.score-5": "/sections/*/tasks/*/score=5",
+        "userJourney.comment": "/comment",
+        "userJourney.acc-title": "/accessibility/title",
+        "userJourney.acc-descr": "/accessibility/description=Steps from making tea to sitting down at home",
+        "userJourney.acc-descr-block": "/accessibility/description=A short journey\nwith one section",
+    },
+    probes={"object": "/sections/0/tasks/0", "number": "/sections/0/tasks/0/score", "enum": None, "ref": None},
+))
+
+# --- gitgraph --------------------------------------------------------------------------------
+
+text_context("gitgraph.quoted", encode=_g2_encode(_G2_BASE + "\\"))
+text_context("gitgraph.title")  # YAML frontmatter, JSON-quoted; no entity decoding there
+text_context(
+    "gitgraph.main-branch",
+    reject_patterns=((r"[^A-Za-z0-9_./-]", "the main branch name may contain only letters, digits and _ . / -"),),
+)
+
+_GIT_COMMIT_TYPES = ("NORMAL", "REVERSE", "HIGHLIGHT")
+_GIT_CONFIG = {
+    "gitGraph": {
+        "showBranches": ("boolean",),
+        "showCommitLabel": ("boolean",),
+        "mainBranchName": ("string", "gitgraph.main-branch"),
+        "mainBranchOrder": ("integer", 0, 1000),
+        "parallelCommits": ("boolean",),
+        "rotateCommitLabel": ("boolean",),
+        "titleTopMargin": ("number", 0, 10000),
+        "diagramPadding": ("number", 0, 10000),
+        "useMaxWidth": ("boolean",),
+    },
+    "themeVariables": {
+        **{f"git{i}": ("color",) for i in range(8)},
+        **{f"gitBranchLabel{i}": ("color",) for i in range(8)},
+        **{f"gitInv{i}": ("color",) for i in range(8)},
+        "commitLabelColor": ("color",),
+        "commitLabelBackground": ("color",),
+        "tagLabelColor": ("color",),
+        "tagLabelBackground": ("color",),
+        "tagLabelBorder": ("color",),
+    },
+}
+_GIT_OPS = {
+    "commit": ((), ("id", "commitType", "tag")),
+    "branch": (("name",), ("order",)),
+    "checkout": (("name",), ()),
+    "switch": (("name",), ()),
+    "merge": (("name",), ("id", "tag", "commitType")),
+    "cherry-pick": (("id",), ("parent",)),
+}
+
+
+@dataclass
+class _GitCommit:
+    branch: str
+    parents: list[int]
+    merge: bool = False
+
+
+def _git_attrs(v: Validator, op: dict, path: str) -> list[str]:
+    parts = []
+    if "id" in op:
+        parts.append(f'id: "{v.text(op["id"], ptr(path, "id"), "gitgraph.quoted")}"')
+    if "tag" in op:
+        parts.append(f'tag: "{v.text(op["tag"], ptr(path, "tag"), "gitgraph.quoted")}"')
+    if "commitType" in op:
+        parts.append(f"type: {v.enum(op['commitType'], ptr(path, 'commitType'), _GIT_COMMIT_TYPES)}")
+    return parts
+
+
+def _git_serialize(ir: dict, keyword: str) -> str:
+    v = Validator(keyword)
+    v.fields(ir, "", ("ops",), ("config", "title", "orientation", "colon", "accessibility", "comment"))
+    config = _g2_config(v, ir, _GIT_CONFIG)
+    title = v.text(ir["title"], "/title", "gitgraph.title") if "title" in ir else None
+    header = "gitGraph"
+    if "orientation" in ir:
+        header += f" {v.enum(ir['orientation'], '/orientation', ('LR', 'TB', 'BT'))}:"
+    if "colon" in ir and v.boolean(ir["colon"], "/colon"):
+        if "orientation" in ir:
+            raise v.error("/colon", "'colon' is the bare 'gitGraph:' form; with 'orientation' the colon is already emitted")
+        header += ":"
+    lines = [header, *emit_accessibility(v, ir)]
+    lines += emit_comment(v, ir)
+
+    main = (config or {}).get("gitGraph", {}).get("mainBranchName", "main")
+    heads: dict[str, int | None] = {main: None}
+    current = main
+    commits: list[_GitCommit] = []
+    by_id: dict[str, int] = {}
+
+    def new_commit(op: dict, path: str, commit: _GitCommit) -> None:
+        commits.append(commit)
+        if "id" in op:
+            v.unique(op["id"], ptr(path, "id"), set(by_id), "commit id")
+            by_id[op["id"]] = len(commits) - 1
+        heads[current] = len(commits) - 1
+
+    def head_parents() -> list[int]:
+        head = heads[current]
+        return [] if head is None else [head]
+
+    for i, op in enumerate(_g2_min_one(v, ir["ops"], "/ops")):
+        path = ptr("/ops", i)
+        if not isinstance(op, dict):
+            raise v.error(path, f"must be an object, got {type(op).__name__}")
+        kind = v.enum(op["type"], ptr(path, "type"), tuple(_GIT_OPS)) if "type" in op else None
+        if kind is None:
+            raise v.error(ptr(path, "type"), "required key is missing")
+        required, optional = _GIT_OPS[kind]
+        v.fields(op, path, ("type", *required), optional)
+        if kind == "commit":
+            parts = ["commit", *_git_attrs(v, op, path)]
+            new_commit(op, path, _GitCommit(current, head_parents()))
+            lines.append("    " + " ".join(parts))
+        elif kind == "branch":
+            npath = ptr(path, "name")
+            name = v.text(op["name"], npath, "gitgraph.quoted")
+            if op["name"] in heads:
+                raise v.error(npath, f"branch {op['name']!r} already exists; use checkout")
+            heads[op["name"]] = heads[current]
+            current = op["name"]
+            line = f'    branch "{name}"'
+            if "order" in op:
+                line += f" order: {v.number(op['order'], ptr(path, 'order'), 0, integer=True)}"
+            lines.append(line)
+        elif kind in ("checkout", "switch"):
+            npath = ptr(path, "name")
+            name = v.text(op["name"], npath, "gitgraph.quoted")
+            current = v.ref(op["name"], npath, heads)
+            lines.append(f'    {kind} "{name}"')
+        elif kind == "merge":
+            npath = ptr(path, "name")
+            name = v.text(op["name"], npath, "gitgraph.quoted")
+            other = v.ref(op["name"], npath, heads)
+            if other == current:
+                raise v.error(npath, "cannot merge a branch into itself")
+            mine, theirs = heads[current], heads[other]
+            if mine is None:
+                raise v.error(path, f"the current branch {current!r} has no commits to merge into")
+            if theirs is None:
+                raise v.error(npath, f"branch {other!r} has no commits")
+            if mine == theirs:
+                raise v.error(npath, f"branch {other!r} has the same head as {current!r}; nothing to merge")
+            if commits[mine].branch == other:
+                raise v.error(npath, f"the head of {current!r} was committed on {other!r}; nothing to merge")
+            parts = [f'merge "{name}"', *_git_attrs(v, op, path)]
+            new_commit(op, path, _GitCommit(current, [mine, theirs], merge=True))
+            lines.append("    " + " ".join(parts))
+        else:  # cherry-pick
+            ipath = ptr(path, "id")
+            source_id = v.text(op["id"], ipath, "gitgraph.quoted")
+            source = commits[by_id[v.ref(op["id"], ipath, by_id)]]
+            line = f'    cherry-pick id: "{source_id}"'
+            if "parent" in op:
+                ppath = ptr(path, "parent")
+                parent = v.text(op["parent"], ppath, "gitgraph.quoted")
+                if by_id[v.ref(op["parent"], ppath, by_id)] not in source.parents:
+                    raise v.error(ppath, f"{op['parent']!r} is not an immediate parent of {op['id']!r}")
+                line += f' parent: "{parent}"'
+            elif source.merge:
+                raise v.error(ptr(path, "parent"), "required key is missing: the source is a merge commit")
+            if source.branch == current:
+                raise v.error(ipath, f"commit {op['id']!r} is already on the current branch {current!r}")
+            if heads[current] is None:
+                raise v.error(path, f"the current branch {current!r} has no commits")
+            commits.append(_GitCommit(current, [heads[current], by_id[op["id"]]]))
+            heads[current] = len(commits) - 1
+            lines.append(line)
+    return "\n".join(emit_frontmatter(title, config) + lines) + "\n"
+
+
+register(Builder(
+    "gitgraph", "git", ("gitGraph",), _git_serialize,
+    text_fields=(
+        "/title", "/comment", "/accessibility/title", "/accessibility/description",
+        "/ops/*/tag", "/ops/11/id", "/ops/19/name",
+    ),
+    features={
+        "gitgraph.commit": "/ops/*/type=commit",
+        "gitgraph.commit-id": "/ops/0/id",
+        "gitgraph.commit-type-normal": "/ops/*/commitType=NORMAL",
+        "gitgraph.commit-type-reverse": "/ops/*/commitType=REVERSE",
+        "gitgraph.commit-type-highlight": "/ops/*/commitType=HIGHLIGHT",
+        "gitgraph.commit-tag": "/ops/*/tag",
+        "gitgraph.commit-combined-attributes": "/ops/8/commitType",
+        "gitgraph.branch": "/ops/*/type=branch",
+        "gitgraph.branch-quoted-name": "/ops/*/name=cherry-pick",
+        "gitgraph.branch-order": "/ops/*/order",
+        "gitgraph.checkout": "/ops/*/type=checkout",
+        "gitgraph.switch": "/ops/*/type=switch",
+        "gitgraph.merge": "/ops/*/type=merge",
+        "gitgraph.merge-attributes": "/ops/10/commitType",
+        "gitgraph.cherry-pick": "/ops/*/type=cherry-pick",
+        "gitgraph.cherry-pick-parent": "/ops/*/parent",
+        "gitgraph.orientation-lr": "/orientation=LR",
+        "gitgraph.orientation-tb": "/orientation=TB",
+        "gitgraph.orientation-bt": "/orientation=BT",
+        "gitgraph.keyword-colon": "/colon=true",
+        "gitgraph.frontmatter-title": "/title",
+        "gitgraph.comment": "/comment",
+        "gitgraph.acc-title": "/accessibility/title",
+        "gitgraph.acc-descr": "/accessibility/description=main, develop and release branches with a merge and a cherry-pick",
+        "gitgraph.acc-descr-block": "/accessibility/description=Top to bottom\nwith one branch",
+    },
+    probes={"object": "/ops/0", "number": "/ops/1/order", "enum": "/ops/0/commitType", "ref": "/ops/4/name"},
+))
+
+# --- kanban ----------------------------------------------------------------------------------
+
+text_context("kanban.quoted", encode=_g2_encode(_G2_BASE + "`\\"))
+text_context(
+    "kanban.bare",
+    encode=_g2_encode(_G2_ALL, **{"@": "#64;"}),
+    reject_patterns=_g2_keyword_start(r"kanban\b"),
+)
+text_context("kanban.url", reject_patterns=((r"^(?!https?://[^\s\"']+$)", "must be an http(s) URL without spaces or quotes"),))
+
+_KANBAN_PRIORITIES = ("Very High", "High", "Low", "Very Low")
+_KANBAN_ID = re.compile(r"[A-Za-z_][A-Za-z0-9_]*")
+_KANBAN_CONFIG = {
+    "kanban": {
+        "ticketBaseUrl": ("string", "kanban.url"),
+        "padding": ("number", 0, 1000),
+        "sectionWidth": ("number", 1, 10000),
+        "useMaxWidth": ("boolean",),
+    },
+}
+
+
+def _kanban_serialize(ir: dict, keyword: str) -> str:
+    v = Validator(keyword)
+    v.fields(ir, "", ("columns",), ("config", "comment"))
+    config = _g2_config(v, ir, _KANBAN_CONFIG)
+    lines = ["kanban", *emit_comment(v, ir, indent="  ")]
+    seen: set[str] = set()
+    for c, column in enumerate(_g2_min_one(v, ir["columns"], "/columns")):
+        cpath = ptr("/columns", c)
+        v.fields(column, cpath, ("label",), ("id", "plain", "cards"))
+        plain = v.boolean(column["plain"], ptr(cpath, "plain")) if "plain" in column else False
+        if plain:
+            if "id" in column:
+                raise v.error(ptr(cpath, "plain"), "a plain-text column has no id; drop 'id' or 'plain'")
+            lines.append(f"  {v.text(column['label'], ptr(cpath, 'label'), 'kanban.bare')}")
+        else:
+            label = v.text(column["label"], ptr(cpath, "label"), "kanban.quoted")
+            prefix = ""
+            if "id" in column:
+                prefix = v.unique(v.ident(column["id"], ptr(cpath, "id"), _KANBAN_ID), ptr(cpath, "id"), seen)
+            lines.append(f'  {prefix}["{label}"]')
+        for k, card in enumerate(v.array(column.get("cards", []), ptr(cpath, "cards"))):
+            kpath = ptr(ptr(cpath, "cards"), k)
+            v.fields(card, kpath, ("label",), ("id", "assigned", "ticket", "priority"))
+            label = v.text(card["label"], ptr(kpath, "label"), "kanban.quoted")
+            prefix = ""
+            if "id" in card:
+                prefix = v.unique(v.ident(card["id"], ptr(kpath, "id"), _KANBAN_ID), ptr(kpath, "id"), seen)
+            meta = []
+            for key in ("assigned", "ticket"):
+                if key in card:
+                    meta.append(f'{key}: "{v.text(card[key], ptr(kpath, key), "kanban.quoted")}"')
+            if "priority" in card:
+                meta.append(f'priority: "{v.enum(card["priority"], ptr(kpath, "priority"), _KANBAN_PRIORITIES)}"')
+            suffix = f"@{{ {', '.join(meta)} }}" if meta else ""
+            lines.append(f'    {prefix}["{label}"]{suffix}')
+    return "\n".join(emit_frontmatter(None, config) + lines) + "\n"
+
+
+register(Builder(
+    "kanban", "board", ("kanban",), _kanban_serialize,
+    text_fields=(
+        "/comment", "/columns/0/label", "/columns/1/label", "/columns/2/label",
+        "/columns/*/cards/*/label", "/columns/*/cards/*/assigned", "/columns/*/cards/*/ticket",
+    ),
+    features={
+        "kanban.column": "/columns/*/id",
+        "kanban.column-bare-text": "/columns/*/plain=true",
+        "kanban.column-title-only": "/columns/1/label",
+        "kanban.task": "/columns/*/cards/*/id",
+        "kanban.task-title-only": "/columns/0/cards/0/label",
+        "kanban.metadata": "/columns/*/cards/*/assigned",
+        "kanban.metadata-assigned": "/columns/*/cards/*/assigned",
+        "kanban.metadata-ticket": "/columns/*/cards/*/ticket",
+        "kanban.priority-very-high": "/columns/*/cards/*/priority=Very High",
+        "kanban.priority-high": "/columns/*/cards/*/priority=High",
+        "kanban.priority-low": "/columns/*/cards/*/priority=Low",
+        "kanban.priority-very-low": "/columns/*/cards/*/priority=Very Low",
+        "kanban.metadata-combined": "/columns/3/cards/0/priority",
+        "kanban.comment": "/comment",
+    },
+    probes={
+        "object": "/columns/3/cards/0",
+        "number": "/config/kanban/padding",
+        "enum": "/columns/3/cards/0/priority",
+        "ref": None,
+    },
+))
+
+# --- mindmap ---------------------------------------------------------------------------------
+
+text_context("mindmap.quoted", encode=_g2_encode(_G2_BASE + "`", **{"\n": "<br/>"}), allow_newline=True)
+text_context("mindmap.markdown", encode=_g2_encode(_G2_BASE + "`"), allow_newline=True)
+text_context(
+    "mindmap.bare",
+    encode=_g2_encode(_G2_ALL, **{"\n": "<br/>"}),
+    allow_newline=True,
+    reject_patterns=_g2_keyword_start(r"mindmap\b"),
+)
+text_context("mindmap.icon", reject_patterns=((r"[^A-Za-z0-9_ :-]", "icon classes may contain only letters, digits, space and _ : -"),))
+
+_MINDMAP_SHAPES = {
+    "default": None,
+    "square": ("[", "]"),
+    "rounded": ("(", ")"),
+    "circle": ("((", "))"),
+    "bang": ("))", "(("),
+    "cloud": (")", "("),
+    "hexagon": ("{{", "}}"),
+}
+_MINDMAP_CLASS = re.compile(r"[A-Za-z_][A-Za-z0-9_-]*")
+_MINDMAP_CONFIG = {
+    "mindmap": {
+        "padding": ("number", 0, 1000),
+        "maxNodeWidth": ("number", 1, 10000),
+        "useMaxWidth": ("boolean",),
+    },
+}
+
+
+def _mindmap_serialize(ir: dict, keyword: str) -> str:
+    v = Validator(keyword)
+    v.fields(ir, "", ("root", "nodes", "edges"), ("config", "comment"))
+    config = _g2_config(v, ir, _MINDMAP_CONFIG)
+    nodes: dict[str, tuple[int, dict]] = {}
+    for i, node in enumerate(_g2_min_one(v, ir["nodes"], "/nodes")):
+        path = ptr("/nodes", i)
+        v.fields(node, path, ("id", "label"), ("kind", "icon", "classes", "markdown"))
+        node_id = v.ident(node["id"], ptr(path, "id"))
+        if node_id in nodes:
+            raise v.error(ptr(path, "id"), f"duplicate id {json.dumps(node_id)}")
+        nodes[node_id] = (i, node)
+    root = v.ref(ir["root"], "/root", nodes)
+    children: dict[str, list[str]] = {}
+    parent_of: dict[str, str] = {}
+    for e, edge in enumerate(v.array(ir["edges"], "/edges")):
+        path = ptr("/edges", e)
+        v.fields(edge, path, ("from", "to"))
+        source = v.ref(edge["from"], ptr(path, "from"), nodes)
+        target = v.ref(edge["to"], ptr(path, "to"), nodes)
+        if target == root or target in parent_of:
+            raise v.error(ptr(path, "to"), f"node {target!r} already has a parent; a mindmap is a tree with one root")
+        parent_of[target] = source
+        children.setdefault(source, []).append(target)
+
+    body: list[str] = []
+    visited: set[str] = set()
+    stack = [(root, 1)]
+    while stack:
+        node_id, depth = stack.pop()
+        visited.add(node_id)
+        body.extend(_mindmap_node(v, node_id, nodes[node_id], node_id == root, "  " * depth))
+        for child in reversed(children.get(node_id, [])):
+            stack.append((child, depth + 1))
+    for node_id, (i, _node) in nodes.items():
+        if node_id not in visited:
+            # Edges form a tree only when every node hangs off the root; a cycle lands here too.
+            raise v.error(ptr("/nodes", i), f"node {node_id!r} is not reachable from root {root!r}")
+    lines = ["mindmap", *emit_comment(v, ir, indent="  "), *body]
+    return "\n".join(emit_frontmatter(None, config) + lines) + "\n"
+
+
+def _mindmap_node(v: Validator, node_id: str, entry: tuple[int, dict], is_root: bool, indent: str) -> list[str]:
+    i, node = entry
+    path = ptr("/nodes", i)
+    kind = v.enum(node["kind"], ptr(path, "kind"), tuple(_MINDMAP_SHAPES)) if "kind" in node else ("circle" if is_root else "default")
+    markdown = v.boolean(node["markdown"], ptr(path, "markdown")) if "markdown" in node else False
+    label_path = ptr(path, "label")
+    if kind == "default":
+        if markdown:
+            raise v.error(ptr(path, "markdown"), "a markdown label needs a shape; the default shape is plain text")
+        text = v.text(node["label"], label_path, "mindmap.bare")
+    elif markdown:
+        open_, close = _MINDMAP_SHAPES[kind]
+        text = f'{node_id}{open_}"`{v.text(node["label"], label_path, "mindmap.markdown")}`"{close}'
+    else:
+        open_, close = _MINDMAP_SHAPES[kind]
+        text = f'{node_id}{open_}"{v.text(node["label"], label_path, "mindmap.quoted")}"{close}'
+    lines = [indent + text]
+    if "icon" in node:
+        lines.append(f"{indent}::icon({v.text(node['icon'], ptr(path, 'icon'), 'mindmap.icon')})")
+    if "classes" in node:
+        cpath = ptr(path, "classes")
+        names = [v.ident(c, ptr(cpath, j), _MINDMAP_CLASS) for j, c in enumerate(_g2_min_one(v, node["classes"], cpath))]
+        lines.append(f"{indent}:::{' '.join(names)}")
+    return lines
+
+
+register(Builder(
+    "mindmap", "graph", ("mindmap",), _mindmap_serialize,
+    text_fields=(
+        "/comment", "/nodes/0/label", "/nodes/1/label", "/nodes/2/label", "/nodes/3/label",
+        "/nodes/4/label", "/nodes/5/label", "/nodes/6/label", "/nodes/7/label", "/nodes/8/label",
+    ),
+    features={
+        "mindmap.root": "/root",
+        "mindmap.indentation-hierarchy": "/edges/*/to",
+        "mindmap.unclear-indentation": "/edges/*/from",
+        "mindmap.shape-default": "/nodes/*/kind=default",
+        "mindmap.shape-square": "/nodes/*/kind=square",
+        "mindmap.shape-rounded": "/nodes/*/kind=rounded",
+        "mindmap.shape-circle": "/nodes/*/kind=circle",
+        "mindmap.shape-bang": "/nodes/*/kind=bang",
+        "mindmap.shape-cloud": "/nodes/*/kind=cloud",
+        "mindmap.shape-hexagon": "/nodes/*/kind=hexagon",
+        "mindmap.icon": "/nodes/*/icon",
+        "mindmap.class": "/nodes/*/classes/0",
+        "mindmap.markdown-string": "/nodes/*/markdown=true",
+        "mindmap.line-break": "/nodes/*/label=On effectiveness\nand features",
+        "mindmap.comment": "/comment",
+    },
+    probes={"object": "/nodes/1", "number": "/config/mindmap/padding", "enum": "/nodes/1/kind", "ref": "/edges/0/to"},
+))
 
 # === end group 2 ===
 

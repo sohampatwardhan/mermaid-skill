@@ -112,4 +112,20 @@ kanban
 Covers: every feature id.
 
 ## Builder
-`candidate`: `scripts/render.py` has an IR builder for this type (target keyword(s) `kanban`). It has not been through the reliability bar yet; see [coverage.md](../coverage.md).
+`builder`: family `board`, keyword `kanban`. Accessibility is not accepted (it renders as columns).
+
+| IR key | Type | Meaning |
+|---|---|---|
+| `comment` | string | `%%` comment |
+| `config.kanban` | object | `ticketBaseUrl` (http(s) URL), `padding`, `sectionWidth`, `useMaxWidth` |
+| `columns[].label` | string | column title |
+| `columns[].id` | identifier | `id["title"]`; without it `["title"]` |
+| `columns[].plain` | boolean | bare-text column (`Todo`), no id |
+| `columns[].cards[]` | card | `label`, optional `id`, `assigned`, `ticket`, `priority` |
+| card `priority` | enum | `Very High`, `High`, `Low`, `Very Low` |
+
+Example: [maximal.json](../../tests/fixtures/kanban/maximal.json).
+
+Rejected: duplicate ids, `plain` with an `id`, an unknown priority, a plain column starting with `kanban`.
+Labels and metadata are quoted; `" # ; : % < > & \` and backticks are written as entity codes. Plain columns
+encode every delimiter (brackets, parentheses, `@`, ...).

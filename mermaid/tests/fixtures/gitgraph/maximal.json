@@ -1,0 +1,116 @@
+{
+  "diagram": "git",
+  "target": "gitGraph",
+  "title": "Release flow",
+  "config": {
+    "gitGraph": {
+      "showBranches": true,
+      "showCommitLabel": true,
+      "rotateCommitLabel": false,
+      "mainBranchName": "main",
+      "parallelCommits": false
+    },
+    "themeVariables": {
+      "git0": "#ff0000"
+    }
+  },
+  "orientation": "LR",
+  "accessibility": {
+    "title": "Release flow",
+    "description": "main, develop and release branches with a merge and a cherry-pick"
+  },
+  "comment": "start on main",
+  "ops": [
+    {
+      "type": "commit",
+      "id": "ZERO",
+      "commitType": "NORMAL"
+    },
+    {
+      "type": "branch",
+      "name": "develop",
+      "order": 2
+    },
+    {
+      "type": "branch",
+      "name": "release",
+      "order": 1
+    },
+    {
+      "type": "commit",
+      "id": "A"
+    },
+    {
+      "type": "checkout",
+      "name": "main"
+    },
+    {
+      "type": "commit",
+      "id": "ONE",
+      "tag": "v1.0.0"
+    },
+    {
+      "type": "switch",
+      "name": "develop"
+    },
+    {
+      "type": "commit",
+      "id": "B",
+      "commitType": "HIGHLIGHT"
+    },
+    {
+      "type": "commit",
+      "id": "R",
+      "commitType": "REVERSE",
+      "tag": "RC_1"
+    },
+    {
+      "type": "checkout",
+      "name": "main"
+    },
+    {
+      "type": "merge",
+      "name": "develop",
+      "id": "MERGE",
+      "tag": "v1.1.0",
+      "commitType": "REVERSE"
+    },
+    {
+      "type": "commit",
+      "id": "TWO"
+    },
+    {
+      "type": "checkout",
+      "name": "release"
+    },
+    {
+      "type": "cherry-pick",
+      "id": "MERGE",
+      "parent": "R"
+    },
+    {
+      "type": "cherry-pick",
+      "id": "ONE"
+    },
+    {
+      "type": "branch",
+      "name": "cherry-pick"
+    },
+    {
+      "type": "commit",
+      "id": "THREE"
+    },
+    {
+      "type": "checkout",
+      "name": "main"
+    },
+    {
+      "type": "merge",
+      "name": "cherry-pick"
+    },
+    {
+      "type": "branch",
+      "name": "notes"
+    }
+  ]
+}
