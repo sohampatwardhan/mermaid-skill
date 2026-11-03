@@ -39,6 +39,7 @@ jobs:
       - run: python3 -m pytest tests/ -q --durations=15
         working-directory: mermaid
         env:
-          # Bound each parse well under the job limit so a wedged Node process fails fast; a
-          # healthy parse finishes in well under a second.
+          # Per-diagram parse bound; the whole-batch Node process gets this times the diagram
+          # count, so a large but healthy builder batch is never killed for its size while a
+          # wedged process is still bounded. The job's timeout-minutes is the hard backstop.
           MERMAID_CHECK_TIMEOUT: "60"

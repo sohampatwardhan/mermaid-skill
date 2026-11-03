@@ -18,9 +18,11 @@
 # once into a cache dir (MERMAID_PARSE_CACHE, default under the system temp) with npm. Keep the
 # pin in sync with .github/workflows/tests.yml.
 #
-# Optional: set MERMAID_CHECK_TIMEOUT to the whole-batch parse bound in seconds (default 120).
-# A parse that outlives it is reported as a failure naming "timeout" — never a pass. The bound
-# is portable (GNU/BSD `timeout`, else a perl or python3 watchdog). Set 0 to disable it.
+# Optional: set MERMAID_CHECK_TIMEOUT to the per-diagram parse bound in seconds (default 120).
+# The whole-batch Node process gets this bound times the number of diagrams, so a healthy large
+# batch is never killed for its size while a wedged process is still bounded. A parse that
+# outlives its budget is reported as a failure naming "timeout" — never a pass. The bound is
+# portable (GNU/BSD `timeout`, else a perl or python3 watchdog). Set 0 to disable it.
 #
 # Compatible with bash 3.2 (macOS /bin/bash): no associative arrays, no mapfile, and no
 # expansion of a possibly-empty array under `set -u`.
@@ -142,8 +144,9 @@ export MERMAID_PARSE_NODE_MODULES="${NODE_MODULES}"
 
 # --- whole-batch parse bound --------------------------------------------------------------
 
-# Wall-clock bound (seconds) on the single Node parse process. A parse that outlives it is a
-# failure, never a pass. Parsing is fast; the bound is a backstop against a wedged process.
+# Per-diagram wall-clock bound (seconds). The whole-batch Node process gets this bound times the
+# number of diagrams, so a large but healthy batch is never killed for being large while a
+# wedged process is still bounded. A parse that outlives its budget is a failure, never a pass.
 MERMAID_CHECK_TIMEOUT="${MERMAID_CHECK_TIMEOUT:-120}"
 
 # run_with_timeout SECONDS CMD...: run CMD under a wall-clock bound, portable across macOS and
@@ -186,15 +189,23 @@ except subprocess.TimeoutExpired:
   fi
 }
 
-# parse_batch BATCH_JSON RESULTS_OUT: run the parser once over a JSON batch. Writes the parser's
-# line-based results to RESULTS_OUT. Returns the parser exit (0 all pass, 1 any failed, 2 bad
-# batch/deps), or synthesises a timeout failure (exit 1, a BATCHERROR line) when the bound is
-# hit. The parser's output is shell-readable, so no second Node process is needed.
+# parse_batch BATCH_JSON RESULTS_OUT [DIAGRAM_COUNT]: run the parser once over a JSON batch under
+# a wall-clock bound of MERMAID_CHECK_TIMEOUT seconds *per diagram* (count defaults to 1), so a
+# healthy large batch gets proportional time while a wedged process is still bounded. Writes the
+# parser's line-based results to RESULTS_OUT. Returns the parser exit (0 all pass, 1 any failed,
+# 2 bad batch/deps), or synthesises a timeout failure (exit 1, a BATCHERROR line) on the bound.
+# The parser's output is shell-readable, so no second Node process is needed.
 parse_batch() {
-  local batch="$1" out="$2" status=0
-  run_with_timeout "${MERMAID_CHECK_TIMEOUT}" node "${PARSER}" <"${batch}" >"${out}" 2>"${TMPDIR_LOCAL}/parser.err" || status=$?
+  local batch="$1" out="$2" count="${3:-1}" status=0 budget
+  if [ "${MERMAID_CHECK_TIMEOUT}" -le 0 ] 2>/dev/null; then
+    budget=0
+  else
+    budget=$((MERMAID_CHECK_TIMEOUT * count))
+  fi
+  run_with_timeout "${budget}" node "${PARSER}" <"${batch}" >"${out}" 2>"${TMPDIR_LOCAL}/parser.err" || status=$?
   if [ "${status}" = 124 ]; then
-    printf 'BATCHERROR parse timeout after %ss (MERMAID_CHECK_TIMEOUT)\n' "${MERMAID_CHECK_TIMEOUT}" >"${out}"
+    printf 'BATCHERROR parse timeout after %ss (%ss x %s, MERMAID_CHECK_TIMEOUT)\n' \
+      "${budget}" "${MERMAID_CHECK_TIMEOUT}" "${count}" >"${out}"
     return 1
   fi
   return "${status}"
@@ -288,7 +299,7 @@ check_markdown() {
     printf ']}\n'
   } > "${work}/batch.json"
 
-  parse_batch "${work}/batch.json" "${work}/results.txt" || true
+  parse_batch "${work}/batch.json" "${work}/results.txt" "${count}" || true
   local berr
   berr="$(batch_error "${work}/results.txt")"
   if [ -n "${berr}" ]; then
