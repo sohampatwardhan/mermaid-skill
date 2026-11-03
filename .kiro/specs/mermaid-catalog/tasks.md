@@ -94,9 +94,9 @@ flowchart TB
   classDef critical fill:#fde68a,stroke:#b45309,color:#1c1917
   classDef parallel fill:#dbeafe,stroke:#1d4ed8,color:#1e3a8a
   classDef done fill:#dcfce7,stroke:#15803d,color:#14532d
-  class t1,t2_1,t2_2,t2_3,t3,t4,t5_1,t5_2,t5_3,t5_4,t5_5,t5_6,t6_1,t6_2,t6_3,t7_1,t7_2,t7_3,t7_4,ld done
+  class t1,t2_1,t2_2,t2_3,t3,t4,t5_1,t5_2,t5_3,t5_4,t5_5,t5_6,t6_1,t6_2,t6_3,t7_1,t7_2,t7_3,t7_4,t7_5,ld done
   class t8,lc critical
-  class t7_5,t7_6,lp parallel
+  class t7_6,lp parallel
 ```
 
 Type groups used by tasks 5 and 7:
@@ -210,7 +210,7 @@ If the 12.0.0 refresh in task 3 adds or removes a syntax page, task 3 adds or re
 - [x] 7.4 Builder group 4: structure builders
   - Do 7.1 for `c4` (one maximal fixture per keyword; old examples exist for `C4Context` and `C4Container`), `architecture`, `block`, `packet`, `requirementDiagram`
   - _Requirements: 1.8, 4.1, 4.2, 4.3, 4.4, 4.5, 4.6, 4.7, 4.8, 4.9, 4.10, 6.2, 6.3_
-- [ ] 7.5 Builder group 5: Mermaid 12 and beta builders
+- [x] 7.5 Builder group 5: Mermaid 12 and beta builders
   - Do 7.1 for `agentflow`, `usecase`, `swimlanes`, `wardley`, `cynefin`, `eventmodeling`; these are marked evaluate or keep in the design, and a type that cannot reach the bar becomes hand-author-only
   - _Requirements: 1.8, 4.1, 4.2, 4.3, 4.4, 4.5, 4.6, 4.7, 4.8, 4.9, 4.10, 6.2, 6.3_
 - [ ] 7.6 Builder group 6: remaining builders

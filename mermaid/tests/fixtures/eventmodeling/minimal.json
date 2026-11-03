@@ -1,0 +1,5 @@
+{
+  "diagram": "eventmodeling",
+  "target": "eventmodeling",
+  "timeframes": [{"number": "01", "type": "ui", "entity": "CartUI"}]
+}

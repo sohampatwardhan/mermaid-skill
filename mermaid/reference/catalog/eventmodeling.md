@@ -167,4 +167,24 @@ Covers: every feature id.
 
 ## Builder
 
-`candidate`: `scripts/render.py` has an IR builder for this type (target keyword(s) `eventmodeling`). It has not been through the reliability bar yet; see [coverage.md](../coverage.md).
+`builder`: family `eventmodeling`, keyword `eventmodeling`. Example:
+[maximal.json](../../tests/fixtures/eventmodeling/maximal.json).
+
+| Key | Type | Meaning |
+|---|---|---|
+| `timeframes[]` | object | one frame per line, in array order (the timeline order) |
+| `timeframes[].number` | digit string | frame number, unique, e.g. `"01"` |
+| `timeframes[].type` | enum | `ui`, `pcr`, `processor`, `cmd`, `command`, `rmo`, `readmodel`, `evt`, `event` (emitted as given) |
+| `timeframes[].entity` | string | `Entity` or `Namespace.Entity` (letters, digits, `_`; no leading digit) |
+| `timeframes[].reset` | boolean | `true` emits a reset frame (`rf`) |
+| `timeframes[].form` | `compact` \| `relaxed` | `tf`/`rf` or `timeframe`/`resetframe` (default `compact`) |
+| `timeframes[].data` | `[{key, value, raw?}]` | inline `{ key: value, ... }` |
+| `timeframes[].dataType` | enum | `` `json` ``, `jsobj`, `figma`, `salt`, `uri`, `md`, `html`, `text` tag on inline data |
+| `timeframes[].dataRef` | string | `[[id]]`, a declared `dataBlocks[].id` |
+| `timeframes[].relations` | digit strings | `->> 05 ->> 12`, declared frame numbers |
+| `dataBlocks[]` | `{id, fields, dataType?}` | `data id {` ... `}` after the frames |
+
+A data `value` that is a string is single-quoted and entity-encoded (`'jack'`); a number is
+bare; `raw: true` emits an identifier such as `string` unquoted. `data` and `dataRef` are
+exclusive, and `relations` cannot follow either (Mermaid rejects it). No title and no
+accessibility keys: Mermaid rejects both statements for this type.

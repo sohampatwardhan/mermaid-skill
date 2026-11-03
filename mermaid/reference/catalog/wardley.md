@@ -68,7 +68,7 @@ Business -> Cup of Tea
 | `wardley.flow-bidirectional` | bi-directional flow | `A +<> B` |
 | `wardley.flow-labeled` | labelled flow | `A +'backup'> B` |
 | `wardley.evolve` | evolution arrow to a target evolution | `evolve Kettle 0.62` |
-| `wardley.trend` | trend indicator, `(x, y)` order | `Component -.- (x, y)` |
+| `wardley.trend` | trend indicator, `(x, y)` order (does not render in 12.0.0; see Traps) | `Component -.- (x, y)` |
 | `wardley.pipeline` | pipeline of components sharing visibility | `pipeline Database {` … `}` |
 | `wardley.pipeline-component` | pipeline member with evolution only | `component "SQL DB" [0.50]` |
 | `wardley.evolution-stages` | custom evolution stage labels | `evolution Unmodelled -> Divergent -> Convergent -> Modelled` |
@@ -215,4 +215,26 @@ Covers: `wardley.evolution-dual-labels`.
 
 ## Builder
 
-`candidate`: `scripts/render.py` has an IR builder for this type (target keyword(s) `wardley-beta`). It has not been through the reliability bar yet; see [coverage.md](../coverage.md).
+`builder`: family `graph`, keyword `wardley-beta`. Example:
+[maximal.json](../../tests/fixtures/wardley/maximal.json) (plus `maximal.dual-labels.json`).
+
+| Key | Type | Meaning |
+|---|---|---|
+| `title`, `comment` | string | `title` line; `%%` comment line |
+| `accessibility` | `{title, description}` | `accTitle` / `accDescr` |
+| `size` | `[width, height]` integers | `size [1100, 800]` |
+| `evolutionStages[]` | `{label, dualLabel?, width?}` | `evolution "A"@0.25 -> ...` or `"A" / "B" -> ...` (at least 2) |
+| `anchors[]` | `{id, label?, visibility, evolution}` | `anchor "name" [v, e]` |
+| `components[]` | `{id, label?, visibility, evolution, labelOffset?, sourcing?, inertia?}` | `component "name" [v, e] label [dx, dy] (build) (inertia)`; `sourcing` is `build`, `buy`, `outsource`, `market` |
+| `pipelines[]` | `{parent, stages: [{label, evolution}]}` | `pipeline "parent" { component "label" [e] }`; `parent` is a component id |
+| `links[]` | `{from, to, kind?, label?}` | `kind`: `dependency` `->` (default), `dependencyAlt` `-->`, `dashed` `-.->`, `flow` `+>`, `flowReverse` `+<`, `flowBidirectional` `+<>` |
+| `evolve[]` | `{id, target}` | `evolve "name" 0.85` (component ids only) |
+| `notes[]`, `accelerators[]`, `deaccelerators[]` | `{text, visibility, evolution}` | quoted text at a point |
+| `annotationsPosition` | `{visibility, evolution}` | `annotations [v, e]` |
+| `annotations[]` | `{number, visibility, evolution, text}` | `annotation 1,[v, e] "text"` |
+
+Coordinates are 0 to 1 and always emitted with a decimal point (`1` becomes `1.0`). Names are
+always quoted and entity-encoded; the display name (`label`, else `id`) must be unique. Links
+and `evolve` name ids. A `label` is only accepted on `dependency`, `dependencyAlt`, `dashed`
+and `flow` links, and a stage with a `dualLabel` cannot set a `width`. The trend indicator
+has no key: it does not render with CLI 12.0.0.

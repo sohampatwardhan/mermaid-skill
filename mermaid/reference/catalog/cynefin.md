@@ -138,4 +138,18 @@ Covers: every feature id.
 
 ## Builder
 
-`candidate`: `scripts/render.py` has an IR builder for this type (target keyword(s) `cynefin-beta`). It has not been through the reliability bar yet; see [coverage.md](../coverage.md).
+`builder`: family `cynefin`, keyword `cynefin-beta`. Example:
+[maximal.json](../../tests/fixtures/cynefin/maximal.json) (plus `maximal.empty-domain.json`).
+
+| Key | Type | Meaning |
+|---|---|---|
+| `title` | string | `title` statement |
+| `accessibility` | `{title, description}` | `accTitle` / `accDescr` (a multi-line description uses the block form) |
+| `config` | object | frontmatter `config.cynefin`: `width`, `height`, `padding`, `showDomainDescriptions`, `boundaryAmplitude`, `seed` (integer) |
+| `domains[]` | `{domain, items?}` | domain block in array order; `domain` is one of the five keywords; `items: []` gives an empty domain |
+| `domains[].items[]` | string | quoted item badge |
+| `transitions[]` | `{from, to, label?}` | `from --> to : "label"` |
+
+Every text is entity-encoded (`"` becomes `#quot;`, `#` becomes `#35;`, ...), so any one-line
+text works. A domain may appear once. A self-transition (`from` equal to `to`) is rejected,
+because Mermaid silently ignores it.

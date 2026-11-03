@@ -1,0 +1,42 @@
+{
+  "diagram": "graph",
+  "target": "agentflow-beta",
+  "direction": "TB",
+  "title": "Content pipeline",
+  "config": {"nodeSpacing": 60, "rankSpacing": 50, "titleTopMargin": 25, "diagramPadding": 8, "useMaxWidth": true},
+  "accessibility": {"title": "Content pipeline", "description": "Agents drafting, checking, and publishing copy"},
+  "connectors": [
+    {"id": "llm", "label": "LLM API", "protocol": "http", "endpoint": "https://api.example.com/chat", "description": "Chat completions", "custom": {"region": "eu-west"}}
+  ],
+  "flows": [
+    {"id": "team", "label": "Content Team", "description": "Owns the copy"},
+    {"id": "writer", "label": "Writer", "parent": "team", "model": "claude-sonnet-4", "instruction": "Draft and cite sources.", "params": "brief :: Brief", "returns": "Copy", "custom": {"tier": "gold"}},
+    {"id": "publisher", "label": "Publisher", "parent": "team"},
+    {"id": "tools", "label": "Tools", "algorithm": "elk.rectpacking"},
+    {"id": "archive", "label": "Archive store", "view": "collapsed"}
+  ],
+  "nodes": [
+    {"id": "corpus", "label": "Shared corpus", "shape": "refdoc", "global": true},
+    {"id": "brief", "label": "Brief", "shape": "input", "value": "Stockholm", "example": "Oslo"},
+    {"id": "draft", "label": "Draft copy", "shape": "task", "flow": "writer", "description": "Drafts the copy", "instruction": "Keep it short", "model": "claude-haiku"},
+    {"id": "spell", "label": "spell_check", "shape": "tool", "flow": "writer", "params": "text :: String", "returns": "Report", "connectorRef": "llm.chat", "custom": {"owner": "qa", "retry": 2, "cached": true}},
+    {"id": "ok", "label": "Clean?", "shape": "decision", "flow": "writer"},
+    {"id": "pub", "label": "Publish", "shape": "action", "flow": "publisher"},
+    {"id": "note", "label": "Archive", "shape": "rounded", "flow": "publisher"},
+    {"id": "t1", "label": "search", "shape": "tool", "flow": "tools"},
+    {"id": "t2", "label": "fetch_page", "shape": "tool", "flow": "tools"},
+    {"id": "store", "label": "Store", "shape": "task", "flow": "archive"},
+    {"id": "fetch", "metaLabel": "Fetch sources", "labelType": "markdown", "shape": "tool", "metadataBlock": true, "custom": {"retry": 2}}
+  ],
+  "edges": [
+    {"from": "draft", "to": "spell", "kind": "sequence", "then": [{"to": "ok", "label": "checked"}]},
+    {"from": "draft", "to": "corpus", "kind": "reference"},
+    {"from": "ok", "to": "pub", "label": "yes"},
+    {"from": "ok", "to": "draft", "kind": "failure", "label": "no"},
+    {"from": "writer", "to": "publisher"},
+    {"from": "brief", "to": "team", "id": "e1", "curve": "linear", "animate": true},
+    {"from": "pub", "to": "fetch", "id": "e2", "animation": "slow"},
+    {"from": "note", "to": "store"},
+    {"from": "t1", "to": "t2"}
+  ]
+}

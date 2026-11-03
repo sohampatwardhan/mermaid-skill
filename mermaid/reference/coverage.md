@@ -38,12 +38,12 @@ CI pins `@mermaid-js/mermaid-cli@12.0.0` with Mermaid `12.0.0` on Node 22.
 | `block` | `block`, `block-beta` | [block.md](catalog/block.md) | builder | `test_builders.py::block` | — |
 | `packet` | `packet`, `packet-beta` | [packet.md](catalog/packet.md) | builder | `test_builders.py::packet` | — |
 | `requirementDiagram` | `requirementDiagram` | [requirementDiagram.md](catalog/requirementDiagram.md) | builder | `test_builders.py::requirementDiagram` | — |
-| `agentflow` | `agentflow-beta` | [agentflow.md](catalog/agentflow.md) | candidate | `test_render_legacy` | Metadata, `connector`, `global`, collapsed `view` |
-| `usecase` | `usecase-beta` | [usecase.md](catalog/usecase.md) | candidate | `test_render_legacy` | Notes, JSON tables, stereotypes, actor type/icon, package boundaries |
-| `swimlanes` | `swimlane-beta` | [swimlanes.md](catalog/swimlanes.md) | candidate | `test_render_legacy` | Lane-only features beyond flowchart subgraphs |
-| `wardley` | `wardley-beta` | [wardley.md](catalog/wardley.md) | candidate | `test_render_legacy` | Evolution axis, `size`, label offsets, `(build)`/`(buy)`/`(inertia)` |
-| `cynefin` | `cynefin-beta` | [cynefin.md](catalog/cynefin.md) | candidate | `test_render_legacy` | Self-loops are rejected because Mermaid ignores them |
-| `eventmodeling` | `eventmodeling` | [eventmodeling.md](catalog/eventmodeling.md) | candidate | `test_render_legacy` | `rf` rows, long kind names, data blocks, link chains |
+| `agentflow` | `agentflow-beta` | [agentflow.md](catalog/agentflow.md) | builder | `test_builders.py::agentflow` | — |
+| `usecase` | `usecase-beta` | [usecase.md](catalog/usecase.md) | builder | `test_builders.py::usecase` | — |
+| `swimlanes` | `swimlane-beta` | [swimlanes.md](catalog/swimlanes.md) | builder | `test_builders.py::swimlanes` | — |
+| `wardley` | `wardley-beta` | [wardley.md](catalog/wardley.md) | builder | `test_builders.py::wardley` | — |
+| `cynefin` | `cynefin-beta` | [cynefin.md](catalog/cynefin.md) | builder | `test_builders.py::cynefin` | — |
+| `eventmodeling` | `eventmodeling` | [eventmodeling.md](catalog/eventmodeling.md) | builder | `test_builders.py::eventmodeling` | — |
 | `ishikawa` | `ishikawa-beta` | [ishikawa.md](catalog/ishikawa.md) | candidate | `test_render_legacy` | — |
 | `treeView` | `treeView-beta` | [treeView.md](catalog/treeView.md) | candidate | `test_render_legacy` | Box-drawing input, `icon()`, `##` annotations, `:::` classes |
 | `railroad` | `railroad-ebnf-beta` | [railroad.md](catalog/railroad.md) | candidate | `test_render_legacy` | Rules are verbatim strings, not a grammar AST |

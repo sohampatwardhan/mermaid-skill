@@ -209,4 +209,18 @@ Covers: `swimlanes.direction-rl`.
 
 ## Builder
 
-`candidate`: `scripts/render.py` has an IR builder for this type (target keyword(s) `swimlane-beta`). It has not been through the reliability bar yet; see [coverage.md](../coverage.md).
+`builder`: family `graph`, keyword `swimlane-beta`. Example:
+[maximal.json](../../tests/fixtures/swimlanes/maximal.json) (plus one `maximal.direction-*.json` per direction).
+
+| Key | Type | Meaning |
+|---|---|---|
+| `direction` | `TB` \| `TD` \| `BT` \| `LR` \| `RL` | after the keyword; omit for the default (TB) |
+| `accessibility`, `comment` | | `accTitle` / `accDescr`; `%%` line |
+| `groups[]` | `{id, label?}` | lane: `subgraph id ["label"]` (bare `subgraph id` without label) |
+| `nodes[]` | `{id, label \| markdown, kind? \| shape?, group?, class?}` | node in its lane; `kind`: `rect` (default), `round`, `stadium`, `decision`, `circle`; `shape`: a flowchart `@{ shape }` name |
+| `edges[]` | `{from, to, kind?, label?, then?}` | `kind`: `arrow` `-->` (default), `line` `---`, `dotted` `-.->`, `thick` `==>`; `then: [{to, kind?, label?}]` continues a chain |
+| `classDefs[]` | `{name, style}` | `classDef name ...;`; `style` keys `fill`, `stroke`, `color` (`#hex` or a CSS name), `strokeWidth` (`2px`), `strokeDasharray` (`5 5`) |
+
+Labels are quoted and entity-encoded; `markdown` text keeps `*` and `_` as Markdown. Ids are
+letters, digits and `_` and cannot be flowchart keywords (`end`, `subgraph`, `class`, ...).
+Set exactly one of `label`/`markdown` and at most one of `kind`/`shape`. Raw CSS is rejected.

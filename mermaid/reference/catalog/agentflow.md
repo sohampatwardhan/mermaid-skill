@@ -229,4 +229,23 @@ Covers: `agentflow.direction-rl`.
 
 ## Builder
 
-`candidate`: `scripts/render.py` has an IR builder for this type (target keyword(s) `agentflow-beta`). It has not been through the reliability bar yet; see [coverage.md](../coverage.md).
+`builder`: family `graph`, keyword `agentflow-beta`. Example:
+[maximal.json](../../tests/fixtures/agentflow/maximal.json) (plus `maximal.direction-*.json`).
+
+| Key | Type | Meaning |
+|---|---|---|
+| `direction` | `TB` \| `TD` \| `BT` \| `LR` \| `RL` | after the keyword |
+| `title`, `config` | string; object | frontmatter `title` and `config.agentflow` (`titleTopMargin`, `diagramPadding`, `nodeSpacing`, `rankSpacing`, `useMaxWidth`) |
+| `accessibility` | `{title, description}` | `accTitle` / `accDescr` |
+| `connectors[]` | `{id, label, protocol?, endpoint?, description?, custom?}` | `connector id["label"]` plus an `id@{ ... }` line |
+| `flows[]` | `{id, label, parent?, view?, algorithm?, description?, instruction?, model?, params?, returns?, custom?}` | `flow id["label"] ... end`, nested under `parent`; `view: "collapsed"`, `algorithm` an `elk.*` name; metadata after `end` |
+| `nodes[]` | `{id, label \| metaLabel, labelType?, shape?, flow?, global?, metadataBlock?, ...}` | `id["label"]@{ shape: task, ... }`; `metaLabel` puts the label in metadata (`labelType`: `markdown`, `string`); `global: true` places it in `global ... end`; `metadataBlock: true` uses the multi-line `id@{` form |
+| `nodes[].*` metadata | strings | `description`, `instruction`, `model`, `params`, `returns`, `value`, `example`, `connectorRef` |
+| `*.custom` | `{key: string \| number \| boolean}` | extra metadata keys, e.g. `retry: 2` |
+| `edges[]` | `{from, to, kind?, label?, id?, curve?, animate?, animation?, then?}` | `kind`: `sequence` `-->` (default), `reference` `-.-`, `failure` `--x`; `from`/`to` name nodes or flows; edge metadata needs `id` |
+
+`shape` is an agentflow alias (`task`, `tool`, `input`, `decision`, `refdoc`, `action`) or a
+canonical flowchart shape name. Displayed labels are quoted and entity-encoded. Metadata
+values are not displayed, so they are emitted as-is in YAML double quotes: `"`, `\` and
+entity-like `#name;` are rejected there. Custom keys cannot reuse a typed key, Mermaid's
+presentation keys, or `__proto__`/`constructor`/`prototype`. Flow parents must not form a cycle.

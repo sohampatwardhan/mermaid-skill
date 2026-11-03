@@ -1,0 +1,9 @@
+{
+  "diagram": "usecase",
+  "target": "usecase-beta",
+  "direction": "RL",
+  "accessibility": {"title": "Sign in", "description": "A customer signs in"},
+  "actors": [{"id": "A"}],
+  "usecases": [{"id": "B", "label": "Sign in"}],
+  "edges": [{"from": "A", "to": "B"}]
+}

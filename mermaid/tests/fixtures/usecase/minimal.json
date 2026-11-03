@@ -1,0 +1,7 @@
+{
+  "diagram": "usecase",
+  "target": "usecase-beta",
+  "actors": [{"id": "Customer"}],
+  "usecases": [{"id": "Checkout", "label": "Checkout"}],
+  "edges": [{"from": "Customer", "to": "Checkout"}]
+}

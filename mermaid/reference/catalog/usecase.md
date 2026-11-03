@@ -319,4 +319,26 @@ Covers: `usecase.direction-rl`, `usecase.acc-descr`.
 
 ## Builder
 
-`candidate`: `scripts/render.py` has an IR builder for this type (target keyword(s) `usecase-beta`). It has not been through the reliability bar yet; see [coverage.md](../coverage.md).
+`builder`: family `usecase`, keyword `usecase-beta`. Example:
+[maximal.json](../../tests/fixtures/usecase/maximal.json) (plus `maximal.direction-*.json`).
+
+| Key | Type | Meaning |
+|---|---|---|
+| `title`, `config` | string; object | frontmatter `title` and typed `config.usecase` (font sizes and weights, spacing, `colorScheme`, `useMaxWidth`) |
+| `direction`, `accessibility`, `comment` | | `direction LR`; `accTitle` / `accDescr` (block form for multi-line); `%%` line |
+| `actors[]` | `{id, label?, type?, icon?, business?, stereotype?, class?, boundary?}` | `actor id("label")@{ type: hollow } <<S>>:::cls`; `type`: `normal`, `hollow`, `awesome`; `icon`: `pack:name` |
+| `usecases[]` | `{id, label \| markdown, shape?, form?, business?, stereotype?, class?, boundary?}` | `id("label")` (`shape: ellipse`) or `id["label"]` (`rect`); `form: quoted` emits `"Label"` (id must be the label with `_` for spaces); `{id, implicit: true}` is declared only by an edge |
+| `boundaries[]` | `{id, label?, form?, type?, metadataStatement?, class?}` | `systemBoundary id["label"]@{ type: package } ... end` holding the members whose `boundary` names it |
+| `jsonNodes[]` | `{id, data, class?}` | `json id@{ ... }`; `data` is a JSON object |
+| `notes[]` | `{for, text}` | `note for id "text"` |
+| `edges[]` | `{from, to, kind?, label?, length?, id?, animate?, animation?}` | `kind`: `association` `-->` (default), `reverseAssociation` `<--`, `line` `--`, `circle` `--o`, `reverseCircle` `o--`, `cross` `--x`, `reverseCross` `x--`, `include`, `extend`, `generalization` `--\|>`; `length` adds dashes |
+| `classDefs[]` | `{names, style}` | `classDef a,b ...` (typed style as in swimlanes) |
+| `classAssignments[]` | `{ids, classes}` | `class A,B a,b` (ids may be edge ids) |
+| `styles[]` | `{id, style}` | `style id ...` on a node, boundary or edge id |
+
+Labels, stereotypes, notes, edge labels and JSON strings are quoted and entity-encoded.
+Ids match `[A-Za-z0-9_]+` and cannot be grammar keywords (`end`, `note`, `include`,
+`package`, `LR`, ...). The builder enforces Mermaid's semantic checks: `include`/`extend`
+need use cases at both ends, `generalization` two actors or two use cases, JSON nodes take
+only `association`, `reverseAssociation` and `line`; labels fit the arrow kinds listed above
+except `reverseCircle`, `reverseCross`, `include`, `extend`, `generalization`.

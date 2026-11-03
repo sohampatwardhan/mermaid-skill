@@ -1,0 +1,238 @@
+{
+  "diagram": "graph",
+  "target": "wardley-beta",
+  "title": "Software Platform Strategy",
+  "accessibility": {
+    "title": "Platform strategy map",
+    "description": "Components of a software platform by visibility and evolution"
+  },
+  "comment": "Users and their needs",
+  "size": [
+    1100,
+    800
+  ],
+  "evolutionStages": [
+    {
+      "label": "Genesis",
+      "width": 0.25
+    },
+    {
+      "label": "Custom",
+      "width": 0.5
+    },
+    {
+      "label": "Product",
+      "width": 0.75
+    },
+    {
+      "label": "Commodity",
+      "width": 1.0
+    }
+  ],
+  "anchors": [
+    {
+      "id": "Customer",
+      "visibility": 0.9,
+      "evolution": 0.95
+    },
+    {
+      "id": "Business",
+      "label": "Business unit",
+      "visibility": 0.95,
+      "evolution": 0.63
+    }
+  ],
+  "components": [
+    {
+      "id": "MobileApp",
+      "label": "Mobile App",
+      "visibility": 0.8,
+      "evolution": 0.85,
+      "sourcing": "build"
+    },
+    {
+      "id": "WebApp",
+      "label": "Web App",
+      "visibility": 0.75,
+      "evolution": 0.8,
+      "labelOffset": [
+        -60,
+        10
+      ],
+      "sourcing": "build"
+    },
+    {
+      "id": "ApiGateway",
+      "label": "API Gateway",
+      "visibility": 0.7,
+      "evolution": 0.65,
+      "sourcing": "buy"
+    },
+    {
+      "id": "AuthService",
+      "label": "Auth Service",
+      "visibility": 0.6,
+      "evolution": 0.55,
+      "sourcing": "outsource"
+    },
+    {
+      "id": "Database",
+      "label": "Database",
+      "visibility": 0.5,
+      "evolution": 0.45,
+      "sourcing": "buy",
+      "inertia": true
+    },
+    {
+      "id": "CloudPlatform",
+      "label": "Cloud Platform",
+      "visibility": 0.3,
+      "evolution": 0.95,
+      "sourcing": "market"
+    },
+    {
+      "id": "Cache",
+      "label": "real-time cache",
+      "visibility": 0.55,
+      "evolution": 0.6
+    },
+    {
+      "id": "Storage",
+      "visibility": 0.4,
+      "evolution": 0.6
+    }
+  ],
+  "links": [
+    {
+      "from": "Customer",
+      "to": "MobileApp"
+    },
+    {
+      "from": "Customer",
+      "to": "WebApp",
+      "kind": "dependencyAlt"
+    },
+    {
+      "from": "MobileApp",
+      "to": "ApiGateway",
+      "label": "mobile traffic"
+    },
+    {
+      "from": "WebApp",
+      "to": "ApiGateway",
+      "kind": "dashed"
+    },
+    {
+      "from": "ApiGateway",
+      "to": "AuthService",
+      "kind": "flow"
+    },
+    {
+      "from": "ApiGateway",
+      "to": "Cache",
+      "kind": "flowReverse"
+    },
+    {
+      "from": "ApiGateway",
+      "to": "Database",
+      "kind": "flowBidirectional"
+    },
+    {
+      "from": "Database",
+      "to": "CloudPlatform",
+      "kind": "flow",
+      "label": "backup"
+    },
+    {
+      "from": "Database",
+      "to": "Storage"
+    },
+    {
+      "from": "Business",
+      "to": "WebApp"
+    }
+  ],
+  "evolve": [
+    {
+      "id": "ApiGateway",
+      "target": 0.85
+    },
+    {
+      "id": "Database",
+      "target": 0.75
+    }
+  ],
+  "pipelines": [
+    {
+      "parent": "Storage",
+      "stages": [
+        {
+          "label": "File System",
+          "evolution": 0.25
+        },
+        {
+          "label": "SQL DB",
+          "evolution": 0.5
+        },
+        {
+          "label": "NoSQL",
+          "evolution": 0.7
+        },
+        {
+          "label": "Cloud DB",
+          "evolution": 0.85
+        }
+      ]
+    }
+  ],
+  "accelerators": [
+    {
+      "text": "Cloud Native",
+      "visibility": 0.2,
+      "evolution": 0.85
+    }
+  ],
+  "deaccelerators": [
+    {
+      "text": "Legacy Data",
+      "visibility": 0.45,
+      "evolution": 0.35
+    }
+  ],
+  "annotationsPosition": {
+    "visibility": 0.1,
+    "evolution": 0.2
+  },
+  "annotations": [
+    {
+      "number": 1,
+      "visibility": 0.78,
+      "evolution": 0.82,
+      "text": "User touchpoints"
+    },
+    {
+      "number": 2,
+      "visibility": 0.7,
+      "evolution": 0.6,
+      "text": "Integration layer"
+    },
+    {
+      "number": 3,
+      "visibility": 0.5,
+      "evolution": 0.4,
+      "text": "Data persistence"
+    }
+  ],
+  "notes": [
+    {
+      "text": "Build mobile-first experience",
+      "visibility": 0.85,
+      "evolution": 0.9
+    },
+    {
+      "text": "Migrate to cloud-native database",
+      "visibility": 0.6,
+      "evolution": 0.5
+    }
+  ]
+}

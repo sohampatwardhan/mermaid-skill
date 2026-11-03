@@ -5883,324 +5883,1287 @@ register(Builder(
 
 # === group 5: Mermaid 12 and beta: agentflow, usecase, swimlanes, wardley, cynefin, eventmodeling ====
 
-_AGENT_SHAPES = {"task", "tool", "input", "decision", "refdoc", "action"}
+# --- shared group-5 helpers ------------------------------------------------------------------
+
+_G5_DIRECTIONS = ("TB", "TD", "BT", "LR", "RL")
 
 
-_AGENT_ARROWS = {"sequence": "-->", "reference": "-.-", "failure": "--x"}
+def _g5_list(v: Validator, obj: dict, path: str, key: str, min_items: int = 0) -> list:
+    """`obj[key]` as an array, or `[]` when the optional key is absent."""
+    if key not in obj:
+        return []
+    return v.array(obj[key], ptr(path, key), min_items)
 
 
-def render_graph_agentflow(ir: dict) -> str:
-    _require(ir, ("nodes", "edges"), "graph/agentflow-beta")
-    direction = _direction(ir, "graph/agentflow-beta", allowed=_FLOWCHART_DIRECTIONS, default="TD")
-    lines = [f"agentflow-beta {direction}"]
-    known: set[str] = set()
-    by_group: dict[str | None, list[dict]] = {}
-    for node in ir["nodes"]:
-        _require(node, ("id", "label"), "graph/agentflow-beta node")
-        by_group.setdefault(node.get("group"), []).append(node)
-    children: dict[str | None, list[dict]] = {}
-    for group in ir.get("groups", []):
-        _require(group, ("id", "label"), "graph/agentflow-beta group")
-        children.setdefault(group.get("group"), []).append(group)
+text_context(
+    "g5.color",
+    reject_patterns=((r"^(?!#[0-9A-Fa-f]{3}$|#[0-9A-Fa-f]{6}$|#[0-9A-Fa-f]{8}$|[a-z]+$)", "must be #rgb, #rrggbb, #rrggbbaa or a lowercase CSS color name"),),
+)
+text_context("g5.length", reject_patterns=((r"^(?![0-9]+(\.[0-9]+)?px$)", "must be a length like 2px"),))
+text_context("g5.dasharray", reject_patterns=((r"^(?![0-9]+( [0-9]+)*$)", "must be numbers separated by single spaces, like '5 5'"),))
 
-    def emit_node(node: dict, indent: str) -> None:
-        node_id = _identifier(node["id"], "graph/agentflow-beta node")
-        kind = node.get("kind")
-        shape = ""
-        if kind is not None:
-            if kind not in _AGENT_SHAPES:
-                raise IRError(f"graph/agentflow-beta node {node['id']!r} has unknown kind {kind!r}")
-            shape = f"@{{ shape: {kind} }}"
-        lines.append(f'{indent}{node_id}[{_quote(node["label"])}]{shape}')
-        known.add(node["id"])
-
-    def emit_flow(group: dict, indent: str) -> None:
-        group_id = _identifier(group["id"], "graph/agentflow-beta group")
-        lines.append(f'{indent}flow {group_id}[{_quote(group["label"])}]')
-        known.add(group["id"])
-        for node in by_group.pop(group["id"], []):
-            emit_node(node, indent + "    ")
-        for child in children.pop(group["id"], []):
-            emit_flow(child, indent + "    ")
-        lines.append(f"{indent}end")
-
-    for group in children.pop(None, []):
-        emit_flow(group, "    ")
-    leftover_groups = [group for group in children if group is not None]
-    if leftover_groups:
-        raise IRError(f"graph/agentflow-beta groups reference undeclared parent group(s): {leftover_groups}")
-    for node in by_group.pop(None, []):
-        emit_node(node, "    ")
-    leftover = [group for group in by_group if group is not None]
-    if leftover:
-        raise IRError(f"graph/agentflow-beta nodes reference undeclared group(s): {leftover}")
-    for edge in ir["edges"]:
-        _require(edge, ("from", "to"), "graph/agentflow-beta edge")
-        if edge["from"] not in known or edge["to"] not in known:
-            raise IRError(f"graph/agentflow-beta edge references undeclared node: {edge}")
-        arrow = _AGENT_ARROWS.get(edge.get("kind", "sequence"))
-        if arrow is None:
-            raise IRError(f"graph/agentflow-beta edge has unknown kind {edge.get('kind')!r}")
-        label = f'|{_quote(edge["label"])}|' if edge.get("label") else ""
-        lines.append(f'    {edge["from"]} {arrow}{label} {edge["to"]}')
-    return "\n".join(lines) + "\n"
-
-
-def _usecase_id(raw: str, where: str) -> str:
-    if not re.fullmatch(r"[A-Za-z0-9_]+", raw):
-        raise IRError(f"{where} id {raw!r} must be letters, digits, or underscore")
-    return raw
-
-
-def render_usecase(ir: dict) -> str:
-    _require(ir, ("actors", "usecases", "edges"), "usecase/usecase-beta")
-    lines = ["usecase-beta"]
-    direction = _direction(ir, "usecase/usecase-beta", allowed=_CARDINAL_DIRECTIONS)
-    if direction:
-        lines.append(f"    direction {direction}")
-    actors_by_group: dict[str | None, list[dict]] = {}
-    cases_by_group: dict[str | None, list[dict]] = {}
-    for actor in ir["actors"]:
-        _require(actor, ("id",), "usecase/usecase-beta actor")
-        actors_by_group.setdefault(actor.get("group"), []).append(actor)
-    for usecase in ir["usecases"]:
-        _require(usecase, ("id", "label"), "usecase/usecase-beta usecase")
-        cases_by_group.setdefault(usecase.get("group"), []).append(usecase)
-    actor_ids: set[str] = set()
-    case_ids: set[str] = set()
-
-    def emit_actor(actor: dict, indent: str) -> None:
-        actor_id = _usecase_id(actor["id"], "usecase/usecase-beta actor")
-        label = f"({_quote(actor['label'])})" if actor.get("label") else ""
-        lines.append(f"{indent}actor {actor_id}{label}")
-        actor_ids.add(actor_id)
-
-    def emit_case(usecase: dict, indent: str) -> None:
-        case_id = _usecase_id(usecase["id"], "usecase/usecase-beta usecase")
-        lines.append(f"{indent}{case_id}({_quote(usecase['label'])})")
-        case_ids.add(case_id)
-
-    for group in ir.get("groups", []):
-        _require(group, ("id", "label"), "usecase/usecase-beta group")
-        group_id = _usecase_id(group["id"], "usecase/usecase-beta group")
-        lines.append(f"    systemBoundary {group_id}({_quote(group['label'])})")
-        for actor in actors_by_group.pop(group["id"], []):
-            emit_actor(actor, "        ")
-        for usecase in cases_by_group.pop(group["id"], []):
-            emit_case(usecase, "        ")
-        lines.append("    end")
-    for actor in actors_by_group.pop(None, []):
-        emit_actor(actor, "    ")
-    for usecase in cases_by_group.pop(None, []):
-        emit_case(usecase, "    ")
-    leftover = [group for group in {**actors_by_group, **cases_by_group} if group is not None]
-    if leftover:
-        raise IRError(f"usecase/usecase-beta members reference undeclared group(s): {leftover}")
-    known = actor_ids | case_ids
-    for edge in ir["edges"]:
-        _require(edge, ("from", "to"), "usecase/usecase-beta edge")
-        if edge["from"] not in known or edge["to"] not in known:
-            raise IRError(f"usecase/usecase-beta edge references an undeclared actor or use case: {edge}")
-        kind = edge.get("kind", "association")
-        if kind == "association":
-            if edge.get("label"):
-                lines.append(f'    {edge["from"]} -- {_quote(edge["label"])} --> {edge["to"]}')
-            else:
-                lines.append(f'    {edge["from"]} --> {edge["to"]}')
-        elif kind in ("include", "extend"):
-            if edge["from"] not in case_ids or edge["to"] not in case_ids:
-                raise IRError(f"usecase/usecase-beta {kind} endpoints must both be use cases")
-            lines.append(f'    {edge["from"]} ..> : {kind} {edge["to"]}')
-        elif kind == "generalization":
-            same = (edge["from"] in actor_ids and edge["to"] in actor_ids) or (
-                edge["from"] in case_ids and edge["to"] in case_ids
-            )
-            if not same:
-                raise IRError("usecase/usecase-beta generalization must connect two actors or two use cases")
-            lines.append(f'    {edge["from"]} --|> {edge["to"]}')
-        else:
-            raise IRError(f"usecase/usecase-beta edge has unknown kind {kind!r}")
-    return "\n".join(lines) + "\n"
-
-
-_SWIMLANE_SHAPES = {
-    "terminator": "stadium",
-    "process": "rect",
-    "decision": "diamond",
-    "io": "lean-r",
-    "subprocess": "subproc",
-    "document": "doc",
-    "store": "cyl",
-    "connector": "circle",
-}
-
-_SWIMLANE_EDGES = {
-    "normal": "-->",
-    "dependency": "-->",
-    "conditional": "-.->",
-    "weak": "-.->",
-    "strong": "==>",
-}
-
-_SWIMLANE_STATUS_STYLES = {
-    "done": "fill:#9f9,stroke:#393,color:#000",
-    "ready": "fill:#9cf,stroke:#369,color:#000",
-    "blocked": "fill:#f99,stroke:#933,color:#000",
-    "pending": "fill:#eee,stroke:#999,color:#000",
+# Typed style object -> CSS property list. Values never carry raw CSS.
+_G5_STYLE_KEYS = {
+    "fill": ("fill", "g5.color"),
+    "stroke": ("stroke", "g5.color"),
+    "color": ("color", "g5.color"),
+    "strokeWidth": ("stroke-width", "g5.length"),
+    "strokeDasharray": ("stroke-dasharray", "g5.dasharray"),
 }
 
 
-def _swimlane_flowchart_body(ir: dict) -> str:
-    _require(ir, ("nodes", "edges"), "graph/flowchart")
-    ids: dict[str, str] = {}
-    lines = [f"flowchart {_direction(ir, 'graph/flowchart', allowed=_FLOWCHART_DIRECTIONS, default='TD')}"]
-    by_group: dict[str | None, list[dict]] = {}
-    for node in ir["nodes"]:
-        _require(node, ("id", "label"), "graph/flowchart node")
-        by_group.setdefault(node.get("group"), []).append(node)
-
-    used_statuses: list[str] = []
-    class_lines: list[str] = []
-
-    def emit_node(node: dict, indent: str) -> None:
-        node_id = _safe_id(node["id"], ids)
-        shape = _SWIMLANE_SHAPES.get(node.get("kind", "process"))
-        if shape is None:
-            raise IRError(f"graph/flowchart node {node['id']!r} has unknown kind {node['kind']!r}")
-        lines.append(f'{indent}{node_id}@{{ shape: {shape}, label: {_quote(node["label"])} }}')
-        status = node.get("status")
-        if status is not None:
-            if status not in _SWIMLANE_STATUS_STYLES:
-                raise IRError(f"graph/flowchart node {node['id']!r} has unknown status {status!r}")
-            if status not in used_statuses:
-                used_statuses.append(status)
-            class_lines.append(f"  class {node_id} {status}")
-
-    for group in ir.get("groups", []):
-        _require(group, ("id", "label"), "graph/flowchart group")
-        group_id = _safe_id(group["id"], ids)
-        lines.append(f'  subgraph {group_id}[{_quote(group["label"])}]')
-        for node in by_group.pop(group["id"], []):
-            emit_node(node, "    ")
-        lines.append("  end")
-    for node in by_group.pop(None, []):
-        emit_node(node, "  ")
-    leftover = [group for group in by_group if group is not None]
-    if leftover:
-        raise IRError(f"graph/flowchart nodes reference undeclared group(s): {leftover}")
-
-    for edge in ir["edges"]:
-        _require(edge, ("from", "to"), "graph/flowchart edge")
-        arrow = _SWIMLANE_EDGES.get(edge.get("kind", "normal"))
-        if arrow is None:
-            raise IRError(f"graph/flowchart edge has unknown kind {edge['kind']!r}")
-        if edge["from"] not in ids or edge["to"] not in ids:
-            raise IRError(f"graph/flowchart edge references undeclared node: {edge}")
-        label = f'|{_quote(edge["label"])}|' if edge.get("label") else ""
-        lines.append(f'  {ids[edge["from"]]} {arrow}{label} {ids[edge["to"]]}')
-
-    if used_statuses:
-        style_lines = [f"  classDef {status} {_SWIMLANE_STATUS_STYLES[status]}" for status in used_statuses]
-        lines[1:1] = style_lines  # after the `flowchart <direction>` line, before any node/subgraph
-        lines.extend(class_lines)
-    return "\n".join(lines) + "\n"
+def _g5_style(v: Validator, value: Any, path: str) -> str:
+    """`{fill, stroke, color, strokeWidth, strokeDasharray}` -> `fill:#f9f,stroke:#333`."""
+    v.fields(value, path, optional=tuple(_G5_STYLE_KEYS))
+    if not value:
+        raise v.error(path, "must set at least one style property")
+    parts = []
+    for key, (css, context) in _G5_STYLE_KEYS.items():
+        if key in value:
+            parts.append(f"{css}:{v.text(value[key], ptr(path, key), context)}")
+    return ",".join(parts)
 
 
-def render_graph_swimlane(ir: dict) -> str:
-    direction = _direction(ir, "graph/swimlane-beta", allowed=_FLOWCHART_DIRECTIONS, default="TD")
-    cloned = dict(ir)
-    cloned["direction"] = direction
-    body = _swimlane_flowchart_body(cloned)
-    return f"swimlane-beta {direction}\n" + body.split("\n", 1)[1]
+# Canonical flowchart `@{ shape: ... }` names in Mermaid 12.0.0 (see catalog/flowchart.md).
+_G5_FLOW_SHAPES = (
+    "rect", "rounded", "stadium", "subproc", "cyl", "circle", "odd", "diamond", "hex", "lean-r",
+    "lean-l", "datastore", "trap-b", "trap-t", "dbl-circ", "text", "notch-rect", "lin-rect",
+    "sm-circ", "framed-circle", "fork", "hourglass", "comment", "brace-r", "braces", "bolt", "doc",
+    "delay", "das", "lin-cyl", "curv-trap", "div-rect", "tri", "win-pane", "f-circ", "lin-doc",
+    "notch-pent", "flip-tri", "sl-rect", "docs", "processes", "flag", "bow-rect", "cross-circ",
+    "tag-doc", "tag-rect", "manual-file", "manual-input", "procs", "paper-tape",
+)
+
+# Ids for the flowchart-family lexers (agentflow, swimlanes): a bare word that is not a keyword.
+_G5_FLOW_RESERVED = frozenset(
+    {"end", "subgraph", "graph", "flowchart", "style", "linkStyle", "class", "classDef", "click",
+     "call", "href", "direction", "default", "flow", "global", "connector", "agentflow", "swimlane",
+     "accTitle", "accDescr", "interpolate"}
+)
+_G5_FLOW_ID = re.compile(r"[A-Za-z_][A-Za-z0-9_]*")
 
 
-def render_graph_wardley(ir: dict) -> str:
-    _require(ir, ("nodes", "edges"), "graph/wardley-beta")
-    lines = ["wardley-beta"]
-    if ir.get("title"):
-        lines.append(f"    title {_no_colon(ir['title'], 'graph/wardley-beta title')}")
-    names: dict[str, str] = {}
-    for node in ir["nodes"]:
-        _require(node, ("id", "kind", "visibility", "evolution"), "graph/wardley-beta node")
-        if node["kind"] not in ("anchor", "component"):
-            raise IRError(f"graph/wardley-beta node {node['id']!r} has unknown kind {node['kind']!r}")
-        visibility = float(_positive_number(node["visibility"], "wardley visibility"))
-        evolution = float(_positive_number(node["evolution"], "wardley evolution"))
-        if not 0 <= visibility <= 1 or not 0 <= evolution <= 1:
-            raise IRError(f"graph/wardley-beta node {node['id']!r} coordinates must be between 0 and 1")
-        label = _quote(node["id"]) if not re.fullmatch(r"[A-Za-z0-9_]+", str(node["id"])) else str(node["id"])
-        names[node["id"]] = label
-        lines.append(f"    {node['kind']} {label} [{visibility}, {evolution}]")
-    for edge in ir["edges"]:
-        _require(edge, ("from", "to"), "graph/wardley-beta edge")
-        if edge["from"] not in names or edge["to"] not in names:
-            raise IRError(f"graph/wardley-beta edge references undeclared node: {edge}")
-        lines.append(f"    {names[edge['from']]} -> {names[edge['to']]}")
-    return "\n".join(lines) + "\n"
+def _g5_flow_id(v: Validator, value: Any, path: str) -> str:
+    v.ident(value, path, _G5_FLOW_ID)
+    if value in _G5_FLOW_RESERVED:
+        raise v.error(path, f"{value!r} is a keyword and cannot be an id")
+    return value
 
 
-_CYNEFIN_DOMAINS = ("clear", "complicated", "complex", "chaotic", "confusion")
+# --- cynefin -------------------------------------------------------------------------------
+
+# Item badges, transition labels and the title all render Mermaid entity codes back.
+text_context("cynefin.text", encode=ENTITY)
+
+_CYNEFIN_DOMAINS = ("complex", "complicated", "clear", "chaotic", "confusion")
+_CYNEFIN_CONFIG = {
+    "width": ("number", 1, None),
+    "height": ("number", 1, None),
+    "padding": ("number", 0, None),
+    "showDomainDescriptions": ("boolean",),
+    "boundaryAmplitude": ("number", 0, None),
+    "seed": ("integer", 0, None),
+}
 
 
-def render_cynefin(ir: dict) -> str:
-    _require(ir, ("domains",), "cynefin/cynefin-beta")
-    lines = ["cynefin-beta"]
-    if ir.get("title"):
-        lines.append(f"    title {_no_colon(ir['title'], 'cynefin/cynefin-beta title')}")
-    domains = ir["domains"]
-    for name in domains:
-        if name not in _CYNEFIN_DOMAINS:
-            raise IRError(f"cynefin/cynefin-beta has unknown domain {name!r}")
-    for name in _CYNEFIN_DOMAINS:
-        items = domains.get(name)
-        if not items:
-            continue
-        lines.append(f"    {name}")
-        for item in items:
-            lines.append(f"        {_quote(_no_colon(item, 'cynefin item'))}")
-    for transition in ir.get("transitions", []):
-        _require(transition, ("from", "to"), "cynefin/cynefin-beta transition")
-        if transition["from"] not in _CYNEFIN_DOMAINS or transition["to"] not in _CYNEFIN_DOMAINS:
-            raise IRError(f"cynefin/cynefin-beta transition has an unknown domain: {transition}")
-        if transition["from"] == transition["to"]:
-            raise IRError("cynefin/cynefin-beta ignores self-loops; from and to must differ")
-        label = f' : {_quote(transition["label"])}' if transition.get("label") else ""
-        lines.append(f"    {transition['from']} --> {transition['to']}{label}")
-    return "\n".join(lines) + "\n"
-
-
-_EVENT_KINDS = {"ui", "cmd", "evt", "rmo", "pcr"}
-
-
-def render_eventmodeling(ir: dict) -> str:
-    _require(ir, ("frames",), "eventmodeling/eventmodeling")
-    if not ir["frames"]:
-        raise IRError("eventmodeling/eventmodeling requires frames")
-    lines = ["eventmodeling"]
+def _cynefin_serialize(ir: dict, keyword: str) -> str:
+    v = Validator(keyword)
+    v.fields(ir, "", ("domains",), ("title", "accessibility", "config", "transitions"))
+    lines: list[str] = []
+    if "config" in ir:
+        config = validate_config(v, ir["config"], "/config", _CYNEFIN_CONFIG)
+        if config:
+            lines += emit_frontmatter(config={"cynefin": config})
+    lines.append("cynefin-beta")
+    if "title" in ir:
+        lines.append(f"  title {v.text(ir['title'], '/title', 'cynefin.text')}")
+    lines += emit_accessibility(v, ir, "  ")
     seen: set[str] = set()
-    for frame in ir["frames"]:
-        _require(frame, ("n", "kind", "name"), "eventmodeling frame")
-        number = frame["n"]
-        if isinstance(number, bool) or not isinstance(number, int) or number < 0:
-            raise IRError(f"eventmodeling frame number must be a non-negative integer, got {number!r}")
-        key = f"{number:02d}"
-        if key in seen:
-            raise IRError(f"eventmodeling duplicate frame number {key}")
-        seen.add(key)
-        if frame["kind"] not in _EVENT_KINDS:
-            raise IRError(f"eventmodeling frame {key} has unknown kind {frame['kind']!r}")
-        if not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_.]*", str(frame["name"])):
-            raise IRError(f"eventmodeling frame {key} name {frame['name']!r} must be an identifier")
-        lines.append(f"    tf {key} {frame['kind']} {frame['name']}")
+    for i, entry in enumerate(v.array(ir["domains"], "/domains", 1)):
+        path = ptr("/domains", i)
+        v.fields(entry, path, ("domain",), ("items",))
+        name = v.enum(entry["domain"], ptr(path, "domain"), _CYNEFIN_DOMAINS)
+        v.unique(name, ptr(path, "domain"), seen, "domain")
+        lines.append(f"  {name}")
+        for j, item in enumerate(_g5_list(v, entry, path, "items")):
+            lines.append(f'    "{v.text(item, ptr(ptr(path, "items"), j), "cynefin.text")}"')
+    for i, transition in enumerate(_g5_list(v, ir, "", "transitions")):
+        path = ptr("/transitions", i)
+        v.fields(transition, path, ("from", "to"), ("label",))
+        source = v.enum(transition["from"], ptr(path, "from"), _CYNEFIN_DOMAINS)
+        target = v.enum(transition["to"], ptr(path, "to"), _CYNEFIN_DOMAINS)
+        if source == target:
+            raise v.error(ptr(path, "to"), "a self-transition is silently ignored by Mermaid; from and to must differ")
+        label = ""
+        if "label" in transition:
+            label = f' : "{v.text(transition["label"], ptr(path, "label"), "cynefin.text")}"'
+        lines.append(f"  {source} --> {target}{label}")
     return "\n".join(lines) + "\n"
 
 
-register(Builder('agentflow', 'graph', ('agentflow-beta',), legacy(render_graph_agentflow)))
-register(Builder('usecase', 'usecase', ('usecase-beta',), legacy(render_usecase)))
-register(Builder('swimlanes', 'graph', ('swimlane-beta',), legacy(render_graph_swimlane)))
-register(Builder('wardley', 'graph', ('wardley-beta',), legacy(render_graph_wardley)))
-register(Builder('cynefin', 'cynefin', ('cynefin-beta',), legacy(render_cynefin)))
-register(Builder('eventmodeling', 'eventmodeling', ('eventmodeling',), legacy(render_eventmodeling)))
+register(Builder(
+    "cynefin", "cynefin", ("cynefin-beta",), _cynefin_serialize,
+    text_fields=(
+        "/title", "/domains/*/items/*", "/transitions/*/label",
+        "/accessibility/title", "/accessibility/description",
+    ),
+    features={
+        "cynefin.keyword": "/target=cynefin-beta",
+        "cynefin.title": "/title",
+        "cynefin.domain-complex": "/domains/*/domain=complex",
+        "cynefin.domain-complicated": "/domains/*/domain=complicated",
+        "cynefin.domain-clear": "/domains/*/domain=clear",
+        "cynefin.domain-chaotic": "/domains/*/domain=chaotic",
+        "cynefin.domain-confusion": "/domains/*/domain=confusion",
+        "cynefin.domain-empty": "/domains/*/items=[]",
+        "cynefin.item": "/domains/*/items/*",
+        "cynefin.transition": "/transitions/*/to",
+        "cynefin.transition-label": "/transitions/*/label",
+        "cynefin.acc-title": "/accessibility/title",
+        "cynefin.acc-descr": "/accessibility/description",
+    },
+    probes={"object": "/domains/0", "number": "/config/seed", "enum": "/domains/0/domain", "ref": None},
+))
+
+
+# --- eventmodeling -------------------------------------------------------------------------
+
+# Data values are shown as text in the frame box and render entity codes back.
+text_context("eventmodeling.value", encode=ENTITY, allow_empty=True)
+
+_EVENTMODELING_TYPES = ("ui", "pcr", "processor", "cmd", "command", "rmo", "readmodel", "evt", "event")
+_EVENTMODELING_DATA_TYPES = ("json", "jsobj", "figma", "salt", "uri", "md", "html", "text")
+_EVENTMODELING_FORMS = ("compact", "relaxed")
+_EVENTMODELING_ENTITY = re.compile(r"[A-Za-z_][A-Za-z0-9_]*(?:\.[A-Za-z_][A-Za-z0-9_]*)*")
+_EVENTMODELING_NUMBER = re.compile(r"[0-9]+")
+_EVENTMODELING_RESERVED = frozenset({"tf", "rf", "timeframe", "resetframe", "data", *_EVENTMODELING_TYPES})
+
+
+def _eventmodeling_data(v: Validator, fields: Any, path: str) -> list[str]:
+    """`[{key, value, raw?}]` -> `key: 'text'` / `key: 12.5` / `key: string` (raw type name)."""
+    out = []
+    for i, item in enumerate(v.array(fields, path, 1)):
+        at = ptr(path, i)
+        v.fields(item, at, ("key", "value"), ("raw",))
+        key = v.ident(item["key"], ptr(at, "key"))
+        raw = v.boolean(item["raw"], ptr(at, "raw")) if "raw" in item else False
+        value, value_at = item["value"], ptr(at, "value")
+        if raw:
+            text = v.ident(value, value_at)
+        elif isinstance(value, str):
+            text = f"'{v.text(value, value_at, 'eventmodeling.value')}'"
+        else:
+            text = v.number(value, value_at)
+        out.append(f"{key}: {text}")
+    return out
+
+
+def _eventmodeling_entity(v: Validator, value: Any, path: str) -> str:
+    v.ident(value, path, _EVENTMODELING_ENTITY)
+    if value in _EVENTMODELING_RESERVED:
+        raise v.error(path, f"{value!r} is a keyword and cannot be an entity name")
+    return value
+
+
+def _eventmodeling_serialize(ir: dict, keyword: str) -> str:
+    v = Validator(keyword)
+    v.fields(ir, "", ("timeframes",), ("dataBlocks",))
+    frames = v.array(ir["timeframes"], "/timeframes", 1)
+    blocks = _g5_list(v, ir, "", "dataBlocks")
+    block_ids: set[str] = set()
+    block_lines: list[str] = []
+    for i, block in enumerate(blocks):
+        path = ptr("/dataBlocks", i)
+        v.fields(block, path, ("id", "fields"), ("dataType",))
+        block_id = v.unique(v.ident(block["id"], ptr(path, "id")), ptr(path, "id"), block_ids)
+        tag = ""
+        if "dataType" in block:
+            tag = f"`{v.enum(block['dataType'], ptr(path, 'dataType'), _EVENTMODELING_DATA_TYPES)}`"
+        block_lines.append(f"data {block_id} {tag}{{")
+        block_lines += [f"  {field}" for field in _eventmodeling_data(v, block["fields"], ptr(path, "fields"))]
+        block_lines.append("}")
+    numbers: set[str] = set()
+    for i, frame in enumerate(frames):
+        path = ptr("/timeframes", i)
+        v.fields(frame, path, ("number", "type", "entity"),
+                 ("reset", "form", "data", "dataType", "dataRef", "relations"))
+        number = v.ident(frame["number"], ptr(path, "number"), _EVENTMODELING_NUMBER)
+        v.unique(number, ptr(path, "number"), numbers, "frame number")
+    lines = ["eventmodeling"]
+    for i, frame in enumerate(frames):
+        path = ptr("/timeframes", i)
+        reset = v.boolean(frame["reset"], ptr(path, "reset")) if "reset" in frame else False
+        form = v.enum(frame.get("form", "compact"), ptr(path, "form"), _EVENTMODELING_FORMS)
+        word = {("compact", False): "tf", ("compact", True): "rf",
+                ("relaxed", False): "timeframe", ("relaxed", True): "resetframe"}[(form, reset)]
+        kind = v.enum(frame["type"], ptr(path, "type"), _EVENTMODELING_TYPES)
+        entity = _eventmodeling_entity(v, frame["entity"], ptr(path, "entity"))
+        line = f"{word} {frame['number']} {kind} {entity}"
+        if "data" in frame and "dataRef" in frame:
+            raise v.error(ptr(path, "dataRef"), "use either inline data or dataRef, not both")
+        if "dataType" in frame and "data" not in frame:
+            raise v.error(ptr(path, "dataType"), "dataType applies to inline data; set it on the data block instead")
+        if "relations" in frame and ("data" in frame or "dataRef" in frame):
+            raise v.error(ptr(path, "relations"), "relations cannot follow data or dataRef (Mermaid rejects it)")
+        if "data" in frame:
+            tag = ""
+            if "dataType" in frame:
+                tag = f"`{v.enum(frame['dataType'], ptr(path, 'dataType'), _EVENTMODELING_DATA_TYPES)}`"
+            fields = _eventmodeling_data(v, frame["data"], ptr(path, "data"))
+            line += f" {tag}{{ {', '.join(fields)} }}"
+        if "dataRef" in frame:
+            line += f" [[{v.ref(frame['dataRef'], ptr(path, 'dataRef'), block_ids)}]]"
+        for j, target in enumerate(_g5_list(v, frame, path, "relations", 1)):
+            line += f" ->> {v.ref(target, ptr(ptr(path, 'relations'), j), numbers)}"
+        lines.append(line)
+    return "\n".join(lines + block_lines) + "\n"
+
+
+register(Builder(
+    "eventmodeling", "eventmodeling", ("eventmodeling",), _eventmodeling_serialize,
+    text_fields=("/timeframes/*/data/*/value", "/dataBlocks/*/fields/*/value"),
+    features={
+        "eventmodeling.keyword": "/target=eventmodeling",
+        "eventmodeling.timeframe-compact": "/timeframes/*/form=compact",
+        "eventmodeling.timeframe-relaxed": "/timeframes/*/form=relaxed",
+        "eventmodeling.resetframe-compact": "/timeframes/*/reset=true",
+        "eventmodeling.resetframe-relaxed": "/timeframes/*/reset=true",
+        "eventmodeling.type-ui": "/timeframes/*/type=ui",
+        "eventmodeling.type-pcr": "/timeframes/*/type=pcr",
+        "eventmodeling.type-processor": "/timeframes/*/type=processor",
+        "eventmodeling.type-cmd": "/timeframes/*/type=cmd",
+        "eventmodeling.type-command": "/timeframes/*/type=command",
+        "eventmodeling.type-rmo": "/timeframes/*/type=rmo",
+        "eventmodeling.type-readmodel": "/timeframes/*/type=readmodel",
+        "eventmodeling.type-evt": "/timeframes/*/type=evt",
+        "eventmodeling.type-event": "/timeframes/*/type=event",
+        "eventmodeling.entity-reuse": "/timeframes/*/entity=ItemAdded",
+        "eventmodeling.namespace": "/timeframes/*/entity=External.InventoryChanged",
+        "eventmodeling.inline-data": "/timeframes/*/data/*/key",
+        "eventmodeling.data-ref": "/timeframes/*/dataRef",
+        "eventmodeling.data-block": "/dataBlocks/*/fields/*/key",
+        "eventmodeling.multiple-relations": "/timeframes/*/relations/1",
+        "eventmodeling.data-type-json": "/timeframes/*/dataType=json",
+        "eventmodeling.data-type-jsobj": "/timeframes/*/dataType=jsobj",
+        "eventmodeling.data-type-figma": "/timeframes/*/dataType=figma",
+        "eventmodeling.data-type-salt": "/timeframes/*/dataType=salt",
+        "eventmodeling.data-type-uri": "/timeframes/*/dataType=uri",
+        "eventmodeling.data-type-md": "/timeframes/*/dataType=md",
+        "eventmodeling.data-type-html": "/timeframes/*/dataType=html",
+        "eventmodeling.data-type-text": "/dataBlocks/*/dataType=text",
+    },
+    probes={
+        "object": "/timeframes/1",
+        "number": "/dataBlocks/0/fields/2/value",
+        "enum": "/timeframes/0/type",
+        "ref": "/timeframes/2/dataRef",
+    },
+))
+
+
+# --- wardley -------------------------------------------------------------------------------
+
+# Every wardley text is emitted in a quoted or line-final position that renders entity codes
+# back; the flow label sits in single quotes, so `'` is encoded there too.
+text_context("wardley.text", encode=ENTITY)
+text_context("wardley.flow-label", encode={**ENTITY, "'": "#39;"})
+
+_WARDLEY_SOURCING = ("build", "buy", "outsource", "market")
+_WARDLEY_LINKS = {
+    "dependency": "->",
+    "dependencyAlt": "-->",
+    "dashed": "-.->",
+    "flow": "+>",
+    "flowReverse": "+<",
+    "flowBidirectional": "+<>",
+}
+_WARDLEY_ID = re.compile(r"[A-Za-z_][A-Za-z0-9_]*")
+
+
+def _wardley_coord(v: Validator, value: Any, path: str) -> str:
+    """A 0..1 coordinate; Mermaid needs a leading digit and a decimal point (`1.0`, not `1`)."""
+    text = v.number(value, path, 0, 1)
+    return text if "." in text else f"{text}.0"
+
+
+def _wardley_point(v: Validator, obj: dict, path: str) -> str:
+    return f"[{_wardley_coord(v, obj['visibility'], ptr(path, 'visibility'))}, " \
+           f"{_wardley_coord(v, obj['evolution'], ptr(path, 'evolution'))}]"
+
+
+def _wardley_pair(v: Validator, value: Any, path: str, *, integer: bool, minimum: float | None) -> str:
+    pair = v.array(value, path, 2)
+    if len(pair) != 2:
+        raise v.error(path, "must have exactly 2 items")
+    return ", ".join(v.number(item, ptr(path, i), minimum, integer=integer) for i, item in enumerate(pair))
+
+
+def _wardley_serialize(ir: dict, keyword: str) -> str:
+    v = Validator(keyword)
+    v.fields(ir, "", (), (
+        "title", "accessibility", "comment", "size", "evolutionStages", "anchors", "components",
+        "pipelines", "links", "evolve", "notes", "accelerators", "deaccelerators",
+        "annotationsPosition", "annotations",
+    ))
+    lines = ["wardley-beta"]
+    if "title" in ir:
+        lines.append(f"title {v.text(ir['title'], '/title', 'wardley.text')}")
+    lines += emit_accessibility(v, ir, "")
+    if "size" in ir:
+        lines.append(f"size [{_wardley_pair(v, ir['size'], '/size', integer=True, minimum=1)}]")
+    stages = _g5_list(v, ir, "", "evolutionStages", 2)
+    if stages:
+        parts = []
+        for i, stage in enumerate(stages):
+            path = ptr("/evolutionStages", i)
+            v.fields(stage, path, ("label",), ("dualLabel", "width"))
+            part = f'"{v.text(stage["label"], ptr(path, "label"), "wardley.text")}"'
+            if "dualLabel" in stage:
+                if "width" in stage:
+                    raise v.error(ptr(path, "width"), "a stage with a dualLabel cannot also set a width (Mermaid rejects it)")
+                part += f' / "{v.text(stage["dualLabel"], ptr(path, "dualLabel"), "wardley.text")}"'
+            if "width" in stage:
+                part += f"@{_wardley_coord(v, stage['width'], ptr(path, 'width'))}"
+            parts.append(part)
+        lines.append("evolution " + " -> ".join(parts))
+    lines += emit_comment(v, ir, "", "")
+    names: dict[str, str] = {}  # IR id -> quoted, encoded Mermaid name
+    shown: dict[str, str] = {}  # encoded name -> pointer of its declaration
+    components: set[str] = set()
+
+    def declare(item: dict, path: str) -> str:
+        item_id = v.ident(item["id"], ptr(path, "id"), _WARDLEY_ID)
+        if item_id in names:
+            raise v.error(ptr(path, "id"), f"duplicate id {json.dumps(item_id)}")
+        at = ptr(path, "label") if "label" in item else ptr(path, "id")
+        name = f'"{v.text(item.get("label", item_id), at, "wardley.text")}"'
+        if name in shown:
+            raise v.error(at, f"name is already used at {shown[name]}; Mermaid would merge them")
+        shown[name] = at
+        names[item_id] = name
+        return name
+
+    for i, anchor in enumerate(_g5_list(v, ir, "", "anchors")):
+        path = ptr("/anchors", i)
+        v.fields(anchor, path, ("id", "visibility", "evolution"), ("label",))
+        lines.append(f"anchor {declare(anchor, path)} {_wardley_point(v, anchor, path)}")
+    for i, comp in enumerate(_g5_list(v, ir, "", "components")):
+        path = ptr("/components", i)
+        v.fields(comp, path, ("id", "visibility", "evolution"), ("label", "labelOffset", "sourcing", "inertia"))
+        line = f"component {declare(comp, path)} {_wardley_point(v, comp, path)}"
+        components.add(comp["id"])
+        if "labelOffset" in comp:
+            line += f" label [{_wardley_pair(v, comp['labelOffset'], ptr(path, 'labelOffset'), integer=False, minimum=None)}]"
+        if "sourcing" in comp:
+            line += f" ({v.enum(comp['sourcing'], ptr(path, 'sourcing'), _WARDLEY_SOURCING)})"
+        if "inertia" in comp and v.boolean(comp["inertia"], ptr(path, "inertia")):
+            line += " (inertia)"
+        lines.append(line)
+    for i, pipeline in enumerate(_g5_list(v, ir, "", "pipelines")):
+        path = ptr("/pipelines", i)
+        v.fields(pipeline, path, ("parent", "stages"))
+        parent = v.ref(pipeline["parent"], ptr(path, "parent"), components)
+        lines.append(f"pipeline {names[parent]} {{")
+        for j, stage in enumerate(v.array(pipeline["stages"], ptr(path, "stages"), 1)):
+            at = ptr(ptr(path, "stages"), j)
+            v.fields(stage, at, ("label", "evolution"))
+            name = f'"{v.text(stage["label"], ptr(at, "label"), "wardley.text")}"'
+            if name in shown:
+                raise v.error(ptr(at, "label"), f"name is already used at {shown[name]}; Mermaid would merge them")
+            shown[name] = ptr(at, "label")
+            lines.append(f"  component {name} [{_wardley_coord(v, stage['evolution'], ptr(at, 'evolution'))}]")
+        lines.append("}")
+    for i, link in enumerate(_g5_list(v, ir, "", "links")):
+        path = ptr("/links", i)
+        v.fields(link, path, ("from", "to"), ("kind", "label"))
+        source = names[v.ref(link["from"], ptr(path, "from"), names)]
+        target = names[v.ref(link["to"], ptr(path, "to"), names)]
+        kind = v.enum(link.get("kind", "dependency"), ptr(path, "kind"), _WARDLEY_LINKS)
+        if "label" not in link:
+            lines.append(f"{source} {kind} {target}")
+        elif link.get("kind", "dependency") == "flow":
+            label = v.text(link["label"], ptr(path, "label"), "wardley.flow-label")
+            lines.append(f"{source} +'{label}'> {target}")
+        elif link.get("kind", "dependency") in ("dependency", "dependencyAlt", "dashed"):
+            lines.append(f"{source} {kind} {target}; {v.text(link['label'], ptr(path, 'label'), 'wardley.text')}")
+        else:
+            raise v.error(ptr(path, "label"), "only dependency and flow links take a label")
+    for i, evolve in enumerate(_g5_list(v, ir, "", "evolve")):
+        path = ptr("/evolve", i)
+        v.fields(evolve, path, ("id", "target"))
+        name = names[v.ref(evolve["id"], ptr(path, "id"), components)]
+        lines.append(f"evolve {name} {_wardley_coord(v, evolve['target'], ptr(path, 'target'))}")
+    for key in ("accelerators", "deaccelerators"):
+        for i, force in enumerate(_g5_list(v, ir, "", key)):
+            path = ptr(f"/{key}", i)
+            v.fields(force, path, ("text", "visibility", "evolution"))
+            text = v.text(force["text"], ptr(path, "text"), "wardley.text")
+            lines.append(f'{key[:-1]} "{text}" {_wardley_point(v, force, path)}')
+    if "annotationsPosition" in ir:
+        v.fields(ir["annotationsPosition"], "/annotationsPosition", ("visibility", "evolution"))
+        lines.append(f"annotations {_wardley_point(v, ir['annotationsPosition'], '/annotationsPosition')}")
+    numbers: set[str] = set()
+    for i, note in enumerate(_g5_list(v, ir, "", "annotations")):
+        path = ptr("/annotations", i)
+        v.fields(note, path, ("number", "visibility", "evolution", "text"))
+        number = v.number(note["number"], ptr(path, "number"), 1, integer=True)
+        v.unique(number, ptr(path, "number"), numbers, "annotation number")
+        text = v.text(note["text"], ptr(path, "text"), "wardley.text")
+        lines.append(f'annotation {number},{_wardley_point(v, note, path)} "{text}"')
+    for i, note in enumerate(_g5_list(v, ir, "", "notes")):
+        path = ptr("/notes", i)
+        v.fields(note, path, ("text", "visibility", "evolution"))
+        text = v.text(note["text"], ptr(path, "text"), "wardley.text")
+        lines.append(f'note "{text}" {_wardley_point(v, note, path)}')
+    if not names:
+        raise v.error("", "a map needs at least one anchor or component")
+    return "\n".join(lines) + "\n"
+
+
+register(Builder(
+    "wardley", "graph", ("wardley-beta",), _wardley_serialize,
+    text_fields=(
+        "/title", "/comment", "/evolutionStages/*/label", "/evolutionStages/*/dualLabel",
+        "/anchors/*/label", "/components/*/label", "/pipelines/*/stages/*/label",
+        "/links/*/label", "/notes/*/text", "/annotations/*/text", "/accelerators/*/text",
+        "/deaccelerators/*/text", "/accessibility/title", "/accessibility/description",
+    ),
+    features={
+        "wardley.keyword": "/target=wardley-beta",
+        "wardley.title": "/title",
+        "wardley.size": "/size/1",
+        "wardley.component": "/components/*/visibility",
+        "wardley.component-quoted": "/components/*/label",
+        "wardley.component-hyphen": "/components/*/label=real-time cache",
+        "wardley.component-label-offset": "/components/*/labelOffset/1",
+        "wardley.anchor": "/anchors/*/visibility",
+        "wardley.inertia": "/components/*/inertia=true",
+        "wardley.source-build": "/components/*/sourcing=build",
+        "wardley.source-buy": "/components/*/sourcing=buy",
+        "wardley.source-outsource": "/components/*/sourcing=outsource",
+        "wardley.source-market": "/components/*/sourcing=market",
+        "wardley.link": "/links/*/from",
+        "wardley.link-alt": "/links/*/kind=dependencyAlt",
+        "wardley.link-annotation": "/links/*/label",
+        "wardley.link-dashed": "/links/*/kind=dashed",
+        "wardley.flow": "/links/*/kind=flow",
+        "wardley.flow-reverse": "/links/*/kind=flowReverse",
+        "wardley.flow-bidirectional": "/links/*/kind=flowBidirectional",
+        "wardley.flow-labeled": "/links/*/kind=flow",
+        "wardley.evolve": "/evolve/*/target",
+        "wardley.pipeline": "/pipelines/*/parent",
+        "wardley.pipeline-component": "/pipelines/*/stages/*/evolution",
+        "wardley.evolution-stages": "/evolutionStages/*/label",
+        "wardley.evolution-dual-labels": "/evolutionStages/*/dualLabel",
+        "wardley.evolution-widths": "/evolutionStages/*/width",
+        "wardley.note": "/notes/*/text",
+        "wardley.annotations": "/annotationsPosition/visibility",
+        "wardley.annotation": "/annotations/*/number",
+        "wardley.accelerator": "/accelerators/*/text",
+        "wardley.deaccelerator": "/deaccelerators/*/text",
+        "wardley.comment": "/comment",
+    },
+    probes={
+        "object": "/components/0",
+        "number": "/components/0/visibility",
+        "enum": "/components/0/sourcing",
+        "ref": "/links/0/to",
+    },
+))
+
+
+# --- swimlanes -----------------------------------------------------------------------------
+
+# Labels sit in double quotes (node brackets, `@{ label }`, lane titles, `|edge|` text) and
+# render entity codes back. Markdown labels sit in "`...`"; `*` and `_` stay Markdown.
+text_context("swimlanes.label", encode=ENTITY)
+
+_SWIMLANES_KINDS = {
+    "rect": ('["', '"]'),
+    "round": ('("', '")'),
+    "stadium": ('(["', '"])'),
+    "decision": ('{"', '"}'),
+    "circle": ('(("', '"))'),
+}
+_SWIMLANES_EDGES = {"arrow": "-->", "line": "---", "dotted": "-.->", "thick": "==>"}
+
+
+def _swimlanes_hop(v: Validator, hop: dict, path: str, known: set[str]) -> str:
+    """` --> target` / ` -->|"label"| target` for one edge or chain hop."""
+    arrow = v.enum(hop.get("kind", "arrow"), ptr(path, "kind"), _SWIMLANES_EDGES)
+    label = ""
+    if "label" in hop:
+        label = f'|"{v.text(hop["label"], ptr(path, "label"), "swimlanes.label")}"|'
+    return f" {arrow}{label} {v.ref(hop['to'], ptr(path, 'to'), known)}"
+
+
+def _swimlanes_serialize(ir: dict, keyword: str) -> str:
+    v = Validator(keyword)
+    v.fields(ir, "", ("nodes",), ("direction", "accessibility", "comment", "groups", "edges", "classDefs"))
+    header = "swimlane-beta"
+    if "direction" in ir:
+        header += f" {v.enum(ir['direction'], '/direction', _G5_DIRECTIONS)}"
+    lines = [header, *emit_accessibility(v, ir, "  "), *emit_comment(v, ir, "", "  ")]
+    ids: set[str] = set()
+    class_names: set[str] = set()
+    class_lines: list[str] = []
+    for i, cdef in enumerate(_g5_list(v, ir, "", "classDefs")):
+        path = ptr("/classDefs", i)
+        v.fields(cdef, path, ("name", "style"))
+        name = v.unique(v.ident(cdef["name"], ptr(path, "name")), ptr(path, "name"), class_names, "class name")
+        class_lines.append(f"  classDef {name} {_g5_style(v, cdef['style'], ptr(path, 'style'))};")
+    groups = _g5_list(v, ir, "", "groups")
+    group_ids: set[str] = set()
+    for i, group in enumerate(groups):
+        path = ptr("/groups", i)
+        v.fields(group, path, ("id",), ("label",))
+        v.unique(_g5_flow_id(v, group["id"], ptr(path, "id")), ptr(path, "id"), ids)
+        group_ids.add(group["id"])
+    members: dict[str | None, list[str]] = {}
+    assignments: list[str] = []
+    for i, node in enumerate(v.array(ir["nodes"], "/nodes", 1)):
+        path = ptr("/nodes", i)
+        v.fields(node, path, ("id",), ("label", "markdown", "kind", "shape", "group", "class"))
+        node_id = v.unique(_g5_flow_id(v, node["id"], ptr(path, "id")), ptr(path, "id"), ids)
+        if ("label" in node) == ("markdown" in node):
+            raise v.error(ptr(path, "label"), "set exactly one of label or markdown")
+        if "kind" in node and "shape" in node:
+            raise v.error(ptr(path, "shape"), "set either kind or shape, not both")
+        if "label" in node:
+            text = v.text(node["label"], ptr(path, "label"), "swimlanes.label")
+        else:
+            text = f"`{v.text(node['markdown'], ptr(path, 'markdown'), 'swimlanes.label')}`"
+        if "shape" in node:
+            if "markdown" in node:
+                raise v.error(ptr(path, "markdown"), "a shape node takes a plain label")
+            shape = v.enum(node["shape"], ptr(path, "shape"), _G5_FLOW_SHAPES)
+            decl = f'{node_id}@{{ shape: {shape}, label: "{text}" }}'
+        else:
+            left, right = v.enum(node.get("kind", "rect"), ptr(path, "kind"), _SWIMLANES_KINDS)
+            decl = f"{node_id}{left}{text}{right}"
+        group = v.ref(node["group"], ptr(path, "group"), group_ids) if "group" in node else None
+        members.setdefault(group, []).append(decl)
+        if "class" in node:
+            assignments.append(f"  class {node_id} {v.ref(node['class'], ptr(path, 'class'), class_names)};")
+    nodes = ids - group_ids
+    for i, group in enumerate(groups):
+        path = ptr("/groups", i)
+        title = ""
+        if "label" in group:
+            title = f' ["{v.text(group["label"], ptr(path, "label"), "swimlanes.label")}"]'
+        lines.append(f"  subgraph {group['id']}{title}")
+        lines += [f"    {decl}" for decl in members.get(group["id"], [])]
+        lines.append("  end")
+    lines += [f"  {decl}" for decl in members.get(None, [])]
+    for i, edge in enumerate(_g5_list(v, ir, "", "edges")):
+        path = ptr("/edges", i)
+        v.fields(edge, path, ("from", "to"), ("kind", "label", "then"))
+        line = f"  {v.ref(edge['from'], ptr(path, 'from'), nodes)}{_swimlanes_hop(v, edge, path, nodes)}"
+        for j, hop in enumerate(_g5_list(v, edge, path, "then", 1)):
+            at = ptr(ptr(path, "then"), j)
+            v.fields(hop, at, ("to",), ("kind", "label"))
+            line += _swimlanes_hop(v, hop, at, nodes)
+        lines.append(line)
+    return "\n".join(lines + class_lines + assignments) + "\n"
+
+
+register(Builder(
+    "swimlanes", "graph", ("swimlane-beta",), _swimlanes_serialize,
+    text_fields=(
+        "/groups/*/label", "/nodes/*/label", "/nodes/*/markdown", "/edges/*/label",
+        "/edges/*/then/*/label", "/comment", "/accessibility/title", "/accessibility/description",
+    ),
+    features={
+        "swimlanes.keyword": "/target=swimlane-beta",
+        "swimlanes.direction-tb": "/direction=TB",
+        "swimlanes.direction-td": "/direction=TD",
+        "swimlanes.direction-bt": "/direction=BT",
+        "swimlanes.direction-lr": "/direction=LR",
+        "swimlanes.direction-rl": "/direction=RL",
+        "swimlanes.lane": "/groups/*/id",
+        "swimlanes.lane-id-label": "/groups/*/label",
+        "swimlanes.node-rect": "/nodes/*/kind=rect",
+        "swimlanes.node-rounded": "/nodes/*/kind=round",
+        "swimlanes.node-stadium": "/nodes/*/kind=stadium",
+        "swimlanes.node-decision": "/nodes/*/kind=decision",
+        "swimlanes.node-circle": "/nodes/*/kind=circle",
+        "swimlanes.node-shape-metadata": "/nodes/*/shape",
+        "swimlanes.markdown-string": "/nodes/*/markdown",
+        "swimlanes.edge-arrow": "/edges/*/kind=arrow",
+        "swimlanes.edge-line": "/edges/*/kind=line",
+        "swimlanes.edge-label": "/edges/*/label",
+        "swimlanes.edge-dotted": "/edges/*/kind=dotted",
+        "swimlanes.edge-thick": "/edges/*/kind=thick",
+        "swimlanes.edge-chain": "/edges/*/then/*/to",
+        "swimlanes.edge-cross-lane": "/edges/*/to=triage",
+        "swimlanes.classdef": "/classDefs/*/style/fill",
+        "swimlanes.class": "/nodes/*/class",
+        "swimlanes.acc-title": "/accessibility/title",
+        "swimlanes.acc-descr": "/accessibility/description",
+    },
+    probes={"object": "/nodes/0", "number": None, "enum": "/nodes/0/kind", "ref": "/edges/0/to"},
+))
+
+
+# --- agentflow -----------------------------------------------------------------------------
+
+# Displayed labels (node brackets, `@{ label }`, flow and connector titles, `|edge|` text)
+# render entity codes back. Metadata values are not displayed, so an entity code there could
+# not be checked: they are emitted verbatim inside YAML double quotes, and characters that
+# YAML or Mermaid's entity pass would change are rejected.
+text_context("agentflow.label", encode=ENTITY)
+text_context(
+    "agentflow.meta",
+    reject='"\\',
+    reject_patterns=((r"#\w+;", "an entity-like '#name;' would be decoded by Mermaid"),),
+)
+text_context("agentflow.title")
+
+_AGENTFLOW_ALIASES = ("task", "tool", "input", "decision", "refdoc", "action")
+_AGENTFLOW_SHAPES = _AGENTFLOW_ALIASES + _G5_FLOW_SHAPES
+_AGENTFLOW_EDGES = {"sequence": "-->", "reference": "-.-", "failure": "--x"}
+_AGENTFLOW_CURVES = ("basis", "bumpX", "bumpY", "cardinal", "catmullRom", "linear", "monotoneX",
+                     "monotoneY", "natural", "step", "stepAfter", "stepBefore")
+_AGENTFLOW_ALGORITHMS = ("elk.layered", "elk.rectpacking", "elk.force", "elk.mrtree", "elk.stress",
+                         "elk.radial", "elk.box", "elk.disco", "elk.sporeOverlap", "elk.sporeCompaction")
+_AGENTFLOW_META = ("description", "instruction", "model", "params", "returns")
+_AGENTFLOW_NODE_META = _AGENTFLOW_META + ("value", "example", "connectorRef")
+_AGENTFLOW_RESERVED_META = frozenset(
+    {"shape", "label", "labelType", "view", "algorithm", "curve", "animate", "animation", "protocol",
+     "endpoint", "class", "style", "icon", "img", "w", "h", "__proto__", "constructor", "prototype",
+     *_AGENTFLOW_NODE_META}
+)
+_AGENTFLOW_CONFIG = {
+    "titleTopMargin": ("number", 0, None),
+    "diagramPadding": ("number", 0, None),
+    "nodeSpacing": ("number", 0, None),
+    "rankSpacing": ("number", 0, None),
+    "useMaxWidth": ("boolean",),
+}
+
+
+def _agentflow_meta(v: Validator, obj: dict, path: str, keys: tuple[str, ...]) -> list[str]:
+    """Typed metadata keys plus `custom: {key: string | number | boolean}` -> YAML pairs."""
+    pairs = []
+    for key in keys:
+        if key in obj:
+            pairs.append(f'{key}: "{v.text(obj[key], ptr(path, key), "agentflow.meta")}"')
+    if "custom" in obj:
+        at = ptr(path, "custom")
+        custom = v.obj_map(obj["custom"], at)
+        if not custom:
+            raise v.error(at, "must have at least one key")
+        for key, value in custom.items():
+            key_at = ptr(at, key)
+            if not isinstance(key, str) or not _IDENT.fullmatch(key):
+                raise v.error(key_at, "custom metadata keys must be identifiers")
+            if key in _AGENTFLOW_RESERVED_META:
+                raise v.error(key_at, f"{key!r} is a reserved metadata key; use the typed field")
+            if isinstance(value, bool):
+                text = "true" if value else "false"
+            elif isinstance(value, str):
+                text = f'"{v.text(value, key_at, "agentflow.meta")}"'
+            else:
+                text = v.number(value, key_at)
+            pairs.append(f"{key}: {text}")
+    return pairs
+
+
+def _agentflow_hop(v: Validator, hop: dict, path: str, known: set[str], edge_id: str = "") -> str:
+    arrow = v.enum(hop.get("kind", "sequence"), ptr(path, "kind"), _AGENTFLOW_EDGES)
+    label = ""
+    if "label" in hop:
+        label = f'|"{v.text(hop["label"], ptr(path, "label"), "agentflow.label")}"|'
+    prefix = f"{edge_id}@" if edge_id else ""
+    return f" {prefix}{arrow}{label} {v.ref(hop['to'], ptr(path, 'to'), known)}"
+
+
+def _agentflow_serialize(ir: dict, keyword: str) -> str:
+    v = Validator(keyword)
+    v.fields(ir, "", ("nodes",), (
+        "direction", "title", "config", "accessibility", "connectors", "flows", "edges",
+    ))
+    config = validate_config(v, ir["config"], "/config", _AGENTFLOW_CONFIG) if "config" in ir else {}
+    title = v.text(ir["title"], "/title", "agentflow.title") if "title" in ir else None
+    lines = emit_frontmatter(title, {"agentflow": config} if config else None)
+    header = "agentflow-beta"
+    if "direction" in ir:
+        header += f" {v.enum(ir['direction'], '/direction', _G5_DIRECTIONS)}"
+    lines += [header, *emit_accessibility(v, ir, "  ")]
+    ids: set[str] = set()
+
+    for i, conn in enumerate(_g5_list(v, ir, "", "connectors")):
+        path = ptr("/connectors", i)
+        v.fields(conn, path, ("id", "label"), ("protocol", "endpoint", "description", "custom"))
+        conn_id = v.unique(_g5_flow_id(v, conn["id"], ptr(path, "id")), ptr(path, "id"), ids)
+        lines.append(f'  connector {conn_id}["{v.text(conn["label"], ptr(path, "label"), "agentflow.label")}"]')
+        meta = _agentflow_meta(v, conn, path, ("protocol", "endpoint", "description"))
+        if meta:
+            lines.append(f"  {conn_id}@{{ {', '.join(meta)} }}")
+
+    flows = _g5_list(v, ir, "", "flows")
+    flow_ids: set[str] = set()
+    for i, flow in enumerate(flows):
+        path = ptr("/flows", i)
+        v.fields(flow, path, ("id", "label"), ("parent", "view", "algorithm", "custom", *_AGENTFLOW_META))
+        flow_ids.add(v.unique(_g5_flow_id(v, flow["id"], ptr(path, "id")), ptr(path, "id"), ids))
+    children: dict[str | None, list[int]] = {}
+    for i, flow in enumerate(flows):
+        path = ptr("/flows", i)
+        parent = v.ref(flow["parent"], ptr(path, "parent"), flow_ids) if "parent" in flow else None
+        children.setdefault(parent, []).append(i)
+
+    nodes = v.array(ir["nodes"], "/nodes", 1)
+    node_ids: set[str] = set()
+    in_flow: dict[str | None, list[list[str]]] = {}
+    global_nodes: list[list[str]] = []
+    for i, node in enumerate(nodes):
+        path = ptr("/nodes", i)
+        v.fields(node, path, ("id",), (
+            "label", "metaLabel", "labelType", "shape", "flow", "global", "metadataBlock", "custom",
+            *_AGENTFLOW_NODE_META,
+        ))
+        node_id = v.unique(_g5_flow_id(v, node["id"], ptr(path, "id")), ptr(path, "id"), ids)
+        node_ids.add(node_id)
+        if ("label" in node) == ("metaLabel" in node):
+            raise v.error(ptr(path, "label"), "set exactly one of label (bracket) or metaLabel (metadata)")
+        meta = []
+        if "shape" in node:
+            meta.append(f"shape: {v.enum(node['shape'], ptr(path, 'shape'), _AGENTFLOW_SHAPES)}")
+        if "metaLabel" in node:
+            meta.append(f'label: "{v.text(node["metaLabel"], ptr(path, "metaLabel"), "agentflow.label")}"')
+        if "labelType" in node:
+            if "metaLabel" not in node:
+                raise v.error(ptr(path, "labelType"), "labelType applies to metaLabel")
+            meta.append(f"labelType: {v.enum(node['labelType'], ptr(path, 'labelType'), ('markdown', 'string'))}")
+        meta += _agentflow_meta(v, node, path, _AGENTFLOW_NODE_META)
+        block = v.boolean(node["metadataBlock"], ptr(path, "metadataBlock")) if "metadataBlock" in node else False
+        if block and not meta:
+            raise v.error(ptr(path, "metadataBlock"), "the node has no metadata to put in a block")
+        decl = node_id
+        if "label" in node:
+            decl += f'["{v.text(node["label"], ptr(path, "label"), "agentflow.label")}"]'
+        if block:
+            stmt = [decl, f"{node_id}@{{", *[f"  {pair}" for pair in meta], "}"] if "label" in node else \
+                [f"{node_id}@{{", *[f"  {pair}" for pair in meta], "}"]
+        else:
+            stmt = [f"{decl}@{{ {', '.join(meta)} }}" if meta else decl]
+        is_global = v.boolean(node["global"], ptr(path, "global")) if "global" in node else False
+        if is_global:
+            if "flow" in node:
+                raise v.error(ptr(path, "global"), "a global node cannot also belong to a flow")
+            global_nodes.append(stmt)
+        else:
+            flow = v.ref(node["flow"], ptr(path, "flow"), flow_ids) if "flow" in node else None
+            in_flow.setdefault(flow, []).append(stmt)
+
+    if global_nodes:
+        lines.append("  global")
+        lines += [f"    {line}" for stmt in global_nodes for line in stmt]
+        lines.append("  end")
+
+    emitted: set[int] = set()
+
+    def emit_flow(index: int, indent: str) -> None:
+        emitted.add(index)
+        flow, path = flows[index], ptr("/flows", index)
+        lines.append(f'{indent}flow {flow["id"]}["{v.text(flow["label"], ptr(path, "label"), "agentflow.label")}"]')
+        lines.extend(f"{indent}  {line}" for stmt in in_flow.get(flow["id"], []) for line in stmt)
+        for child in children.get(flow["id"], []):
+            emit_flow(child, indent + "  ")
+        lines.append(f"{indent}end")
+        meta = []
+        if "view" in flow:
+            meta.append(f'view: "{v.enum(flow["view"], ptr(path, "view"), ("collapsed",))}"')
+        if "algorithm" in flow:
+            meta.append(f'algorithm: "{v.enum(flow["algorithm"], ptr(path, "algorithm"), _AGENTFLOW_ALGORITHMS)}"')
+        meta += _agentflow_meta(v, flow, path, _AGENTFLOW_META)
+        if meta:
+            lines.append(f"{indent}{flow['id']}@{{ {', '.join(meta)} }}")
+
+    for index in children.get(None, []):
+        emit_flow(index, "  ")
+    for index, flow in enumerate(flows):
+        if index not in emitted:
+            raise v.error(ptr(ptr("/flows", index), "parent"), "flow parents form a cycle")
+    lines += [f"  {line}" for stmt in in_flow.get(None, []) for line in stmt]
+
+    endpoints = node_ids | flow_ids
+    edge_meta: list[str] = []
+    for i, edge in enumerate(_g5_list(v, ir, "", "edges")):
+        path = ptr("/edges", i)
+        v.fields(edge, path, ("from", "to"), ("kind", "label", "id", "curve", "animate", "animation", "then"))
+        edge_id = ""
+        meta = []
+        if "id" in edge:
+            edge_id = v.unique(_g5_flow_id(v, edge["id"], ptr(path, "id")), ptr(path, "id"), ids)
+            if "curve" in edge:
+                meta.append(f"curve: {v.enum(edge['curve'], ptr(path, 'curve'), _AGENTFLOW_CURVES)}")
+            if "animate" in edge:
+                meta.append(f"animate: {'true' if v.boolean(edge['animate'], ptr(path, 'animate')) else 'false'}")
+            if "animation" in edge:
+                meta.append(f"animation: {v.enum(edge['animation'], ptr(path, 'animation'), ('fast', 'slow'))}")
+        else:
+            for key in ("curve", "animate", "animation"):
+                if key in edge:
+                    raise v.error(ptr(path, key), "edge metadata needs an edge id")
+        line = f"  {v.ref(edge['from'], ptr(path, 'from'), endpoints)}{_agentflow_hop(v, edge, path, endpoints, edge_id)}"
+        for j, hop in enumerate(_g5_list(v, edge, path, "then", 1)):
+            at = ptr(ptr(path, "then"), j)
+            v.fields(hop, at, ("to",), ("kind", "label"))
+            line += _agentflow_hop(v, hop, at, endpoints)
+        lines.append(line)
+        if meta:
+            edge_meta.append(f"  {edge_id}@{{ {', '.join(meta)} }}")
+    return "\n".join(lines + edge_meta) + "\n"
+
+
+register(Builder(
+    "agentflow", "graph", ("agentflow-beta",), _agentflow_serialize,
+    text_fields=(
+        "/title", "/accessibility/title", "/accessibility/description",
+        "/nodes/*/label", "/nodes/*/metaLabel", "/flows/*/label", "/connectors/*/label",
+        "/edges/*/label", "/edges/*/then/*/label",
+        "/nodes/*/description", "/nodes/*/instruction", "/nodes/*/model", "/nodes/*/params",
+        "/nodes/*/returns", "/nodes/*/value", "/nodes/*/example", "/nodes/*/connectorRef",
+        "/nodes/*/custom/*", "/flows/*/description", "/flows/*/instruction", "/flows/*/model",
+        "/flows/*/params", "/flows/*/returns", "/flows/*/custom/*", "/connectors/*/protocol",
+        "/connectors/*/endpoint", "/connectors/*/description", "/connectors/*/custom/*",
+    ),
+    features={
+        "agentflow.keyword": "/target=agentflow-beta",
+        "agentflow.direction-tb": "/direction=TB",
+        "agentflow.direction-td": "/direction=TD",
+        "agentflow.direction-bt": "/direction=BT",
+        "agentflow.direction-lr": "/direction=LR",
+        "agentflow.direction-rl": "/direction=RL",
+        "agentflow.node": "/nodes/*/label",
+        "agentflow.shape-task": "/nodes/*/shape=task",
+        "agentflow.shape-tool": "/nodes/*/shape=tool",
+        "agentflow.shape-input": "/nodes/*/shape=input",
+        "agentflow.shape-decision": "/nodes/*/shape=decision",
+        "agentflow.shape-refdoc": "/nodes/*/shape=refdoc",
+        "agentflow.shape-action": "/nodes/*/shape=action",
+        "agentflow.shape-canonical": "/nodes/*/shape=rounded",
+        "agentflow.edge-sequence": "/edges/*/kind=sequence",
+        "agentflow.edge-reference": "/edges/*/kind=reference",
+        "agentflow.edge-failure": "/edges/*/kind=failure",
+        "agentflow.edge-label": "/edges/*/label",
+        "agentflow.edge-chain": "/edges/*/then/*/to",
+        "agentflow.flow": "/flows/*/label",
+        "agentflow.flow-nested": "/flows/*/parent",
+        "agentflow.flow-endpoint": "/edges/*/to=publisher",
+        "agentflow.global": "/nodes/*/global=true",
+        "agentflow.view-collapsed": "/flows/*/view=collapsed",
+        "agentflow.algorithm": "/flows/*/algorithm",
+        "agentflow.metadata-inline": "/flows/*/model",
+        "agentflow.metadata-block": "/nodes/*/metadataBlock=true",
+        "agentflow.meta-label": "/nodes/*/metaLabel",
+        "agentflow.meta-label-type": "/nodes/*/labelType",
+        "agentflow.edge-curve": "/edges/*/curve",
+        "agentflow.edge-animate": "/edges/*/animate",
+        "agentflow.edge-animation": "/edges/*/animation",
+        "agentflow.meta-description": "/nodes/*/description",
+        "agentflow.meta-instruction": "/flows/*/instruction",
+        "agentflow.meta-model": "/flows/*/model",
+        "agentflow.meta-params": "/nodes/*/params",
+        "agentflow.meta-returns": "/nodes/*/returns",
+        "agentflow.meta-value": "/nodes/*/value",
+        "agentflow.meta-example": "/nodes/*/example",
+        "agentflow.meta-connector-ref": "/nodes/*/connectorRef",
+        "agentflow.meta-custom": "/nodes/*/custom/*",
+        "agentflow.connector": "/connectors/*/label",
+        "agentflow.connector-metadata": "/connectors/*/protocol",
+    },
+    probes={"object": "/nodes/0", "number": "/config/nodeSpacing", "enum": "/nodes/0/shape", "ref": "/edges/0/to"},
+))
+
+
+# --- usecase -------------------------------------------------------------------------------
+
+# Labels, stereotypes, notes, edge labels, boundary titles and JSON strings all sit in double
+# quotes (or `<<...>>`) and render entity codes back. Markdown labels sit in "`...`".
+text_context("usecase.text", encode=ENTITY)
+text_context("usecase.title")
+# A Markdown label may span lines (a real newline inside the backticks).
+text_context("usecase.markdown", encode=ENTITY, allow_newline=True, reject_patterns=((r"\r", "use \\n line breaks"),))
+# The quoted declaration form derives the id from the text, so only words and spaces fit.
+text_context("usecase.quoted-form", reject_patterns=((r"[^A-Za-z0-9_ ]", "a quoted declaration takes only letters, digits, '_' and spaces"),))
+
+_USECASE_ID = re.compile(r"[A-Za-z0-9_]+")
+_USECASE_RESERVED = frozenset({
+    "end", "note", "actor", "style", "json", "class", "classDef", "direction", "systemBoundary",
+    "for", "include", "extend", "true", "false", "TB", "TD", "BT", "LR", "RL",
+})
+_USECASE_ACTOR_TYPES = ("normal", "hollow", "awesome")
+_USECASE_SHAPES = {"ellipse": ('("', '")'), "rect": ('["', '"]')}
+_USECASE_FORMS = ("declared", "quoted")
+_USECASE_BOUNDARY_TYPES = ("rect", "package")
+_USECASE_EDGES = {
+    # kind: (unlabelled arrow, labelled (left, right) or None, takes extra length)
+    "association": ("-->", ("--", "-->"), True),
+    "reverseAssociation": ("<--", ("<--", "--"), True),
+    "line": ("--", ("--", "--"), True),
+    "circle": ("--o", ("--", "--o"), False),
+    "reverseCircle": ("o--", None, False),
+    "cross": ("--x", ("--", "--x"), False),
+    "reverseCross": ("x--", None, False),
+    "include": ("..> : include", None, False),
+    "extend": ("..> : extend", None, False),
+    "generalization": ("--|>", None, False),
+}
+_USECASE_CONFIG = {
+    "actorFontSize": ("number", 1, None),
+    "usecaseFontSize": ("number", 1, None),
+    "actorFontWeight": ("enum", ("normal", "bold", "lighter", "bolder")),
+    "usecaseFontWeight": ("enum", ("normal", "bold", "lighter", "bolder")),
+    "nodeSpacing": ("number", 0, None),
+    "rankSpacing": ("number", 0, None),
+    "diagramPadding": ("number", 0, None),
+    "colorScheme": ("enum", ("role", "rotate")),
+    "useMaxWidth": ("boolean",),
+}
+text_context("usecase.icon", reject_patterns=((r"^(?![a-z0-9-]+:[a-z0-9-]+$)", "must look like pack:name"),))
+
+
+def _usecase_id(v: Validator, value: Any, path: str) -> str:
+    v.ident(value, path, _USECASE_ID)
+    if value in _USECASE_RESERVED or value.lower() == "package":
+        raise v.error(path, f"{value!r} is a keyword and cannot be an id")
+    return value
+
+
+def _usecase_json(v: Validator, value: Any, path: str) -> str:
+    """A JSON value with every string (keys too) entity-encoded."""
+    if isinstance(value, dict):
+        parts = []
+        for key, item in value.items():
+            at = ptr(path, key)
+            if not isinstance(key, str) or not key:
+                raise v.error(at, "JSON keys must be non-empty strings")
+            parts.append(f'"{v.text(key, at, "usecase.text")}": {_usecase_json(v, item, at)}')
+        return "{ " + ", ".join(parts) + " }" if parts else "{}"
+    if isinstance(value, list):
+        return "[" + ", ".join(_usecase_json(v, item, ptr(path, i)) for i, item in enumerate(value)) + "]"
+    if isinstance(value, str):
+        return f'"{v.text(value, path, "usecase.text")}"'
+    if isinstance(value, bool):
+        return "true" if value else "false"
+    if value is None:
+        return "null"
+    return v.number(value, path)
+
+
+def _usecase_serialize(ir: dict, keyword: str) -> str:
+    v = Validator(keyword)
+    v.fields(ir, "", (), (
+        "title", "config", "direction", "accessibility", "comment", "actors", "usecases",
+        "boundaries", "jsonNodes", "notes", "edges", "classDefs", "classAssignments", "styles",
+    ))
+    config = validate_config(v, ir["config"], "/config", _USECASE_CONFIG) if "config" in ir else {}
+    title = v.text(ir["title"], "/title", "usecase.title") if "title" in ir else None
+    lines = emit_frontmatter(title, {"usecase": config} if config else None)
+    lines.append("usecase-beta")
+    if "direction" in ir:
+        lines.append(f"direction {v.enum(ir['direction'], '/direction', _G5_DIRECTIONS)}")
+    lines += emit_accessibility(v, ir, "")
+    lines += emit_comment(v, ir, "", "")
+
+    ids: set[str] = set()
+    class_names: set[str] = set()
+    class_lines: list[str] = []
+    for i, cdef in enumerate(_g5_list(v, ir, "", "classDefs")):
+        path = ptr("/classDefs", i)
+        v.fields(cdef, path, ("names", "style"))
+        names = []
+        for j, name in enumerate(v.array(cdef["names"], ptr(path, "names"), 1)):
+            at = ptr(ptr(path, "names"), j)
+            names.append(v.unique(v.ident(name, at), at, class_names, "class name"))
+        class_lines.append(f"classDef {','.join(names)} {_g5_style(v, cdef['style'], ptr(path, 'style'))}")
+
+    def suffix(obj: dict, path: str) -> str:
+        out = ""
+        if "stereotype" in obj:
+            out += f" <<{v.text(obj['stereotype'], ptr(path, 'stereotype'), 'usecase.text')}>>"
+        if "class" in obj:
+            out += f":::{v.ref(obj['class'], ptr(path, 'class'), class_names)}"
+        return out
+
+    boundaries = _g5_list(v, ir, "", "boundaries")
+    boundary_ids: set[str] = set()
+    for i, boundary in enumerate(boundaries):
+        path = ptr("/boundaries", i)
+        v.fields(boundary, path, ("id",), ("label", "form", "type", "metadataStatement", "class"))
+        boundary_ids.add(v.unique(_usecase_id(v, boundary["id"], ptr(path, "id")), ptr(path, "id"), ids))
+
+    actor_decls: dict[str | None, list[str]] = {}
+    case_decls: dict[str | None, list[str]] = {}
+    actor_ids: set[str] = set()
+    for i, actor in enumerate(_g5_list(v, ir, "", "actors")):
+        path = ptr("/actors", i)
+        v.fields(actor, path, ("id",), ("label", "type", "icon", "business", "stereotype", "class", "boundary"))
+        actor_id = v.unique(_usecase_id(v, actor["id"], ptr(path, "id")), ptr(path, "id"), ids)
+        actor_ids.add(actor_id)
+        decl = f"actor {actor_id}"
+        if "label" in actor:
+            decl += f'("{v.text(actor["label"], ptr(path, "label"), "usecase.text")}")'
+        meta = []
+        if "type" in actor:
+            meta.append(f"type: {v.enum(actor['type'], ptr(path, 'type'), _USECASE_ACTOR_TYPES)}")
+        if "icon" in actor:
+            if "type" in actor or actor.get("business"):
+                raise v.error(ptr(path, "icon"), "an icon actor cannot also set type or business")
+            meta.append(f'icon: "{v.text(actor["icon"], ptr(path, "icon"), "usecase.icon")}"')
+        if "business" in actor and v.boolean(actor["business"], ptr(path, "business")):
+            meta.append("business: true")
+        if meta:
+            decl += f"@{{ {', '.join(meta)} }}"
+        decl += suffix(actor, path)
+        boundary = v.ref(actor["boundary"], ptr(path, "boundary"), boundary_ids) if "boundary" in actor else None
+        actor_decls.setdefault(boundary, []).append(decl)
+
+    case_ids: set[str] = set()
+    implicit: dict[str, str] = {}  # id -> pointer, for use cases declared only by an edge
+    for i, case in enumerate(_g5_list(v, ir, "", "usecases")):
+        path = ptr("/usecases", i)
+        v.fields(case, path, ("id",), (
+            "label", "markdown", "shape", "form", "implicit", "business", "stereotype", "class", "boundary",
+        ))
+        case_id = v.unique(_usecase_id(v, case["id"], ptr(path, "id")), ptr(path, "id"), ids)
+        case_ids.add(case_id)
+        if "implicit" in case and v.boolean(case["implicit"], ptr(path, "implicit")):
+            extra = sorted(set(case) - {"id", "implicit"})
+            if extra:
+                raise v.error(ptr(path, extra[0]), "an implicit use case takes only an id")
+            implicit[case_id] = path
+            continue
+        if ("label" in case) == ("markdown" in case):
+            raise v.error(ptr(path, "label"), "set exactly one of label or markdown")
+        form = v.enum(case.get("form", "declared"), ptr(path, "form"), _USECASE_FORMS)
+        shape = v.enum(case.get("shape", "ellipse"), ptr(path, "shape"), _USECASE_SHAPES)
+        if form == "quoted":
+            for key in ("markdown", "shape", "business", "stereotype", "class"):
+                if key in case:
+                    raise v.error(ptr(path, key), "the quoted declaration form takes only a label")
+            text = v.text(case["label"], ptr(path, "label"), "usecase.quoted-form")
+            if text.replace(" ", "_") != case_id:
+                raise v.error(ptr(path, "id"), f"the quoted form derives the id {text.replace(' ', '_')!r}")
+            decl = f'"{text}"'
+        else:
+            if "label" in case:
+                text = v.text(case["label"], ptr(path, "label"), "usecase.text")
+            else:
+                text = f"`{v.text(case['markdown'], ptr(path, 'markdown'), 'usecase.markdown')}`"
+            decl = f"{case_id}{shape[0]}{text}{shape[1]}"
+            if "business" in case and v.boolean(case["business"], ptr(path, "business")):
+                if case.get("shape") == "rect":
+                    raise v.error(ptr(path, "business"), "only an ellipse use case takes business")
+                decl += "@{ business: true }"
+            decl += suffix(case, path)
+        boundary = v.ref(case["boundary"], ptr(path, "boundary"), boundary_ids) if "boundary" in case else None
+        case_decls.setdefault(boundary, []).append(decl)
+
+    lines += actor_decls.get(None, [])
+    statement_lines: list[str] = []
+    for i, boundary in enumerate(boundaries):
+        path = ptr("/boundaries", i)
+        form = v.enum(boundary.get("form", "declared"), ptr(path, "form"), _USECASE_FORMS)
+        if form == "quoted":
+            if "label" not in boundary:
+                raise v.error(ptr(path, "label"), "the quoted form needs a label")
+            text = v.text(boundary["label"], ptr(path, "label"), "usecase.quoted-form")
+            if text.replace(" ", "_") != boundary["id"]:
+                raise v.error(ptr(path, "id"), f"the quoted form derives the id {text.replace(' ', '_')!r}")
+            decl = f'systemBoundary "{text}"'
+        else:
+            decl = f"systemBoundary {boundary['id']}"
+            if "label" in boundary:
+                decl += f'["{v.text(boundary["label"], ptr(path, "label"), "usecase.text")}"]'
+        statement = v.boolean(boundary["metadataStatement"], ptr(path, "metadataStatement")) \
+            if "metadataStatement" in boundary else False
+        if "type" in boundary:
+            kind = v.enum(boundary["type"], ptr(path, "type"), _USECASE_BOUNDARY_TYPES)
+            if statement:
+                statement_lines.append(f"{boundary['id']}@{{ type: {kind} }}")
+            else:
+                decl += f"@{{ type: {kind} }}"
+        elif statement:
+            raise v.error(ptr(path, "metadataStatement"), "needs a type to put in the statement")
+        if "class" in boundary:
+            decl += f":::{v.ref(boundary['class'], ptr(path, 'class'), class_names)}"
+        inside = actor_decls.get(boundary["id"], []) + case_decls.get(boundary["id"], [])
+        if not inside:
+            raise v.error(ptr(path, "id"), "a boundary needs at least one actor or use case")
+        lines += [decl, *[f"  {d}" for d in inside], "end"]
+    lines += statement_lines
+    lines += case_decls.get(None, [])
+
+    json_ids: set[str] = set()
+    for i, node in enumerate(_g5_list(v, ir, "", "jsonNodes")):
+        path = ptr("/jsonNodes", i)
+        v.fields(node, path, ("id", "data"), ("class",))
+        node_id = v.unique(_usecase_id(v, node["id"], ptr(path, "id")), ptr(path, "id"), ids)
+        json_ids.add(node_id)
+        data = v.obj_map(node["data"], ptr(path, "data"))
+        if not data:
+            raise v.error(ptr(path, "data"), "must have at least one key")
+        decl = f"json {node_id}@{_usecase_json(v, data, ptr(path, 'data'))}"
+        if "class" in node:
+            decl += f":::{v.ref(node['class'], ptr(path, 'class'), class_names)}"
+        lines.append(decl)
+
+    for i, note in enumerate(_g5_list(v, ir, "", "notes")):
+        path = ptr("/notes", i)
+        v.fields(note, path, ("for", "text"))
+        target = v.ref(note["for"], ptr(path, "for"), actor_ids | case_ids)
+        lines.append(f'note for {target} "{v.text(note["text"], ptr(path, "text"), "usecase.text")}"')
+
+    endpoints = actor_ids | case_ids | json_ids
+    referenced: set[str] = set()
+    edge_ids: set[str] = set()
+    edge_meta: list[str] = []
+    for i, edge in enumerate(_g5_list(v, ir, "", "edges")):
+        path = ptr("/edges", i)
+        v.fields(edge, path, ("from", "to"), ("kind", "label", "length", "id", "animate", "animation"))
+        source = v.ref(edge["from"], ptr(path, "from"), endpoints)
+        target = v.ref(edge["to"], ptr(path, "to"), endpoints)
+        referenced |= {source, target}
+        kind = edge.get("kind", "association")
+        arrow, labelled, stretch = v.enum(kind, ptr(path, "kind"), _USECASE_EDGES)
+        if kind in ("include", "extend") and not {source, target} <= case_ids:
+            raise v.error(ptr(path, "kind"), f"{kind} needs use cases at both ends")
+        if kind == "generalization" and not ({source, target} <= case_ids or {source, target} <= actor_ids):
+            raise v.error(ptr(path, "kind"), "generalization needs two actors or two use cases")
+        if {source, target} & json_ids and kind not in ("association", "reverseAssociation", "line"):
+            raise v.error(ptr(path, "kind"), "a JSON node takes only association, reverseAssociation or line edges")
+        extra = 0
+        if "length" in edge:
+            if not stretch:
+                raise v.error(ptr(path, "length"), f"a {kind} edge cannot be lengthened")
+            extra = int(v.number(edge["length"], ptr(path, "length"), 1, 8, integer=True))
+        prefix = ""
+        if "id" in edge:
+            edge_id = v.unique(_usecase_id(v, edge["id"], ptr(path, "id")), ptr(path, "id"), ids)
+            edge_ids.add(edge_id)
+            prefix = f"{edge_id}@"
+            meta = []
+            if "animate" in edge:
+                meta.append(f"animate: {'true' if v.boolean(edge['animate'], ptr(path, 'animate')) else 'false'}")
+            if "animation" in edge:
+                meta.append(f"animation: {v.enum(edge['animation'], ptr(path, 'animation'), ('fast', 'slow'))}")
+            if meta:
+                edge_meta.append(f"{edge_id}@{{ {', '.join(meta)} }}")
+        else:
+            for key in ("animate", "animation"):
+                if key in edge:
+                    raise v.error(ptr(path, key), "edge metadata needs an edge id")
+        if "label" in edge:
+            if labelled is None:
+                raise v.error(ptr(path, "label"), f"a {kind} edge takes no label")
+            left, right = labelled
+            if extra:
+                right = right.replace("--", "--" + "-" * extra, 1)
+            text = v.text(edge["label"], ptr(path, "label"), "usecase.text")
+            lines.append(f'{source} {prefix}{left} "{text}" {right} {target}')
+        else:
+            if extra:
+                arrow = arrow.replace("--", "--" + "-" * extra, 1)
+            lines.append(f"{source} {prefix}{arrow} {target}")
+    for case_id, path in implicit.items():
+        if case_id not in referenced:
+            raise v.error(ptr(path, "implicit"), "an implicit use case must be the end of an edge")
+
+    lines += class_lines
+    targets = endpoints | boundary_ids | edge_ids
+    for i, assign in enumerate(_g5_list(v, ir, "", "classAssignments")):
+        path = ptr("/classAssignments", i)
+        v.fields(assign, path, ("ids", "classes"))
+        who = [v.ref(x, ptr(ptr(path, "ids"), j), targets) for j, x in enumerate(v.array(assign["ids"], ptr(path, "ids"), 1))]
+        what = [v.ref(x, ptr(ptr(path, "classes"), j), class_names)
+                for j, x in enumerate(v.array(assign["classes"], ptr(path, "classes"), 1))]
+        lines.append(f"class {','.join(who)} {','.join(what)}")
+    for i, style in enumerate(_g5_list(v, ir, "", "styles")):
+        path = ptr("/styles", i)
+        v.fields(style, path, ("id", "style"))
+        target = v.ref(style["id"], ptr(path, "id"), targets)
+        lines.append(f"style {target} {_g5_style(v, style['style'], ptr(path, 'style'))}")
+    lines += edge_meta
+    if not (actor_ids or case_ids or json_ids):
+        raise v.error("", "a diagram needs at least one actor, use case or JSON node")
+    return "\n".join(lines) + "\n"
+
+
+register(Builder(
+    "usecase", "usecase", ("usecase-beta",), _usecase_serialize,
+    text_fields=(
+        "/title", "/comment", "/accessibility/title", "/accessibility/description",
+        "/actors/*/label", "/actors/*/stereotype", "/usecases/*/label", "/usecases/*/markdown",
+        "/usecases/*/stereotype", "/boundaries/*/label", "/edges/*/label", "/notes/*/text",
+        "/jsonNodes/*/data/*", "/jsonNodes/*/data/*/*/*",
+    ),
+    features={
+        "usecase.keyword": "/target=usecase-beta",
+        "usecase.direction-td": "/direction=TD",
+        "usecase.direction-tb": "/direction=TB",
+        "usecase.direction-bt": "/direction=BT",
+        "usecase.direction-lr": "/direction=LR",
+        "usecase.direction-rl": "/direction=RL",
+        "usecase.actor": "/actors/*/id=Customer",
+        "usecase.actor-label": "/actors/*/label",
+        "usecase.actor-digit-id": "/actors/*/id=3rd",
+        "usecase.actor-normal": "/actors/*/type=normal",
+        "usecase.actor-hollow": "/actors/*/type=hollow",
+        "usecase.actor-awesome": "/actors/*/type=awesome",
+        "usecase.actor-icon": "/actors/*/icon",
+        "usecase.business-actor": "/actors/*/business=true",
+        "usecase.business-usecase": "/usecases/*/business=true",
+        "usecase.stereotype": "/usecases/*/stereotype",
+        "usecase.usecase-ellipse": "/usecases/*/shape=ellipse",
+        "usecase.usecase-rect": "/usecases/*/shape=rect",
+        "usecase.usecase-quoted": "/usecases/*/form=quoted",
+        "usecase.usecase-implicit": "/usecases/*/implicit=true",
+        "usecase.label-unquoted": "/usecases/*/label=Costs 19.95 EUR!",
+        "usecase.label-string": "/usecases/*/label=**Literal markers**",
+        "usecase.label-markdown": "/usecases/*/markdown",
+        "usecase.label-entity": "/usecases/*/label=Refund (partial)",
+        "usecase.comment": "/comment",
+        "usecase.boundary": "/boundaries/*/label",
+        "usecase.boundary-quoted": "/boundaries/*/form=quoted",
+        "usecase.boundary-rect": "/boundaries/*/type=rect",
+        "usecase.boundary-package": "/boundaries/*/type=package",
+        "usecase.boundary-metadata-statement": "/boundaries/*/metadataStatement=true",
+        "usecase.assoc-point": "/edges/*/kind=association",
+        "usecase.assoc-reverse-point": "/edges/*/kind=reverseAssociation",
+        "usecase.assoc-plain": "/edges/*/kind=line",
+        "usecase.assoc-circle": "/edges/*/kind=circle",
+        "usecase.assoc-reverse-circle": "/edges/*/kind=reverseCircle",
+        "usecase.assoc-cross": "/edges/*/kind=cross",
+        "usecase.assoc-reverse-cross": "/edges/*/kind=reverseCross",
+        "usecase.assoc-label": "/edges/*/label",
+        "usecase.assoc-label-unquoted": "/edges/*/label=files R&D report",
+        "usecase.assoc-length": "/edges/*/length",
+        "usecase.include": "/edges/*/kind=include",
+        "usecase.extend": "/edges/*/kind=extend",
+        "usecase.generalization": "/edges/*/kind=generalization",
+        "usecase.edge-id": "/edges/*/id",
+        "usecase.edge-animate": "/edges/*/animate",
+        "usecase.edge-animation-fast": "/edges/*/animation=fast",
+        "usecase.edge-animation-slow": "/edges/*/animation=slow",
+        "usecase.note": "/notes/*/text",
+        "usecase.json": "/jsonNodes/*/data",
+        "usecase.classdef": "/classDefs/*/style",
+        "usecase.classdef-default": "/classDefs/*/names/*=default",
+        "usecase.classdef-multi": "/classDefs/*/names/1",
+        "usecase.class": "/classAssignments/*/classes/*",
+        "usecase.class-shorthand": "/usecases/*/class",
+        "usecase.style": "/styles/*/id=ordering",
+        "usecase.style-edge": "/styles/*/id=pays",
+        "usecase.acc-title": "/accessibility/title",
+        "usecase.acc-descr": "/accessibility/description=A customer signs in",
+        "usecase.acc-descr-block": "/accessibility/description=A customer places an order.\nStaff review it and inspect its data.",
+    },
+    probes={"object": "/actors/1", "number": "/edges/0/length", "enum": "/actors/1/type", "ref": "/edges/0/to"},
+))
 
 # === end group 5 ===
 

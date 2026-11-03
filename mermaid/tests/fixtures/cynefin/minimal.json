@@ -1,0 +1,5 @@
+{
+  "diagram": "cynefin",
+  "target": "cynefin-beta",
+  "domains": [{"domain": "complex", "items": ["Investigate root cause"]}]
+}
