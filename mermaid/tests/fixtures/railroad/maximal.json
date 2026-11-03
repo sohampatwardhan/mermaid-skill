@@ -1,0 +1,306 @@
+{
+  "diagram": "grammar",
+  "target": "railroad-ebnf-beta",
+  "title": "Expression Grammar",
+  "accessibility": {
+    "title": "Expression grammar",
+    "description": "EBNF rules for signed numbers and expressions"
+  },
+  "comment": "one rule per statement, each ends with ;",
+  "rules": [
+    {
+      "name": "expression",
+      "operator": "=",
+      "comment": {
+        "style": "w3c",
+        "text": "W3C style comment"
+      },
+      "expression": {
+        "kind": "sequence",
+        "separator": "space",
+        "items": [
+          {
+            "kind": "nonterminal",
+            "name": "term"
+          },
+          {
+            "kind": "zeroOrMore",
+            "form": "postfix",
+            "item": {
+              "kind": "sequence",
+              "items": [
+                {
+                  "kind": "choice",
+                  "items": [
+                    {
+                      "kind": "terminal",
+                      "text": "+"
+                    },
+                    {
+                      "kind": "terminal",
+                      "text": "-"
+                    }
+                  ]
+                },
+                {
+                  "kind": "nonterminal",
+                  "name": "term"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "term",
+      "operator": "::=",
+      "comment": {
+        "style": "iso",
+        "text": "ISO style comment"
+      },
+      "expression": {
+        "kind": "sequence",
+        "separator": "comma",
+        "items": [
+          {
+            "kind": "nonterminal",
+            "name": "factor"
+          },
+          {
+            "kind": "zeroOrMore",
+            "form": "braces",
+            "item": {
+              "kind": "sequence",
+              "separator": "comma",
+              "items": [
+                {
+                  "kind": "choice",
+                  "items": [
+                    {
+                      "kind": "terminal",
+                      "text": "*",
+                      "quote": "single"
+                    },
+                    {
+                      "kind": "terminal",
+                      "text": "/",
+                      "quote": "single"
+                    }
+                  ]
+                },
+                {
+                  "kind": "nonterminal",
+                  "name": "factor"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "factor",
+      "expression": {
+        "kind": "choice",
+        "items": [
+          {
+            "kind": "nonterminal",
+            "name": "number"
+          },
+          {
+            "kind": "sequence",
+            "items": [
+              {
+                "kind": "terminal",
+                "text": "(",
+                "quote": "double"
+              },
+              {
+                "kind": "nonterminal",
+                "name": "expression"
+              },
+              {
+                "kind": "terminal",
+                "text": ")"
+              }
+            ]
+          },
+          {
+            "kind": "special",
+            "text": "any constant"
+          }
+        ]
+      }
+    },
+    {
+      "name": "number",
+      "expression": {
+        "kind": "sequence",
+        "items": [
+          {
+            "kind": "optional",
+            "form": "postfix",
+            "item": {
+              "kind": "nonterminal",
+              "name": "sign"
+            }
+          },
+          {
+            "kind": "oneOrMore",
+            "item": {
+              "kind": "nonterminal",
+              "name": "digit"
+            }
+          },
+          {
+            "kind": "optional",
+            "form": "brackets",
+            "item": {
+              "kind": "sequence",
+              "items": [
+                {
+                  "kind": "terminal",
+                  "text": "."
+                },
+                {
+                  "kind": "oneOrMore",
+                  "item": {
+                    "kind": "nonterminal",
+                    "name": "digit"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "signed",
+      "expression": {
+        "kind": "sequence",
+        "items": [
+          {
+            "kind": "group",
+            "item": {
+              "kind": "choice",
+              "items": [
+                {
+                  "kind": "terminal",
+                  "text": "+"
+                },
+                {
+                  "kind": "terminal",
+                  "text": "-"
+                }
+              ]
+            }
+          },
+          {
+            "kind": "nonterminal",
+            "name": "number"
+          }
+        ]
+      }
+    },
+    {
+      "name": "sign",
+      "expression": {
+        "kind": "choice",
+        "items": [
+          {
+            "kind": "terminal",
+            "text": "+"
+          },
+          {
+            "kind": "terminal",
+            "text": "-"
+          }
+        ]
+      }
+    },
+    {
+      "name": "digit",
+      "expression": {
+        "kind": "choice",
+        "items": [
+          {
+            "kind": "terminal",
+            "text": "0"
+          },
+          {
+            "kind": "terminal",
+            "text": "1"
+          },
+          {
+            "kind": "terminal",
+            "text": "2"
+          },
+          {
+            "kind": "terminal",
+            "text": "3"
+          },
+          {
+            "kind": "terminal",
+            "text": "4"
+          },
+          {
+            "kind": "terminal",
+            "text": "5"
+          },
+          {
+            "kind": "terminal",
+            "text": "6"
+          },
+          {
+            "kind": "terminal",
+            "text": "7"
+          },
+          {
+            "kind": "terminal",
+            "text": "8"
+          },
+          {
+            "kind": "terminal",
+            "text": "9"
+          }
+        ]
+      }
+    },
+    {
+      "name": "name",
+      "expression": {
+        "kind": "exception",
+        "item": {
+          "kind": "nonterminal",
+          "name": "letter"
+        },
+        "except": {
+          "kind": "terminal",
+          "text": "x"
+        }
+      }
+    },
+    {
+      "name": "letter",
+      "expression": {
+        "kind": "choice",
+        "items": [
+          {
+            "kind": "terminal",
+            "text": "a"
+          },
+          {
+            "kind": "terminal",
+            "text": "b"
+          },
+          {
+            "kind": "terminal",
+            "text": "c"
+          }
+        ]
+      }
+    }
+  ]
+}

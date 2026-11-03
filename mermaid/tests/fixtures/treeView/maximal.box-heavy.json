@@ -1,0 +1,29 @@
+{
+  "diagram": "tree",
+  "target": "treeView-beta",
+  "style": "box-heavy",
+  "nodes": [
+    {
+      "name": "packages",
+      "directory": true,
+      "children": [
+        {
+          "name": "mermaid",
+          "directory": true,
+          "children": [
+            {
+              "name": "parser.ts"
+            }
+          ]
+        },
+        {
+          "name": "parser",
+          "directory": true
+        }
+      ]
+    },
+    {
+      "name": "README.md"
+    }
+  ]
+}

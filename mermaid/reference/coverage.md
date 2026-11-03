@@ -44,10 +44,10 @@ CI pins `@mermaid-js/mermaid-cli@12.0.0` with Mermaid `12.0.0` on Node 22.
 | `wardley` | `wardley-beta` | [wardley.md](catalog/wardley.md) | builder | `test_builders.py::wardley` | — |
 | `cynefin` | `cynefin-beta` | [cynefin.md](catalog/cynefin.md) | builder | `test_builders.py::cynefin` | — |
 | `eventmodeling` | `eventmodeling` | [eventmodeling.md](catalog/eventmodeling.md) | builder | `test_builders.py::eventmodeling` | — |
-| `ishikawa` | `ishikawa-beta` | [ishikawa.md](catalog/ishikawa.md) | candidate | `test_render_legacy` | — |
-| `treeView` | `treeView-beta` | [treeView.md](catalog/treeView.md) | candidate | `test_render_legacy` | Box-drawing input, `icon()`, `##` annotations, `:::` classes |
-| `railroad` | `railroad-ebnf-beta` | [railroad.md](catalog/railroad.md) | candidate | `test_render_legacy` | Rules are verbatim strings, not a grammar AST |
-| `zenuml` | `zenuml` | [zenuml.md](catalog/zenuml.md) | candidate | `test_render_legacy` | `if` / `while` / `try` / `par` / `opt` / `new` / aliases. External diagram; `mmdc` loads it |
-| `info` | `info` | [info.md](catalog/info.md) | candidate | `test_render_legacy` | — |
+| `ishikawa` | `ishikawa-beta`, `ishikawa` | [ishikawa.md](catalog/ishikawa.md) | builder | `test_builders.py::ishikawa` | — |
+| `treeView` | `treeView-beta` | [treeView.md](catalog/treeView.md) | builder | `test_builders.py::treeView` | — |
+| `railroad` | `railroad-ebnf-beta`, `railroad-abnf-beta`, `railroad-peg-beta`, `railroad-beta` | [railroad.md](catalog/railroad.md) | builder | `test_builders.py::railroad` | — |
+| `zenuml` | `zenuml` | [zenuml.md](catalog/zenuml.md) | hand-author-only | `test_catalog.py::zenuml` | n/a |
+| `info` | `info` | [info.md](catalog/info.md) | builder | `test_builders.py::info` | — |
 
 Hand-author anything a `hand-author-only` row covers, and anything in a `candidate` row's gaps.

@@ -111,4 +111,16 @@ ishikawa
 Covers: `ishikawa.keyword-alias`, `ishikawa.effect`, `ishikawa.category`, `ishikawa.cause`.
 
 ## Builder
-`candidate`: `scripts/render.py` has an IR builder for this type (target keyword(s) `ishikawa-beta`). It has not been through the reliability bar yet; see [coverage.md](../coverage.md).
+`builder`: family `tree`, keywords `ishikawa-beta` and `ishikawa` (the alias). No accessibility keys: the grammar has none.
+
+| Key | Type | Meaning |
+|---|---|---|
+| `effect` | string, required | the fish head (first content line) |
+| `causes` | array of cause | main bones (categories) |
+| `causes[].label` | string, required | cause text |
+| `causes[].children` | array of cause | sub-causes, nested to any depth |
+| `comment` | string | one `%%` line after the keyword |
+
+Every key is validated; an unknown key fails at its JSON path. Labels are one line and reject `<` (rendered double-escaped),
+`%%`, entity-like text such as `#amp;`, and a leading `ishikawa` word (lexed as the keyword).
+Example: [maximal.json](../../tests/fixtures/ishikawa/maximal.json).

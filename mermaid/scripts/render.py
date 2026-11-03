@@ -7170,103 +7170,550 @@ register(Builder(
 
 # === group 6: remaining: ishikawa, treeView, railroad, zenuml, info ===================
 
-def _emit_ishikawa(node: dict, lines: list[str], depth: int) -> None:
-    _require(node, ("label",), "tree/ishikawa cause")
-    lines.append(f"{'    ' * depth}{_no_colon(node['label'], 'tree/ishikawa label')}")
-    for child in node.get("children", []):
-        _emit_ishikawa(child, lines, depth + 1)
+# Shared by the group 6 text contexts: Mermaid's entity preprocessor turns `#name;` (and the
+# browser turns `&name;`) into a different character, so such text cannot round-trip.
+_G6_ENTITY = (r"(&#?|#)\w+;", "looks like an entity code, which Mermaid would decode")
 
 
-def render_ishikawa(ir: dict) -> str:
-    _require(ir, ("effect", "causes"), "tree/ishikawa-beta")
-    lines = ["ishikawa-beta", f"    {_no_colon(ir['effect'], 'tree/ishikawa effect')}"]
-    for cause in ir["causes"]:
-        _emit_ishikawa(cause, lines, 1)
+# --- ishikawa --------------------------------------------------------------------------------
+#
+# The jison lexer reads each content line as `[^\n]+` after its indentation; the first content
+# line is the effect, deeper indentation nests causes. Labels go through sanitizeText, which
+# double-escapes a lone `<` (renders `&lt;`), so `<` is rejected.
+
+text_context(
+    "ishikawa.label",
+    reject="<",
+    reject_patterns=(
+        (r"%%", "'%%' starts a comment line"),
+        (r"(?i)^ishikawa\b", "a line starting with the 'ishikawa' keyword is a parse error"),
+        _G6_ENTITY,
+    ),
+)
+
+
+def _ishikawa_causes(v: Validator, causes: Any, path: str, depth: int, lines: list[str]) -> None:
+    for index, cause in enumerate(v.array(causes, path)):
+        at = ptr(path, index)
+        v.fields(cause, at, ("label",), ("children",))
+        lines.append(f"{'    ' * depth}{v.text(cause['label'], ptr(at, 'label'), 'ishikawa.label')}")
+        if "children" in cause:
+            _ishikawa_causes(v, cause["children"], ptr(at, "children"), depth + 1, lines)
+
+
+def serialize_ishikawa(ir: dict, keyword: str) -> str:
+    v = Validator(keyword)
+    v.fields(ir, "", ("effect",), ("causes", "comment"))
+    lines = [keyword]
+    lines += emit_comment(v, ir)
+    lines.append(f"    {v.text(ir['effect'], '/effect', 'ishikawa.label')}")
+    if "causes" in ir:
+        _ishikawa_causes(v, ir["causes"], "/causes", 1, lines)
     return "\n".join(lines) + "\n"
 
 
-def _tree_token(name: str) -> str:
-    if re.fullmatch(r"[A-Za-z0-9_./-]+", name):
-        return name
-    return _quote(name)
+register(Builder(
+    "ishikawa", "tree", ("ishikawa-beta", "ishikawa"), serialize_ishikawa,
+    text_fields=(
+        "/effect",
+        "/causes/*/label",
+        "/causes/*/children/*/label",
+        "/causes/*/children/*/children/*/label",
+        "/comment",
+    ),
+    features={
+        "ishikawa.effect": "/effect",
+        "ishikawa.category": "/causes/*/label",
+        "ishikawa.cause": "/causes/*/children/*/label",
+        "ishikawa.nested-cause": "/causes/*/children/*/children/*/label",
+        "ishikawa.comment": "/comment",
+        "ishikawa.keyword-alias": "/target=ishikawa",
+    },
+    probes={"object": "/causes/2/children/0", "number": None, "enum": None, "ref": None},
+))
 
 
-def _emit_treeview(node: dict, lines: list[str], depth: int) -> None:
-    _require(node, ("name",), "tree/treeView node")
-    children = node.get("children", [])
-    name = str(node["name"])
-    if children and not name.endswith("/"):
-        name += "/"
-    lines.append(f"{'    ' * (depth + 1)}{_tree_token(name)}")
-    for child in children:
-        _emit_treeview(child, lines, depth + 1)
+# --- treeView --------------------------------------------------------------------------------
+#
+# Langium grammar: a name is QUOTED_NAME (`"[^"]*"` or `'[^']*'`, no escapes) or BARE_NAME; a
+# trailing `/` makes a directory. Names are drawn with .text() (no sanitizing). Descriptions
+# (`## text` to end of line) go through sanitizeText, so `<` is rejected there. Any box-drawing
+# glyph switches the whole diagram to box-drawing input, so names may not contain one.
+
+_TREEVIEW_BOX = "─━│┃└┗├┣"
+_TREEVIEW_BARE = re.compile(r"[A-Za-z0-9_][A-Za-z0-9_.\-]*")
+_TREEVIEW_CLASS = re.compile(r"[A-Za-z_][A-Za-z0-9_-]*")
+_TREEVIEW_ICON = re.compile(r"[A-Za-z0-9_-]+")
+_TREEVIEW_STYLES = {
+    # style -> (branch, last branch, pipe) glyphs; "indent" uses plain indentation.
+    "box": ("├── ", "└── ", "│   "),
+    "box-heavy": ("┣━━ ", "┗━━ ", "┃   "),
+}
+
+text_context(
+    "treeView.name",
+    reject=_TREEVIEW_BOX,
+    reject_patterns=(
+        (r"/$", "a trailing '/' is the directory marker; set directory: true instead"),
+        _G6_ENTITY,
+    ),
+)
+text_context("treeView.description", reject="<" + _TREEVIEW_BOX, reject_patterns=(_G6_ENTITY,))
 
 
-def render_treeview(ir: dict) -> str:
-    _require(ir, ("nodes",), "tree/treeView-beta")
-    if not ir["nodes"]:
-        raise IRError("tree/treeView-beta requires nodes")
-    lines = ["treeView-beta"]
-    for node in ir["nodes"]:
-        _emit_treeview(node, lines, 0)
+def _treeview_label(v: Validator, node: dict, path: str) -> str:
+    name = v.text(node["name"], ptr(path, "name"), "treeView.name")
+    directory = "directory" in node and v.boolean(node["directory"], ptr(path, "directory"))
+    text = name + ("/" if directory else "")
+    # TITLE is matched before BARE_NAME, so a bare name starting with `title` loses its prefix.
+    if _TREEVIEW_BARE.fullmatch(name) and not name.lower().startswith("title"):
+        return text
+    if '"' not in name:
+        return f'"{text}"'
+    if "'" not in name:
+        return f"'{text}'"
+    raise v.error(ptr(path, "name"), "a name cannot contain both ' and \" (quoted names have no escapes)")
+
+
+def _treeview_node(v: Validator, node: Any, path: str, prefix: str, last: bool, style: str,
+                   depth: int, lines: list[str]) -> None:
+    v.fields(node, path, ("name",), ("directory", "description", "class", "icon", "children"))
+    parts = [_treeview_label(v, node, path)]
+    if "class" in node:
+        parts.append(f":::{v.ident(node['class'], ptr(path, 'class'), _TREEVIEW_CLASS)}")
+    if "icon" in node:
+        at = ptr(path, "icon")
+        icon = v.fields(node["icon"], at, (), ("pack", "name"))
+        if "pack" in icon and "name" not in icon:
+            raise v.error(ptr(at, "name"), "required when pack is set")
+        name = v.ident(icon["name"], ptr(at, "name"), _TREEVIEW_ICON) if "name" in icon else ""
+        pack = f"{v.ident(icon['pack'], ptr(at, 'pack'), _TREEVIEW_ICON)}:" if "pack" in icon else ""
+        parts.append(f"icon({pack}{name})")
+    if "description" in node:
+        parts.append(f"## {v.text(node['description'], ptr(path, 'description'), 'treeView.description')}")
+    if style == "indent":
+        lead, child_prefix = "    " * (depth + 1), ""
+    else:
+        branch, last_branch, pipe = _TREEVIEW_STYLES[style]
+        lead = prefix + (last_branch if last else branch)
+        child_prefix = prefix + ("    " if last else pipe)
+    lines.append(lead + " ".join(parts))
+    if "children" in node:
+        children = v.array(node["children"], ptr(path, "children"))
+        for index, child in enumerate(children):
+            _treeview_node(v, child, ptr(ptr(path, "children"), index), child_prefix,
+                           index == len(children) - 1, style, depth + 1, lines)
+
+
+def serialize_treeview(ir: dict, keyword: str) -> str:
+    v = Validator(keyword)
+    v.fields(ir, "", ("nodes",), ("style", "accessibility", "comment"))
+    style = v.enum(ir["style"], "/style", ("indent", *_TREEVIEW_STYLES)) if "style" in ir else "indent"
+    lines = [keyword]
+    acc = ir.get("accessibility")
+    if style != "indent" and isinstance(acc, dict) and "\n" in str(acc.get("description", "")):
+        # The box-drawing preprocessor rejects the indented lines of an `accDescr { }` block.
+        raise v.error("/accessibility/description", "must be one line when style is box or box-heavy")
+    lines += emit_accessibility(v, ir)
+    lines += emit_comment(v, ir)
+    nodes = v.array(ir["nodes"], "/nodes", min_items=1)
+    for index, node in enumerate(nodes):
+        _treeview_node(v, node, ptr("/nodes", index), "", index == len(nodes) - 1, style, 0, lines)
     return "\n".join(lines) + "\n"
 
 
-def render_railroad(ir: dict) -> str:
-    _require(ir, ("rules",), "grammar/railroad-ebnf-beta")
-    if not ir["rules"]:
-        raise IRError("grammar/railroad-ebnf-beta requires rules")
-    lines = ["railroad-ebnf-beta"]
-    if ir.get("title"):
-        lines.append(f"    title {_quote(ir['title'])}")
-    for rule in ir["rules"]:
-        text = str(rule).strip()
-        if "\n" in text or "=" not in text or not text.endswith(";"):
-            raise IRError(f"grammar/railroad-ebnf-beta rule must be one line containing '=' and ending with ';': {rule!r}")
-        lines.append(f"    {text}")
-    return "\n".join(lines) + "\n"
+register(Builder(
+    "treeView", "tree", ("treeView-beta",), serialize_treeview,
+    text_fields=(
+        "/nodes/*/name",
+        "/nodes/*/children/*/name",
+        "/nodes/*/children/*/children/*/name",
+        "/nodes/*/children/*/description",
+        "/nodes/*/children/*/children/*/description",
+        "/accessibility/title",
+        "/accessibility/description",
+        "/comment",
+    ),
+    features={
+        "treeView.indent-nesting": "/style=indent",
+        "treeView.bare-label": "/nodes/0/children/2/name=package.json",
+        "treeView.quoted-label": "/nodes/0/name=my project",
+        "treeView.directory": "/nodes/*/directory=true",
+        "treeView.file": "/nodes/0/children/*/directory=false",
+        "treeView.unicode-label": "/nodes/0/children/1/children/0/name=🚀 launch-plan.md",
+        "treeView.box-drawing-standard": "/style=box",
+        "treeView.box-drawing-heavy": "/style=box-heavy",
+        "treeView.class-highlight": "/nodes/0/children/0/children/0/class=highlight",
+        "treeView.class-custom": "/nodes/0/children/0/children/2/class=myClass",
+        "treeView.description": "/nodes/0/children/0/children/1/description",
+        "treeView.icon-pack": "/nodes/0/children/0/children/0/icon/pack=logos",
+        "treeView.icon-default-pack": '/nodes/0/children/0/children/3/icon={"name": "rust"}',
+        "treeView.icon-builtin": "/nodes/0/children/0/children/4/icon/name=folder",
+        "treeView.icon-hide-empty": "/nodes/0/children/0/children/5/icon={}",
+        "treeView.icon-hide-none": "/nodes/0/children/0/children/6/icon/name=none",
+        "treeView.combined-annotations": "/nodes/0/children/0/children/0/description",
+        "treeView.comment": "/comment",
+    },
+    probes={"object": "/nodes/0/children/0/children/0/icon", "number": None, "enum": "/style", "ref": None},
+))
 
 
-def _zenuml_text(value: Any) -> str:
-    return str(value).replace("\r\n", "<br/>").replace("\n", "<br/>")
+# --- railroad --------------------------------------------------------------------------------
+#
+# One expression tree, four notations (one keyword each). Facts from the 12.0.0 Langium
+# grammars that shape the checks below:
+# - EBNF, PEG and railroad-beta strings are `"..."` or `'...'` with backslash escapes; ABNF
+#   strings are `"[^"]*"` with no escapes.
+# - The TITLE terminal is matched before identifiers, so a rule name starting with `title`
+#   silently loses that prefix (or the whole rule): such names are rejected.
+# - EBNF special sequences are lexed by `\?[^?;]*\?`, so after a W3C postfix `?` any later `?`
+#   in the same rule turns the text between them into a special sequence: rejected.
+# - Text is sanitized before drawing, which double-escapes a lone `<`: rejected.
+
+_RR_EBNF, _RR_ABNF, _RR_PEG, _RR_IR = "railroad-ebnf-beta", "railroad-abnf-beta", "railroad-peg-beta", "railroad-beta"
+_RR_NAME = re.compile(r"[A-Za-z_][A-Za-z0-9_-]*")
+_RR_ABNF_NAME = re.compile(r"[A-Za-z][A-Za-z0-9-]*")
+_RR_IR_RESERVED = {"terminal", "nonterminal", "sequence", "choice", "optional", "zeroOrMore", "oneOrMore", "special"}
+# RFC 5234 appendix B core rules: referenced without being declared.
+_RR_ABNF_CORE = {"ALPHA", "BIT", "CHAR", "CR", "CRLF", "CTL", "DIGIT", "DQUOTE", "HEXDIG", "HTAB",
+                 "LF", "LWSP", "OCTET", "SP", "VCHAR", "WSP"}
+_RR_KINDS = ("terminal", "nonterminal", "sequence", "choice", "group", "optional", "zeroOrMore",
+             "oneOrMore", "repeat", "special", "exception", "charValue", "andPredicate",
+             "notPredicate", "anyChar")
+# kind -> keywords that can express it
+_RR_SUPPORT = {
+    "group": (_RR_EBNF, _RR_ABNF, _RR_PEG),
+    "repeat": (_RR_ABNF,),
+    "special": (_RR_EBNF, _RR_IR),
+    "exception": (_RR_EBNF,),
+    "charValue": (_RR_ABNF,),
+    "andPredicate": (_RR_PEG,),
+    "notPredicate": (_RR_PEG,),
+    "anyChar": (_RR_PEG,),
+}
+_RR_OPERATORS = {_RR_EBNF: ("=", "::="), _RR_ABNF: ("=",), _RR_PEG: ("<-",), _RR_IR: ("=",)}
+_RR_COMMENT_STYLES = {_RR_EBNF: ("w3c", "iso"), _RR_ABNF: ("line",), _RR_PEG: ("line",), _RR_IR: ("w3c",)}
+_RR_FORMS = {  # kind -> keyword -> allowed `form` values (first is the default)
+    "optional": {_RR_EBNF: ("postfix", "brackets"), _RR_ABNF: ("brackets",), _RR_PEG: ("postfix",), _RR_IR: ()},
+    "zeroOrMore": {_RR_EBNF: ("postfix", "braces"), _RR_ABNF: ("prefix",), _RR_PEG: ("postfix",), _RR_IR: ()},
+}
+_RR_CHAR_BASES = {"hex": "x", "dec": "d", "bin": "b"}
+# Precedence levels of an emitted expression; an operand below the level it needs is grouped.
+_RR_CHOICE, _RR_SEQ, _RR_PREFIX, _RR_POSTFIX, _RR_ATOM = 1, 2, 3, 4, 5
+
+_RR_TEXT_REJECT = (_G6_ENTITY,)
+text_context("railroad.string", reject="<", reject_patterns=_RR_TEXT_REJECT)
+text_context("railroad.abnf-string", reject='<"', reject_patterns=_RR_TEXT_REJECT)
+text_context("railroad.ebnf-special", reject="<?;", reject_patterns=_RR_TEXT_REJECT)
+text_context("railroad.title", reject="<", reject_patterns=((r"%%", "'%%' ends the title"), _G6_ENTITY))
+text_context("railroad.comment-w3c", reject_patterns=((r"\*/", "'*/' ends the comment"), _G6_ENTITY))
+text_context("railroad.comment-iso", reject_patterns=((r"\*\)", "'*)' ends the comment"), _G6_ENTITY))
+text_context("railroad.comment-line", reject_patterns=(_G6_ENTITY,))
 
 
-def render_sequence_zenuml(ir: dict) -> str:
-    _require(ir, ("actors", "steps"), "sequence/zenuml")
-    lines = ["zenuml"]
-    if ir.get("title"):
-        lines.append(f"    title {_no_colon(ir['title'], 'sequence/zenuml title')}")
+def _rr_quote(text: str, quote: str) -> str:
+    """A backslash-escaped string literal (EBNF, PEG, railroad-beta)."""
+    return quote + text.replace("\\", "\\\\").replace(quote, "\\" + quote) + quote
+
+
+class _RailroadWriter:
+    """Serializes one expression tree to one railroad notation."""
+
+    def __init__(self, v: Validator, keyword: str, known: set[str]) -> None:
+        self.v, self.kw, self.known = v, keyword, known
+        self.marks: list[tuple[str, str]] = []  # EBNF `?` characters in rule order: (kind, path)
+
+    def name(self, value: Any, path: str) -> str:
+        pattern = _RR_ABNF_NAME if self.kw == _RR_ABNF else _RR_NAME
+        self.v.ident(value, path, pattern)
+        if value.startswith("title"):
+            raise self.v.error(path, "a name starting with 'title' is read as a title statement")
+        if self.kw == _RR_IR and value in _RR_IR_RESERVED:
+            raise self.v.error(path, f"{value!r} is a railroad-beta constructor name")
+        return value
+
+    def string(self, node: dict, key: str, path: str, context: str = "railroad.string") -> str:
+        """`node[key]` as a string literal for this notation."""
+        sub = ptr(path, key)
+        quote = '"'
+        if "quote" in node:
+            allowed = ("double",) if self.kw == _RR_ABNF else ("double", "single")
+            quote = {"double": '"', "single": "'"}[self.v.enum(node["quote"], ptr(path, "quote"), allowed)]
+        if self.kw == _RR_ABNF:
+            return f'"{self.v.text(node[key], sub, "railroad.abnf-string")}"'
+        text = self.v.text(node[key], sub, context)
+        if "?" in text:
+            self.marks.append(("other", sub))
+        return _rr_quote(text, quote)
+
+    def form(self, node: dict, kind: str, path: str) -> str:
+        allowed = _RR_FORMS[kind][self.kw]
+        if "form" not in node:
+            return allowed[0] if allowed else ""
+        if not allowed:
+            raise self.v.error(ptr(path, "form"), f"{self.kw} writes {kind}(...); there is no form to choose")
+        return self.v.enum(node["form"], ptr(path, "form"), allowed)
+
+    def operand(self, node: dict, key: str, path: str, need: int) -> str:
+        text, level = self.expr(node[key], ptr(path, key))
+        return f"( {text} )" if level < need else text
+
+    def expr(self, node: Any, path: str) -> tuple[str, int]:
+        v, kw = self.v, self.kw
+        if not isinstance(node, dict):
+            raise v.error(path, f"must be an object, got {type(node).__name__}")
+        if "kind" not in node:
+            raise v.error(ptr(path, "kind"), "required key is missing")
+        kind = v.enum(node["kind"], ptr(path, "kind"), _RR_KINDS)
+        if kw not in _RR_SUPPORT.get(kind, (kw,)):
+            raise v.error(ptr(path, "kind"), f"{kind!r} cannot be written in {kw}")
+        ir = kw == _RR_IR
+
+        if kind == "terminal":
+            v.fields(node, path, ("kind", "text"), ("quote",))
+            text = self.string(node, "text", path)
+            return (f"terminal({text})" if ir else text), _RR_ATOM
+        if kind == "nonterminal":
+            v.fields(node, path, ("kind", "name"))
+            name = v.ref(node["name"], ptr(path, "name"), self.known | (_RR_ABNF_CORE if kw == _RR_ABNF else set()))
+            return (f'nonterminal("{name}")' if ir else name), _RR_ATOM
+        if kind in ("sequence", "choice"):
+            v.fields(node, path, ("kind", "items"), ("separator",) if kind == "sequence" else ())
+            items_path = ptr(path, "items")
+            items = v.array(node["items"], items_path, min_items=1)
+            separator = " "
+            if "separator" in node:
+                allowed = {"space": " ", "comma": " , "} if kw == _RR_EBNF else {"space": " "}
+                if ir:
+                    raise v.error(ptr(path, "separator"), "railroad-beta writes sequence(a, b); there is no separator")
+                separator = v.enum(node["separator"], ptr(path, "separator"), allowed)
+            if ir:
+                inner = ", ".join(self.expr(item, ptr(items_path, i))[0] for i, item in enumerate(items))
+                return f"{kind}({inner})", _RR_ATOM
+            need = _RR_PREFIX if kind == "sequence" else _RR_SEQ
+            parts, levels = [], []
+            for i, item in enumerate(items):
+                text, level = self.expr(item, ptr(items_path, i))
+                parts.append(f"( {text} )" if level < need else text)
+                levels.append(_RR_ATOM if level < need else level)
+            if len(parts) == 1:
+                return parts[0], levels[0]
+            if kind == "choice":
+                return (" | " if kw == _RR_EBNF else " / ").join(parts), _RR_CHOICE
+            return separator.join(parts), _RR_SEQ
+        if kind == "group":
+            v.fields(node, path, ("kind", "item"))
+            return f"( {self.expr(node['item'], ptr(path, 'item'))[0]} )", _RR_ATOM
+        if kind in ("optional", "zeroOrMore", "oneOrMore"):
+            v.fields(node, path, ("kind", "item"), ("form",) if kind != "oneOrMore" else ())
+            form = self.form(node, kind, path) if kind != "oneOrMore" else ""
+            if ir:
+                return f"{kind}({self.expr(node['item'], ptr(path, 'item'))[0]})", _RR_ATOM
+            if form == "brackets":
+                return f"[ {self.expr(node['item'], ptr(path, 'item'))[0]} ]", _RR_ATOM
+            if form == "braces":
+                return f"{{ {self.expr(node['item'], ptr(path, 'item'))[0]} }}", _RR_ATOM
+            if kw == _RR_ABNF:
+                prefix = "*" if kind == "zeroOrMore" else "1*"
+                return prefix + self.operand(node, "item", path, _RR_ATOM), _RR_PREFIX
+            need = _RR_POSTFIX if kw == _RR_EBNF else _RR_ATOM
+            text = self.operand(node, "item", path, need)
+            suffix = {"optional": "?", "zeroOrMore": "*", "oneOrMore": "+"}[kind]
+            if suffix == "?" and kw == _RR_EBNF:
+                self.marks.append(("postfix", path))
+            return text + suffix, _RR_POSTFIX
+        if kind == "repeat":
+            v.fields(node, path, ("kind", "item", "min"), ("max",))
+            low = int(v.number(node["min"], ptr(path, "min"), 0, integer=True))
+            if "max" in node:
+                high = int(v.number(node["max"], ptr(path, "max"), max(low, 1), integer=True))
+                count = str(low) if high == low else f"{low}*{high}"
+            else:
+                count = f"{low}*"
+            return count + self.operand(node, "item", path, _RR_ATOM), _RR_PREFIX
+        if kind == "special":
+            v.fields(node, path, ("kind", "text"))
+            if ir:
+                return f"special({self.string(node, 'text', path)})", _RR_ATOM
+            text = v.text(node["text"], ptr(path, "text"), "railroad.ebnf-special")
+            self.marks.append(("other", ptr(path, "text")))
+            return f"? {text} ?", _RR_ATOM
+        if kind == "exception":
+            v.fields(node, path, ("kind", "item", "except"))
+            base = self.operand(node, "item", path, _RR_POSTFIX)
+            return f"{base} - {self.operand(node, 'except', path, _RR_ATOM)}", _RR_POSTFIX
+        if kind == "charValue":
+            v.fields(node, path, ("kind", "base", "value"), ("to",))
+            letter = v.enum(node["base"], ptr(path, "base"), _RR_CHAR_BASES)
+            low = int(v.number(node["value"], ptr(path, "value"), 0, integer=True))
+            digits = {"x": "{:X}", "d": "{:d}", "b": "{:b}"}[letter]
+            text = f"%{letter}{digits.format(low)}"
+            if "to" in node:
+                high = int(v.number(node["to"], ptr(path, "to"), low, integer=True, exclusive_minimum=True))
+                text += f"-{digits.format(high)}"
+            return text, _RR_ATOM
+        if kind in ("andPredicate", "notPredicate"):
+            v.fields(node, path, ("kind", "item"))
+            sign = "&" if kind == "andPredicate" else "!"
+            return sign + self.operand(node, "item", path, _RR_POSTFIX), _RR_PREFIX
+        # anyChar
+        v.fields(node, path, ("kind",))
+        return ".", _RR_ATOM
+
+    def rule(self, rule: Any, path: str) -> list[str]:
+        v, kw = self.v, self.kw
+        v.fields(rule, path, ("name", "expression"), ("operator", "comment"))
+        lines = []
+        if "comment" in rule:
+            at = ptr(path, "comment")
+            comment = v.fields(rule["comment"], at, ("text",), ("style",))
+            styles = _RR_COMMENT_STYLES[kw]
+            style = v.enum(comment["style"], ptr(at, "style"), styles) if "style" in comment else styles[0]
+            text = v.text(comment["text"], ptr(at, "text"), f"railroad.comment-{style}")
+            lines.append({"w3c": f"/* {text} */", "iso": f"(* {text} *)",
+                          "line": f"{';' if kw == _RR_ABNF else '#'} {text}"}[style])
+        name = self.name(rule["name"], ptr(path, "name"))
+        allowed = _RR_OPERATORS[kw]
+        operator = v.enum(rule["operator"], ptr(path, "operator"), allowed) if "operator" in rule else allowed[0]
+        self.marks = []
+        body, _ = self.expr(rule["expression"], ptr(path, "expression"))
+        postfix = [i for i, (kind, _) in enumerate(self.marks) if kind == "postfix"]
+        if postfix and postfix[0] < len(self.marks) - 1:
+            raise v.error(self.marks[postfix[0]][1], "a W3C postfix '?' followed by another '?' in the same "
+                          "rule is read as a special sequence; use form: brackets")
+        lines.append(f"{name} {operator} {body} ;")
+        return lines
+
+
+def serialize_railroad(ir: dict, keyword: str) -> str:
+    v = Validator(keyword)
+    v.fields(ir, "", ("rules",), ("title", "accessibility", "comment"))
+    rules = v.array(ir["rules"], "/rules", min_items=1)
     known: set[str] = set()
-    for actor in ir["actors"]:
-        _require(actor, ("id",), "sequence/zenuml actor")
-        if actor.get("label") not in (None, actor["id"]):
-            raise IRError("sequence/zenuml has no alias; the id is the displayed name")
-        if not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", actor["id"]):
-            raise IRError(f"sequence/zenuml actor id {actor['id']!r} must be a bare identifier")
-        prefix = "@Actor " if actor.get("kind") == "actor" else ""
-        if actor.get("kind") not in (None, "actor", "participant"):
-            raise IRError(f"sequence/zenuml actor {actor['id']!r} has unknown kind {actor['kind']!r}")
-        lines.append(f"    {prefix}{actor['id']}")
-        known.add(actor["id"])
-    for step in ir["steps"]:
-        if step.get("type", "message") != "message":
-            raise IRError("sequence/zenuml only emits messages; hand-author if/while/try blocks")
-        _require(step, ("from", "to", "label"), "sequence/zenuml message")
-        if step["from"] not in known or step["to"] not in known:
-            raise IRError(f"sequence/zenuml message references an undeclared participant: {step}")
-        lines.append(f'    {step["from"]}->{step["to"]}: {_zenuml_text(step["label"])}')
+    writer = _RailroadWriter(v, keyword, known)
+    for index, rule in enumerate(rules):
+        at = ptr("/rules", index)
+        v.fields(rule, at, ("name", "expression"), ("operator", "comment"))
+        v.unique(writer.name(rule["name"], ptr(at, "name")), ptr(at, "name"), known, "rule name")
+    lines = [keyword]
+    if "title" in ir:
+        title = v.text(ir["title"], "/title", "railroad.title")
+        # ABNF strips the outer quotes without decoding escapes; the others decode backslashes.
+        quoted = f'"{title}"' if keyword == _RR_ABNF else _rr_quote(title, '"')
+        lines.append(f"title {quoted}")
+    lines += emit_accessibility(v, ir, indent="")
+    lines += emit_comment(v, ir, indent="")
+    for index, rule in enumerate(rules):
+        lines += writer.rule(rule, ptr("/rules", index))
     return "\n".join(lines) + "\n"
 
 
-def render_info(_ir: dict) -> str:
-    return "info\n"
+register(Builder(
+    "railroad", "grammar", (_RR_EBNF, _RR_ABNF, _RR_PEG, _RR_IR), serialize_railroad,
+    text_fields=(
+        "/title",
+        "/accessibility/title",
+        "/accessibility/description",
+        "/comment",
+        "/rules/*/comment/text",
+        "/rules/2/expression/items/1/items/0/text",
+        "/rules/1/expression/items/1/item/items/0/items/0/text",
+        "/rules/2/expression/items/2/text",
+    ),
+    features={
+        "railroad.ebnf-keyword": f"/target={_RR_EBNF}",
+        "railroad.title": "/title",
+        "railroad.acc-title": "/accessibility/title",
+        "railroad.acc-descr": "/accessibility/description=EBNF rules for signed numbers and expressions",
+        "railroad.acc-descr-block": "/accessibility/description=Expression rules\nwritten as constructors",
+        "railroad.mermaid-comment": "/comment",
+        "railroad.ebnf-rule": "/rules/0/operator==",
+        "railroad.ebnf-rule-colon-colon-eq": "/rules/1/operator=::=",
+        "railroad.ebnf-terminal-double": "/rules/2/expression/items/1/items/0/quote=double",
+        "railroad.ebnf-terminal-single": "/rules/1/expression/items/1/item/items/0/items/0/quote=single",
+        "railroad.ebnf-nonterminal": "/rules/0/expression/items/0/kind=nonterminal",
+        "railroad.ebnf-sequence-w3c": "/rules/0/expression/separator=space",
+        "railroad.ebnf-sequence-iso": "/rules/1/expression/separator=comma",
+        "railroad.ebnf-choice": "/rules/2/expression/kind=choice",
+        "railroad.ebnf-optional-w3c": "/rules/3/expression/items/0/form=postfix",
+        "railroad.ebnf-optional-iso": "/rules/3/expression/items/2/form=brackets",
+        "railroad.ebnf-zero-or-more-w3c": "/rules/0/expression/items/1/form=postfix",
+        "railroad.ebnf-zero-or-more-iso": "/rules/1/expression/items/1/form=braces",
+        "railroad.ebnf-one-or-more": "/rules/3/expression/items/1/kind=oneOrMore",
+        "railroad.ebnf-grouping": "/rules/4/expression/items/0/kind=group",
+        "railroad.ebnf-comment-w3c": "/rules/0/comment/style=w3c",
+        "railroad.ebnf-comment-iso": "/rules/1/comment/style=iso",
+        "railroad.ebnf-special": "/rules/2/expression/items/2/kind=special",
+        "railroad.ebnf-exception": "/rules/7/expression/kind=exception",
+        "railroad.abnf-keyword": f"/target={_RR_ABNF}",
+        "railroad.abnf-alternation": "/rules/2/expression/item/kind=choice",
+        "railroad.abnf-concatenation": "/rules/0/expression/separator=space",
+        "railroad.abnf-zero-or-more": "/rules/3/expression/items/1/kind=zeroOrMore",
+        "railroad.abnf-one-or-more": "/rules/1/expression/kind=oneOrMore",
+        "railroad.abnf-bounded-repeat": "/rules/4/expression/items/0/max=4",
+        "railroad.abnf-exact-repeat": "/rules/4/expression/items/1/max=3",
+        "railroad.abnf-grouping": "/rules/3/expression/items/1/item/kind=group",
+        "railroad.abnf-optional": "/rules/0/expression/items/0/form=brackets",
+        "railroad.abnf-terminal": "/rules/0/expression/items/2/text=@",
+        "railroad.abnf-num-hex": "/rules/5/expression/items/3/base=hex",
+        "railroad.abnf-num-dec": "/rules/5/expression/items/1/base=dec",
+        "railroad.abnf-num-bin": "/rules/5/expression/items/2/base=bin",
+        "railroad.abnf-num-range": "/rules/5/expression/items/0/to",
+        "railroad.abnf-comment": "/rules/0/comment/style=line",
+        "railroad.peg-keyword": f"/target={_RR_PEG}",
+        "railroad.peg-rule": "/rules/*/operator=<-",
+        "railroad.peg-ordered-choice": "/rules/1/expression/kind=choice",
+        "railroad.peg-sequence": "/rules/0/expression/kind=sequence",
+        "railroad.peg-optional": "/rules/0/expression/items/4/kind=optional",
+        "railroad.peg-zero-or-more": "/rules/0/expression/items/3/kind=zeroOrMore",
+        "railroad.peg-one-or-more": "/rules/4/expression/kind=oneOrMore",
+        "railroad.peg-and-predicate": "/rules/0/expression/items/1/kind=andPredicate",
+        "railroad.peg-not-predicate": "/rules/0/expression/items/0/kind=notPredicate",
+        "railroad.peg-grouping": "/rules/2/expression/items/2/kind=group",
+        "railroad.peg-any-char": "/rules/2/expression/items/3/kind=anyChar",
+        "railroad.peg-terminal": "/rules/1/expression/items/1/quote=single",
+        "railroad.peg-comment": "/rules/0/comment/text=PEG comment",
+        "railroad.ir-keyword": f"/target={_RR_IR}",
+        "railroad.ir-terminal": "/rules/1/expression/items/0/item/kind=terminal",
+        "railroad.ir-nonterminal": "/rules/0/expression/items/0/kind=nonterminal",
+        "railroad.ir-sequence": "/rules/1/expression/kind=sequence",
+        "railroad.ir-choice": "/rules/2/expression/kind=choice",
+        "railroad.ir-optional": "/rules/1/expression/items/0/kind=optional",
+        "railroad.ir-zero-or-more": "/rules/0/expression/items/1/kind=zeroOrMore",
+        "railroad.ir-one-or-more": "/rules/1/expression/items/1/kind=oneOrMore",
+        "railroad.ir-special": "/rules/1/expression/items/2/kind=special",
+    },
+    probes={"object": "/rules/0/expression", "number": None, "enum": "/rules/0/operator",
+            "ref": "/rules/0/expression/items/0/name"},
+))
 
 
-register(Builder('ishikawa', 'tree', ('ishikawa-beta',), legacy(render_ishikawa)))
-register(Builder('treeView', 'tree', ('treeView-beta',), legacy(render_treeview)))
-register(Builder('railroad', 'grammar', ('railroad-ebnf-beta',), legacy(render_railroad)))
-register(Builder('zenuml', 'sequence', ('zenuml',), legacy(render_sequence_zenuml)))
-register(Builder('info', 'info', ('info',), legacy(render_info)))
+# --- zenuml ----------------------------------------------------------------------------------
+#
+# Hand-author-only: an external renderer with its own nested control-flow language
+# (if / while / try / par / new / replies), and the old builder emitted messages only.
+
+hand_author_only("zenuml", "zenuml")
+
+
+# --- info ------------------------------------------------------------------------------------
+
+
+def serialize_info(ir: dict, keyword: str) -> str:
+    v = Validator(keyword)
+    v.fields(ir, "", (), ("showInfo", "comment"))
+    show = "showInfo" in ir and v.boolean(ir["showInfo"], "/showInfo")
+    lines = [keyword + (" showInfo" if show else "")]
+    lines += emit_comment(v, ir)
+    return "\n".join(lines) + "\n"
+
+
+register(Builder(
+    "info", "info", ("info",), serialize_info,
+    text_fields=("/comment",),
+    features={"info.keyword": "/target=info", "info.show-info": "/showInfo=true", "info.comment": "/comment"},
+    probes={"object": None, "number": None, "enum": None, "ref": None},
+))
 
 # === end group 6 ===
 

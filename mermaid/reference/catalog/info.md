@@ -55,4 +55,11 @@ info showInfo
 Covers: every feature id.
 
 ## Builder
-`candidate`: `scripts/render.py` has an IR builder for this type (target keyword(s) `info`). It has not been through the reliability bar yet; see [coverage.md](../coverage.md).
+`builder`: family `info`, keyword `info`.
+
+| Key | Type | Meaning |
+|---|---|---|
+| `showInfo` | boolean | `true` writes `info showInfo` |
+| `comment` | string | one `%%` line after the keyword (must not contain `%%`) |
+
+Unknown keys fail at their JSON path. Example: [maximal.json](../../tests/fixtures/info/maximal.json).

@@ -220,4 +220,41 @@ term = sequence(optional(terminal("-")), oneOrMore(nonterminal("digit")), specia
 Covers: every `railroad.ir-*` feature id.
 
 ## Builder
-`candidate`: `scripts/render.py` has an IR builder for this type (target keyword(s) `railroad-ebnf-beta`). It has not been through the reliability bar yet; see [coverage.md](../coverage.md).
+`builder`: family `grammar`, keywords `railroad-ebnf-beta`, `railroad-abnf-beta`, `railroad-peg-beta`, `railroad-beta`.
+One expression tree is written in the notation the `target` picks; a kind or form the notation lacks fails at its path.
+
+| Key | Type | Meaning |
+|---|---|---|
+| `rules` | array of rule, at least 1 | one rule per line, ended by `;` |
+| `rules[].name` | identifier, unique | rule name (ABNF: letters, digits, `-`); must not start with `title` |
+| `rules[].operator` | `=`, `::=` (EBNF), `<-` (PEG) | assignment; default `=` or `<-` |
+| `rules[].comment` | `{text, style}` | comment line above the rule: `w3c` `/* */`, `iso` `(* *)` (EBNF), `line` `;` / `#` (ABNF, PEG) |
+| `rules[].expression` | expression | the definition |
+| `title` | string | `title "..."` (parsed, not drawn) |
+| `accessibility` | `{title, description}` | `accTitle`, `accDescr` (a newline gives the block form) |
+| `comment` | string | one `%%` line |
+
+Expression objects, by `kind`:
+
+| `kind` | Keys | Notations |
+|---|---|---|
+| `terminal` | `text`, `quote` (`double` default, `single`) | all; ABNF double only |
+| `nonterminal` | `name`, a declared rule (ABNF core rules such as `DIGIT` too) | all |
+| `sequence` | `items`, `separator` (`space`, `comma` EBNF only) | all |
+| `choice` | `items` | all |
+| `group` | `item` | EBNF, ABNF, PEG |
+| `optional` | `item`, `form`: `postfix` (EBNF, PEG) or `brackets` (EBNF, ABNF); none in railroad-beta | all |
+| `zeroOrMore` | `item`, `form`: `postfix` (EBNF, PEG), `braces` (EBNF) or `prefix` (ABNF `*`); none in railroad-beta | all |
+| `oneOrMore` | `item` | all |
+| `special` | `text` | EBNF, railroad-beta |
+| `exception` | `item`, `except` | EBNF |
+| `repeat` | `item`, `min`, `max` (absent: unbounded) | ABNF |
+| `charValue` | `base` (`hex`, `dec`, `bin`), `value`, `to` (range end) | ABNF |
+| `andPredicate`, `notPredicate` | `item` | PEG |
+| `anyChar` | none | PEG |
+
+Operands are parenthesized by precedence. Rejected: `<` and entity-like text in any string, `"` in ABNF strings, `?` or `;`
+in an EBNF special sequence, and an EBNF postfix `?` followed by another `?` in the same rule (lexed as a special
+sequence; use `form: brackets`). Examples: [maximal.json](../../tests/fixtures/railroad/maximal.json) (EBNF),
+[ABNF](../../tests/fixtures/railroad/maximal.railroad-abnf-beta.json), [PEG](../../tests/fixtures/railroad/maximal.railroad-peg-beta.json),
+[railroad-beta](../../tests/fixtures/railroad/maximal.railroad-beta.json).

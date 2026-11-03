@@ -1,0 +1,22 @@
+{
+  "diagram": "grammar",
+  "target": "railroad-peg-beta",
+  "rules": [
+    {
+      "name": "Digit",
+      "expression": {
+        "kind": "choice",
+        "items": [
+          {
+            "kind": "terminal",
+            "text": "0"
+          },
+          {
+            "kind": "terminal",
+            "text": "1"
+          }
+        ]
+      }
+    }
+  ]
+}

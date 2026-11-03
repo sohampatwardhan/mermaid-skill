@@ -1,0 +1,74 @@
+{
+  "diagram": "tree",
+  "target": "ishikawa-beta",
+  "comment": "categories at one level, causes indented below",
+  "effect": "Blurry Photo",
+  "causes": [
+    {
+      "label": "Process",
+      "children": [
+        {
+          "label": "Out of focus"
+        },
+        {
+          "label": "Shutter speed too slow"
+        },
+        {
+          "label": "Protective film not removed"
+        },
+        {
+          "label": "Beautification filter applied"
+        }
+      ]
+    },
+    {
+      "label": "User",
+      "children": [
+        {
+          "label": "Shaky hands"
+        }
+      ]
+    },
+    {
+      "label": "Equipment",
+      "children": [
+        {
+          "label": "LENS",
+          "children": [
+            {
+              "label": "Inappropriate lens"
+            },
+            {
+              "label": "Damaged lens"
+            },
+            {
+              "label": "Dirty lens"
+            }
+          ]
+        },
+        {
+          "label": "SENSOR",
+          "children": [
+            {
+              "label": "Damaged sensor"
+            },
+            {
+              "label": "Dirty sensor"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "label": "Environment",
+      "children": [
+        {
+          "label": "Subject moved too quickly"
+        },
+        {
+          "label": "Too dark"
+        }
+      ]
+    }
+  ]
+}

@@ -157,4 +157,22 @@ treeView-beta
 Covers: `treeView.box-drawing-heavy`, `treeView.directory`, `treeView.file`.
 
 ## Builder
-`candidate`: `scripts/render.py` has an IR builder for this type (target keyword(s) `treeView-beta`). It has not been through the reliability bar yet; see [coverage.md](../coverage.md).
+`builder`: family `tree`, keyword `treeView-beta`.
+
+| Key | Type | Meaning |
+|---|---|---|
+| `nodes` | array of node, at least 1 | top-level entries |
+| `nodes[].name` | string, required | label; emitted bare when safe, else quoted with `"` or `'` |
+| `nodes[].directory` | boolean | `true` appends the `/` directory marker |
+| `nodes[].description` | string | `## description` |
+| `nodes[].class` | identifier | `:::class` (`highlight` is built in) |
+| `nodes[].icon` | object `{pack?, name?}` | `icon(pack:name)`; `{}` is `icon()`, `{"name": "none"}` is `icon(none)` |
+| `nodes[].children` | array of node | nested entries |
+| `style` | `indent` (default), `box`, `box-heavy` | indentation or box-drawing input |
+| `accessibility` | `{title, description}` | `accTitle`, `accDescr` |
+| `comment` | string | one `%%` line |
+
+Rejected: a name ending in `/` (use `directory`), a name with both `'` and `"`, box-drawing glyphs, entity-like text such as
+`#lt;`, `<` in a description, and a multi-line accessibility description with a box style.
+Examples: [maximal.json](../../tests/fixtures/treeView/maximal.json), [maximal.box.json](../../tests/fixtures/treeView/maximal.box.json),
+[maximal.box-heavy.json](../../tests/fixtures/treeView/maximal.box-heavy.json).

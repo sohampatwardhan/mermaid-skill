@@ -1,0 +1,82 @@
+{
+  "diagram": "tree",
+  "target": "treeView-beta",
+  "style": "indent",
+  "accessibility": {
+    "title": "Project tree",
+    "description": "Source layout of an example project"
+  },
+  "comment": "bare, quoted, unicode, directories and files",
+  "nodes": [
+    {
+      "name": "my project",
+      "directory": true,
+      "children": [
+        {
+          "name": "src",
+          "directory": true,
+          "children": [
+            {
+              "name": "App.tsx",
+              "class": "highlight",
+              "icon": {
+                "pack": "logos",
+                "name": "react"
+              },
+              "description": "main component"
+            },
+            {
+              "name": "index.js",
+              "description": "app entry point"
+            },
+            {
+              "name": "styles.css",
+              "class": "myClass"
+            },
+            {
+              "name": "main.rs",
+              "icon": {
+                "name": "rust"
+              }
+            },
+            {
+              "name": "vendor",
+              "icon": {
+                "name": "folder"
+              }
+            },
+            {
+              "name": "generated.js",
+              "icon": {}
+            },
+            {
+              "name": "legacy.js",
+              "icon": {
+                "name": "none"
+              }
+            }
+          ]
+        },
+        {
+          "name": "docs and notes",
+          "directory": true,
+          "children": [
+            {
+              "name": "🚀 launch-plan.md",
+              "description": "release checklist"
+            }
+          ]
+        },
+        {
+          "name": "package.json",
+          "directory": false,
+          "description": "project manifest"
+        },
+        {
+          "name": "README.md",
+          "directory": false
+        }
+      ]
+    }
+  ]
+}

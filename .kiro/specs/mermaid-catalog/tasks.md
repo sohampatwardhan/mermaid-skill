@@ -94,9 +94,9 @@ flowchart TB
   classDef critical fill:#fde68a,stroke:#b45309,color:#1c1917
   classDef parallel fill:#dbeafe,stroke:#1d4ed8,color:#1e3a8a
   classDef done fill:#dcfce7,stroke:#15803d,color:#14532d
-  class t1,t2_1,t2_2,t2_3,t3,t4,t5_1,t5_2,t5_3,t5_4,t5_5,t5_6,t6_1,t6_2,t6_3,t7_1,t7_2,t7_3,t7_4,t7_5,ld done
+  class t1,t2_1,t2_2,t2_3,t3,t4,t5_1,t5_2,t5_3,t5_4,t5_5,t5_6,t6_1,t6_2,t6_3,t7_1,t7_2,t7_3,t7_4,t7_5,t7_6,ld done
   class t8,lc critical
-  class t7_6,lp parallel
+  class lp parallel
 ```
 
 Type groups used by tasks 5 and 7:
@@ -194,7 +194,7 @@ If the 12.0.0 refresh in task 3 adds or removes a syntax page, task 3 adds or re
   - Add a self-test with a toy builder that drops a key, proving the harness fails on it
   - _Requirements: 4.1, 4.4, 4.5, 4.6, 4.8_
 
-- [ ] 7. Decide and finish each builder
+- [x] 7. Decide and finish each builder
 - [x] 7.1 Builder group 1: core graph builders
   - For `flowchart`, `sequenceDiagram`, `classDiagram`, `stateDiagram`, `entityRelationshipDiagram`: port the old branch's `maximal.json` (`git show origin/spec/mermaid-json-ir-schema:.specs/mermaid-json-ir-schema/work/skill/examples/<target>/maximal.json`) to the flat shape as `tests/fixtures/<type>/maximal.json`, add `minimal.json`, and use the old target schema as a construct checklist
   - Move each serializer onto `Validator`, declare `text_fields` and `features`, and close every gap until the parity and corpus tests pass; if a type cannot reach the bar, remove its builder and add its keywords to `HAND_AUTHOR_ONLY`
@@ -213,7 +213,7 @@ If the 12.0.0 refresh in task 3 adds or removes a syntax page, task 3 adds or re
 - [x] 7.5 Builder group 5: Mermaid 12 and beta builders
   - Do 7.1 for `agentflow`, `usecase`, `swimlanes`, `wardley`, `cynefin`, `eventmodeling`; these are marked evaluate or keep in the design, and a type that cannot reach the bar becomes hand-author-only
   - _Requirements: 1.8, 4.1, 4.2, 4.3, 4.4, 4.5, 4.6, 4.7, 4.8, 4.9, 4.10, 6.2, 6.3_
-- [ ] 7.6 Builder group 6: remaining builders
+- [x] 7.6 Builder group 6: remaining builders
   - Do 7.1 for `ishikawa`, `treeView`, and `info`
   - For `railroad`, replace the verbatim rule strings with the old branch's expression tree (`sequence`, `choice`, `zeroOrMore`, `terminal`, `nonterminal`, and the rest of its schema) or remove the builder
   - Remove the `zenuml` builder, add `zenuml` to `HAND_AUTHOR_ONLY`, and mark it hand-author-only

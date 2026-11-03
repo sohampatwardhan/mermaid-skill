@@ -1,0 +1,137 @@
+{
+  "diagram": "grammar",
+  "target": "railroad-peg-beta",
+  "title": "Identifiers",
+  "rules": [
+    {
+      "name": "Identifier",
+      "operator": "<-",
+      "comment": {
+        "text": "PEG comment"
+      },
+      "expression": {
+        "kind": "sequence",
+        "items": [
+          {
+            "kind": "notPredicate",
+            "item": {
+              "kind": "nonterminal",
+              "name": "Keyword"
+            }
+          },
+          {
+            "kind": "andPredicate",
+            "item": {
+              "kind": "nonterminal",
+              "name": "Letter"
+            }
+          },
+          {
+            "kind": "nonterminal",
+            "name": "Letter"
+          },
+          {
+            "kind": "zeroOrMore",
+            "item": {
+              "kind": "nonterminal",
+              "name": "Letter"
+            }
+          },
+          {
+            "kind": "optional",
+            "item": {
+              "kind": "nonterminal",
+              "name": "Digit"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Keyword",
+      "operator": "<-",
+      "expression": {
+        "kind": "choice",
+        "items": [
+          {
+            "kind": "terminal",
+            "text": "if"
+          },
+          {
+            "kind": "terminal",
+            "text": "else",
+            "quote": "single"
+          },
+          {
+            "kind": "terminal",
+            "text": "while"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Letter",
+      "operator": "<-",
+      "expression": {
+        "kind": "choice",
+        "items": [
+          {
+            "kind": "terminal",
+            "text": "a"
+          },
+          {
+            "kind": "terminal",
+            "text": "b"
+          },
+          {
+            "kind": "group",
+            "item": {
+              "kind": "sequence",
+              "items": [
+                {
+                  "kind": "terminal",
+                  "text": "c"
+                },
+                {
+                  "kind": "terminal",
+                  "text": "_"
+                }
+              ]
+            }
+          },
+          {
+            "kind": "anyChar"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Digit",
+      "operator": "<-",
+      "expression": {
+        "kind": "choice",
+        "items": [
+          {
+            "kind": "terminal",
+            "text": "0"
+          },
+          {
+            "kind": "terminal",
+            "text": "1"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Number",
+      "operator": "<-",
+      "expression": {
+        "kind": "oneOrMore",
+        "item": {
+          "kind": "nonterminal",
+          "name": "Digit"
+        }
+      }
+    }
+  ]
+}

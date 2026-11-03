@@ -182,4 +182,5 @@ zenuml
 Covers: every feature id.
 
 ## Builder
-`candidate`: `scripts/render.py` has an IR builder for this type (target keyword(s) `zenuml`). It has not been through the reliability bar yet; see [coverage.md](../coverage.md).
+`hand-author-only`: ZenUML is an external renderer with its own nested control-flow language (`if`, `while`, `try`,
+`par`, `new`, replies), and the old builder emitted plain messages only. Write the source by hand from this file.

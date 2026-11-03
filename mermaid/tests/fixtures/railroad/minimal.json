@@ -1,0 +1,22 @@
+{
+  "diagram": "grammar",
+  "target": "railroad-ebnf-beta",
+  "rules": [
+    {
+      "name": "digit",
+      "expression": {
+        "kind": "choice",
+        "items": [
+          {
+            "kind": "terminal",
+            "text": "0"
+          },
+          {
+            "kind": "terminal",
+            "text": "1"
+          }
+        ]
+      }
+    }
+  ]
+}
