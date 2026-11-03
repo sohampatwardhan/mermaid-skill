@@ -137,6 +137,56 @@ def test_error_placeholder_svg_exits_1(tmp_path: Path) -> None:
     assert result.stdout.startswith("FAIL line unknown")
 
 
+# --- 2.2b per-render timeout ------------------------------------------------------------
+
+
+def _sleeping_mmdc(tmp_path: Path) -> Path:
+    """A fake mmdc 12.0.0 that writes a valid SVG but only after a long sleep."""
+    fake = tmp_path / "fake"
+    fake.mkdir()
+    write_exe(
+        fake / "mmdc",
+        'if [ "$1" = "--version" ]; then echo 12.0.0; exit 0; fi\n'
+        'while [ $# -gt 0 ]; do if [ "$1" = "-o" ]; then out="$2"; fi; shift; done\n'
+        'sleep 30\n'
+        'echo "<svg></svg>" > "$out"\n',
+    )
+    return fake
+
+
+def test_single_diagram_timeout_fails_and_says_timeout(tmp_path: Path) -> None:
+    fake = _sleeping_mmdc(tmp_path)
+    # Keep the real PATH so check.sh's portable timeout (timeout/gtimeout/perl/python3) and the
+    # fake's own `sleep` resolve; the fake mmdc 12.0.0 is first, so it is the one that is used.
+    env = {
+        **os.environ,
+        "PATH": f"{fake}:{os.environ['PATH']}",
+        "MERMAID_CHECK_TIMEOUT": "1",
+    }
+    result = run_check("-c", "flowchart TD\n  A-->B", env=env)
+    # A render that outlives the bound must never pass.
+    assert result.returncode == 1, result.stdout + result.stderr
+    assert "timeout" in (result.stdout + result.stderr).lower()
+
+
+def test_markdown_timeout_reports_path_line_and_timeout(tmp_path: Path) -> None:
+    fake = _sleeping_mmdc(tmp_path)
+    md = tmp_path / "slow.md"
+    md.write_text("# Slow\n\n```mermaid\nflowchart TD\n  A --> B\n```\n")
+    env = {
+        **os.environ,
+        "PATH": f"{fake}:{os.environ['PATH']}",
+        "MERMAID_CHECK_TIMEOUT": "1",
+    }
+    result = run_check("--markdown", str(md), env=env)
+    assert result.returncode == 1, result.stdout + result.stderr
+    failures = [line for line in result.stdout.splitlines() if line.startswith(f"{md}:")]
+    assert failures, result.stdout + result.stderr
+    # Reported with path:line and the word "timeout".
+    assert re.match(rf"{re.escape(str(md))}:\d+:", failures[0]), failures[0]
+    assert "timeout" in "\n".join(failures).lower()
+
+
 # --- 2.3 Markdown mode ------------------------------------------------------------------
 
 MIXED_MD = """# Mixed

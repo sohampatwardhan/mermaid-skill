@@ -15,6 +15,10 @@
 # Otherwise `npx -y ${MERMAID_CLI_PACKAGE}` (default @mermaid-js/mermaid-cli@12.0.0).
 # Keep the pin in sync with .github/workflows/tests.yml.
 #
+# Optional: set MERMAID_CHECK_TIMEOUT to the per-diagram render bound in seconds (default 60).
+# A render that outlives it is reported as a failure naming "timeout" — never a pass. The bound
+# is portable (GNU/BSD `timeout`, else a perl or python3 watchdog). Set 0 to disable it.
+#
 # Optional: set MERMAID_PUPPETEER_CONFIG to a puppeteer JSON config path (e.g.
 # {"args": ["--no-sandbox"]}) when the host can't grant Chromium a sandbox — some CI runners
 # (e.g. GitHub Actions' ubuntu-latest, whose AppArmor policy blocks unprivileged user
@@ -91,13 +95,72 @@ else
   exit 3
 fi
 
-# run_mmdc INPUT OUTPUT
-run_mmdc() {
-  if [ -n "${MERMAID_PUPPETEER_CONFIG:-}" ]; then
-    "${RUN[@]}" -i "$1" -o "$2" -p "${MERMAID_PUPPETEER_CONFIG}"
-  else
-    "${RUN[@]}" -i "$1" -o "$2"
+# Per-render wall-clock bound (seconds). A render that outlives it is a failure, never a pass:
+# headless Chromium can wedge forever, and an unbounded render once stalled CI for 45 minutes.
+MERMAID_CHECK_TIMEOUT="${MERMAID_CHECK_TIMEOUT:-60}"
+
+# run_with_timeout SECONDS CMD...: run CMD under a wall-clock bound, portable across macOS and
+# Linux. Prefer GNU/BSD `timeout` (or `gtimeout`); otherwise fall back to a perl or python3
+# SIGALRM watchdog. Exit 124 means the bound was hit (the convention GNU `timeout` uses); any
+# other code is CMD's own. With no usable timer, run CMD unbounded rather than refuse to render.
+run_with_timeout() {
+  local secs="$1"; shift
+  if [ "${secs}" -le 0 ] 2>/dev/null; then
+    "$@"
+    return $?
   fi
+  if command -v timeout >/dev/null 2>&1; then
+    timeout -k 5 "${secs}" "$@"
+  elif command -v gtimeout >/dev/null 2>&1; then
+    gtimeout -k 5 "${secs}" "$@"
+  elif command -v perl >/dev/null 2>&1; then
+    perl -e '
+      my $t = shift;
+      my $pid = fork();
+      die "fork: $!" unless defined $pid;
+      if ($pid == 0) { exec @ARGV or exit 127; }
+      $SIG{ALRM} = sub { kill "TERM", $pid; sleep 5; kill "KILL", $pid; waitpid($pid, 0); exit 124; };
+      alarm $t;
+      waitpid($pid, 0);
+      my $code = $?;
+      exit($code & 127 ? 128 + ($code & 127) : $code >> 8);
+    ' "${secs}" "$@"
+  elif command -v python3 >/dev/null 2>&1; then
+    python3 -c '
+import subprocess, sys
+secs = int(sys.argv[1])
+try:
+    sys.exit(subprocess.run(sys.argv[2:], timeout=secs).returncode)
+except subprocess.TimeoutExpired:
+    sys.exit(124)
+' "${secs}" "$@"
+  else
+    "$@"
+  fi
+}
+
+# run_mmdc INPUT OUTPUT [DIAGRAM_COUNT]: render under a wall-clock bound of
+# MERMAID_CHECK_TIMEOUT seconds *per diagram*. A single render uses the base bound; one mmdc
+# call that renders a whole Markdown batch of N fences gets N× it, so a healthy large batch is
+# never killed for being large while a wedged render is still bounded. On a timeout (exit 124)
+# write a line containing "timeout" to stderr so the caller's log — and the reported failure,
+# located per fence by the Markdown slow path — names it. A timed-out render never passes.
+run_mmdc() {
+  local status=0 count="${3:-1}" budget
+  if [ "${MERMAID_CHECK_TIMEOUT}" -le 0 ] 2>/dev/null; then
+    budget=0
+  else
+    budget=$((MERMAID_CHECK_TIMEOUT * count))
+  fi
+  if [ -n "${MERMAID_PUPPETEER_CONFIG:-}" ]; then
+    run_with_timeout "${budget}" "${RUN[@]}" -i "$1" -o "$2" -p "${MERMAID_PUPPETEER_CONFIG}" || status=$?
+  else
+    run_with_timeout "${budget}" "${RUN[@]}" -i "$1" -o "$2" || status=$?
+  fi
+  if [ "${status}" = 124 ]; then
+    echo "error: render timeout after ${budget}s (${MERMAID_CHECK_TIMEOUT}s x ${count}, MERMAID_CHECK_TIMEOUT)" >&2
+  fi
+  return "${status}"
 }
 
 # --- diagnostics --------------------------------------------------------------------------
@@ -177,7 +240,9 @@ check_markdown() {
   done
   mkdir "${work}/out"
   status=0
-  if run_mmdc "${work}/batch.md" "${work}/out/out.md" >"${work}/batch.log" 2>&1; then
+  # The batch renders every fence in one mmdc process, so give it the per-diagram bound times
+  # the fence count; the slow path below re-renders each fence under the base per-diagram bound.
+  if run_mmdc "${work}/batch.md" "${work}/out/out.md" "${count}" >"${work}/batch.log" 2>&1; then
     i=1
     while [ "${i}" -le "${count}" ]; do
       svg="${work}/out/out-${i}.svg"

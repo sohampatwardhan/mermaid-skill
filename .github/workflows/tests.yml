@@ -7,6 +7,9 @@ on:
 jobs:
   mermaid:
     runs-on: ubuntu-latest
+    # A single wedged headless-Chromium render once stalled this job for 45 minutes. check.sh
+    # now bounds each render (MERMAID_CHECK_TIMEOUT); this is the belt-and-braces job backstop.
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-python@v6
@@ -17,7 +20,9 @@ jobs:
           # @mermaid-js/mermaid-cli@12 requires Node >= 22.13. Node 20 makes npx
           # resolve an older CLI that does not register agentflow-beta.
           node-version: "22"
-      - run: pip install pytest
+      # pytest-xdist runs the independent render tests across every runner core; the bulk of
+      # the wall time is headless-Chromium render tests that parallelise cleanly.
+      - run: pip install pytest pytest-xdist
       # Pin the CLI (and Mermaid) so CI does not float to whatever `npx` latest
       # resolves. check.sh prefers this mmdc over its npx fallback.
       - name: Install pinned Mermaid CLI
@@ -37,7 +42,10 @@ jobs:
       - name: Allow Chromium to run without a sandbox
         run: |
           echo '{"args": ["--no-sandbox"]}' > /tmp/puppeteer-config.json
-      - run: python3 -m pytest tests/ -q
+      - run: python3 -m pytest tests/ -q -n auto --durations=15
         working-directory: mermaid
         env:
           MERMAID_PUPPETEER_CONFIG: /tmp/puppeteer-config.json
+          # Bound each render well under the job and per-call limits so a wedged Chromium fails
+          # fast instead of stalling the run; a healthy render finishes in a few seconds.
+          MERMAID_CHECK_TIMEOUT: "60"

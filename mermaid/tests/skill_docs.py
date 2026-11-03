@@ -145,7 +145,7 @@ def builder_state(text: str) -> str:
     return match.group(1) if match else ""
 
 
-def run_check_markdown(*files: Path, timeout: int = 1800) -> subprocess.CompletedProcess:
+def run_check_markdown(*files: Path, timeout: int = 300) -> subprocess.CompletedProcess:
     return subprocess.run(
         [BASH, str(CHECK), "--markdown", *map(str, files)],
         capture_output=True, text=True, timeout=timeout,
