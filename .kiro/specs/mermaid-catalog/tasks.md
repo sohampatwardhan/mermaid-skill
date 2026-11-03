@@ -94,8 +94,8 @@ flowchart TB
   classDef critical fill:#fde68a,stroke:#b45309,color:#1c1917
   classDef parallel fill:#dbeafe,stroke:#1d4ed8,color:#1e3a8a
   classDef done fill:#dcfce7,stroke:#15803d,color:#14532d
-  class t1,t2_1,t2_2,t2_3,t3,t4,t5_1,t5_2,t5_3,t5_4,t5_5,t5_6,t6_1,t6_2,t6_3,t7_1,t7_2,t7_3,t7_4,t7_5,t7_6,ld done
-  class t8,lc critical
+  class t1,t2_1,t2_2,t2_3,t3,t4,t5_1,t5_2,t5_3,t5_4,t5_5,t5_6,t6_1,t6_2,t6_3,t7_1,t7_2,t7_3,t7_4,t7_5,t7_6,t8,ld done
+  class lc critical
   class lp parallel
 ```
 
@@ -219,7 +219,7 @@ If the 12.0.0 refresh in task 3 adds or removes a syntax page, task 3 adds or re
   - Remove the `zenuml` builder, add `zenuml` to `HAND_AUTHOR_ONLY`, and mark it hand-author-only
   - _Requirements: 1.8, 4.1, 4.2, 4.3, 4.4, 4.5, 4.6, 4.7, 4.8, 4.9, 4.10, 4.11, 6.2, 6.3_
 
-- [ ] 8. Ship the lean index and remove the old references
+- [x] 8. Ship the lean index and remove the old references
   - Rewrite `mermaid/SKILL.md` to the design layout with `name: mermaid`, the check rule, and a 34-row index linking each catalog file, at most 120 lines
   - Delete `mermaid/reference/type-cheatsheets.md`, `mermaid/reference/ir-catalog.md`, and `mermaid/reference/iso-5807-flowcharts.md` (now inside `catalog/flowchart.md`); rewrite `mermaid/reference/ir.md` to the shared IR rules only (family and target keys, strict keys, error format, exit codes); fix every link to the removed files
   - Update `README.md` to keep both `npx skills` commands, name the skill `mermaid`, and link `mermaid/SKILL.md` and `mermaid/reference/coverage.md`

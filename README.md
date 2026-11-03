@@ -2,22 +2,23 @@
 
 An [Agent Skills](https://agentskills.io/specification)-compatible skill for authoring,
 validating, and deterministically generating [Mermaid](https://mermaid.js.org/) diagrams. Built
-for Claude Code, and portable to any tool that reads the open `SKILL.md` format.
+for Claude Code, and portable to any tool that reads the open `SKILL.md` format. The skill is
+named `mermaid`; [`mermaid/SKILL.md`](mermaid/SKILL.md) is a lean index that points at one
+catalog file per diagram type.
 
-- **Cached syntax, checked against the renderer.** Per-type syntax lives in
-  `mermaid/reference/syntax/` (version stamp in `mermaid/reference/diagram-types.md`).
-  `scripts/check.sh` uses the installed Mermaid CLI, which may be newer than that stamp.
-  Escalate to live docs or `scripts/refresh.sh` when a type is missing from the cache.
-- **Never presented unverified.** Every diagram is render-validated (via an MCP render tool or
-  the bundled `scripts/check.sh`) before it's shown, including detection of Mermaid's silent
-  error-placeholder SVG.
-- **Deterministic generation from structured data.** When a diagram's content is already
-  structured data on disk (a dependency graph, a timing ledger, a state machine, a sequence, a
-  requirement-traceability table), `mermaid/scripts/render.py` generates the exact Mermaid source
-  from a small JSON intermediate representation (IR) instead of hand-authoring it — see
-  [`mermaid/reference/ir.md`](mermaid/reference/ir.md) and
-  [`mermaid/reference/ir-catalog.md`](mermaid/reference/ir-catalog.md). The matrix of every
-  open-source diagram type, its IR, its tests, and remaining gaps is
+- **One catalog file per type.** Every open-source Mermaid 12.0.0 diagram type has a file under
+  `mermaid/reference/catalog/` with its syntax, every feature, config and theming, traps, and a
+  complete worked example. An agent picks a type from the index and loads only that file. The
+  cached upstream pages stay in `mermaid/reference/syntax/`, pinned to the `mermaid@12.0.0` tag.
+- **Never presented unverified.** Every diagram is render-validated with `scripts/check.sh`,
+  which pins Mermaid CLI 12.0.0, reports the failing line, and rejects Mermaid's silent
+  error-placeholder SVG. CI runs it on every example in every catalog file.
+- **Optional, reliable generation from structured data.** When a diagram's content is already
+  structured data, `mermaid/scripts/render.py` generates the exact Mermaid source from a small
+  JSON intermediate representation (IR) — see [`mermaid/reference/ir.md`](mermaid/reference/ir.md).
+  A type keeps a builder only where it is 100% reliable: accepted IR always renders, and anything
+  it cannot represent is rejected with a JSON path rather than guessed. The checked matrix of
+  every type, its keywords, its builder, and its tests is
   [`mermaid/reference/coverage.md`](mermaid/reference/coverage.md).
 
 ## Install
@@ -51,9 +52,10 @@ part of the installed skill.
 cd mermaid && python3 -m pytest tests/ -q
 ```
 
-Every positive-case test in `tests/test_render.py` is a real render through `scripts/check.sh`
-(an installed `mmdc`, otherwise `npx -y @mermaid-js/mermaid-cli@12.0.0`), not just a string match.
-GitHub Actions installs that same pin on Node 22. Mermaid 11 does not register `agentflow-beta`.
+The builder tests render every fixture and text-corpus case through `scripts/check.sh` (an
+`mmdc` 12.0.0, otherwise `npx -y @mermaid-js/mermaid-cli@12.0.0`), and `check.sh --markdown`
+validates every example in every catalog file — not just string matches. GitHub Actions installs
+that same pin on Node 22. Mermaid 11 does not register `agentflow-beta`.
 
 ## License
 

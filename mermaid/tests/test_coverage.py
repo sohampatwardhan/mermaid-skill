@@ -6,10 +6,6 @@ from skill_docs import BUILDER_STATES, coverage_rows, load_render, type_set
 
 render = load_render()
 
-# `candidate` marks a builder not yet through the reliability bar. Removed by task 8.
-TRANSITIONAL_STATES = ("candidate",)
-
-
 def serializer_keywords() -> set[str]:
     keywords = {target for _family, target in render.SERIALIZERS}
     keywords |= set(getattr(render, "HAND_AUTHOR_ONLY", {}))
@@ -30,9 +26,8 @@ def test_catalog_column_names_the_type_file() -> None:
 
 
 def test_builder_column_values() -> None:
-    allowed = BUILDER_STATES + TRANSITIONAL_STATES
     for row in coverage_rows():
-        assert row.builder in allowed, f"{row.type_id}: Builder column {row.builder!r}"
+        assert row.builder in BUILDER_STATES, f"{row.type_id}: Builder column {row.builder!r}"
 
 
 def test_builder_rows_have_no_gaps() -> None:

@@ -16,22 +16,17 @@ from skill_docs import (
     type_set,
 )
 
-# Types whose catalog file is not written yet. Emptied by task 5.6, removed by task 8.
-PENDING_TYPES: set[str] = set()
-
-
 def catalog_files():
     return sorted(CATALOG_DIR.glob("*.md"))
 
 
 def test_catalog_stems_equal_the_type_set() -> None:
-    expected = type_set() - PENDING_TYPES
+    expected = type_set()
     actual = {path.stem for path in catalog_files()}
     missing = sorted(expected - actual)
     extra = sorted(actual - expected)
     assert not missing, f"types without a catalog file: {missing}"
-    assert not extra, f"catalog files naming no pending-free type: {extra}"
-    assert PENDING_TYPES <= type_set(), f"PENDING_TYPES not in the type set: {sorted(PENDING_TYPES - type_set())}"
+    assert not extra, f"catalog files naming no type in the type set: {extra}"
 
 
 @pytest.mark.parametrize("path", catalog_files(), ids=lambda p: p.stem)
