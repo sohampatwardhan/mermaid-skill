@@ -1,0 +1,42 @@
+{
+  "diagram": "graph",
+  "target": "swimlane-beta",
+  "direction": "LR",
+  "accessibility": {
+    "title": "Support escalation",
+    "description": "A request starts with the customer, is triaged by support, and may be escalated to engineering."
+  },
+  "comment": "Lanes follow ownership",
+  "groups": [
+    {"id": "customer", "label": "Customer"},
+    {"id": "support", "label": "Support team"},
+    {"id": "Engineering"}
+  ],
+  "nodes": [
+    {"id": "request", "label": "Request service", "kind": "stadium", "group": "customer"},
+    {"id": "receive", "label": "Receive update", "kind": "round", "group": "customer"},
+    {"id": "triage", "label": "Triage request", "kind": "rect", "group": "support"},
+    {"id": "ready", "label": "Ready to answer?", "kind": "decision", "group": "support", "class": "attention"},
+    {"id": "answer", "label": "Send answer", "kind": "round", "group": "support"},
+    {"id": "investigate", "label": "Investigate issue", "kind": "rect", "group": "Engineering"},
+    {"id": "fix", "label": "Prepare fix", "kind": "rect", "group": "Engineering"},
+    {"id": "done", "label": "Fixed", "kind": "circle", "group": "Engineering"},
+    {"id": "notes", "label": "Fix notes", "shape": "doc", "group": "Engineering"},
+    {"id": "release", "markdown": "**Release** fix", "group": "Engineering"},
+    {"id": "marker", "label": "Escalation point", "kind": "circle"}
+  ],
+  "edges": [
+    {"from": "request", "to": "triage", "kind": "arrow"},
+    {"from": "triage", "to": "ready", "kind": "line"},
+    {"from": "ready", "to": "answer", "label": "Known issue", "kind": "arrow"},
+    {"from": "ready", "to": "investigate", "label": "Needs code change", "kind": "dotted"},
+    {"from": "investigate", "to": "fix", "kind": "thick", "then": [{"to": "done"}, {"to": "release", "kind": "thick", "label": "ship"}]},
+    {"from": "fix", "to": "answer", "kind": "arrow"},
+    {"from": "done", "to": "notes", "kind": "dotted"},
+    {"from": "answer", "to": "receive", "kind": "arrow"},
+    {"from": "investigate", "to": "marker", "kind": "dotted"}
+  ],
+  "classDefs": [
+    {"name": "attention", "style": {"fill": "#fff2cc", "stroke": "#d6a500", "color": "#111", "strokeWidth": "2px", "strokeDasharray": "5 5"}}
+  ]
+}

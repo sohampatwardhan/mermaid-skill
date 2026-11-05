@@ -1,0 +1,56 @@
+{
+  "diagram": "graph",
+  "target": "block",
+  "config": {"padding": 8, "useMaxWidth": true},
+  "comment": "shapes",
+  "columns": 4,
+  "blocks": [
+    {"id": "r1", "label": "Rect", "shape": "rect"},
+    {"id": "r2", "label": "Round", "shape": "round"},
+    {"id": "r3", "label": "Stadium", "shape": "stadium"},
+    {"id": "r4", "label": "Subroutine", "shape": "subroutine"},
+    {"id": "s1", "label": "Cylinder", "shape": "cylinder"},
+    {"id": "s2", "label": "Circle", "shape": "circle"},
+    {"id": "s3", "label": "Asymmetric", "shape": "asymmetric"},
+    {"id": "s4", "label": "Rhombus", "shape": "rhombus"},
+    {"id": "s5", "label": "Hexagon", "shape": "hexagon"},
+    {"id": "p1", "label": "Parallelogram", "shape": "parallelogram"},
+    {"id": "p2", "label": "Parallelogram alt", "shape": "parallelogram-alt"},
+    {"id": "t1", "label": "Trapezoid", "shape": "trapezoid"},
+    {"id": "t2", "label": "Trapezoid alt", "shape": "trapezoid-alt"},
+    {"id": "dc", "label": "Double", "shape": "double-circle"},
+    {"id": "plain"},
+    {"id": "wide", "label": "Wide", "width": 2},
+    {"kind": "arrow", "id": "ba1", "label": "right", "directions": ["right"]},
+    {"kind": "arrow", "id": "ba2", "label": "left", "directions": ["left"]},
+    {"kind": "arrow", "id": "ba3", "label": "up", "directions": ["up"]},
+    {"kind": "arrow", "id": "ba4", "label": "down", "directions": ["down"]},
+    {"kind": "arrow", "id": "ba5", "label": "x", "directions": ["x"]},
+    {"kind": "arrow", "id": "ba6", "label": "y", "directions": ["y"]},
+    {"kind": "arrow", "id": "ba7", "label": "both\u00a0ways", "directions": ["x", "down"]},
+    {"kind": "space"},
+    {"kind": "composite", "id": "ID", "label": "Group One", "width": 2, "columns": 2, "children": [
+      {"id": "A", "label": "A"},
+      {"id": "B", "label": "B", "shape": "cylinder"}
+    ]},
+    {"kind": "space", "width": 2},
+    {"kind": "composite", "children": [{"id": "C", "label": "C"}]},
+    {"kind": "space"},
+    {"id": "D", "label": "D"},
+    {"id": "E", "label": "E"}
+  ],
+  "edges": [
+    {"from": "ID", "to": "D"},
+    {"from": "A", "to": "E", "label": "feeds", "kind": "arrow"},
+    {"from": "C", "to": "D", "kind": "line"}
+  ],
+  "class_defs": [
+    {"name": "blue", "style": {"fill": "#6e6ce6", "stroke": "#333", "strokeWidth": "4px", "color": "white"}}
+  ],
+  "class_assignments": [
+    {"blocks": ["s1", "s2"], "class": "blue"}
+  ],
+  "styles": [
+    {"block": "r1", "style": {"fill": "#969", "stroke": "#333", "strokeWidth": "4px", "strokeDasharray": "5 5", "fontWeight": "bold", "fontStyle": "italic", "fontSize": "14px"}}
+  ]
+}

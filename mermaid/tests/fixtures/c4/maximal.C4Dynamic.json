@@ -1,0 +1,18 @@
+{
+  "diagram": "graph",
+  "target": "C4Dynamic",
+  "title": "Sign-in flow",
+  "groups": [{"id": "b", "label": "API Application", "kind": "container_boundary"}],
+  "nodes": [
+    {"id": "db", "label": "Database", "kind": "container_db", "technology": "SQL", "description": "Users"},
+    {"id": "spa", "label": "Single-Page App", "kind": "container", "technology": "Angular"},
+    {"id": "sec", "label": "Security Component", "kind": "component", "technology": "Spring Bean", "group": "b"},
+    {"id": "ctl", "label": "Sign In Controller", "kind": "component", "technology": "Spring MVC", "group": "b"}
+  ],
+  "edges": [
+    {"from": "spa", "to": "ctl", "label": "Submits credentials to", "kind": "rel_index", "index": 1, "technology": "JSON/HTTPS"},
+    {"from": "ctl", "to": "sec", "label": "Calls isAuthenticated() on", "kind": "rel_index", "index": 2},
+    {"from": "sec", "to": "db", "label": "select * from users", "kind": "rel_index", "index": 3, "technology": "JDBC"}
+  ],
+  "rel_styles": [{"from": "spa", "to": "ctl", "text_color": "red", "offset_y": -40}]
+}

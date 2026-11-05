@@ -1,0 +1,64 @@
+{
+  "diagram": "journey",
+  "target": "journey",
+  "config": {
+    "journey": {
+      "leftMargin": 150,
+      "taskFontSize": 14
+    }
+  },
+  "accessibility": {
+    "title": "Working day",
+    "description": "Steps from making tea to sitting down at home"
+  },
+  "title": "My working day",
+  "comment": "scores are 1 (sad) to 5 (happy)",
+  "sections": [
+    {
+      "name": "Go to work",
+      "tasks": [
+        {
+          "name": "Make tea",
+          "score": 5,
+          "actors": [
+            "Me"
+          ]
+        },
+        {
+          "name": "Go upstairs",
+          "score": 3,
+          "actors": [
+            "Me"
+          ]
+        },
+        {
+          "name": "Do work",
+          "score": 1,
+          "actors": [
+            "Me",
+            "Cat"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Go home",
+      "tasks": [
+        {
+          "name": "Go downstairs",
+          "score": 5,
+          "actors": [
+            "Me"
+          ]
+        },
+        {
+          "name": "Sit down",
+          "score": 5,
+          "actors": [
+            "Me"
+          ]
+        }
+      ]
+    }
+  ]
+}

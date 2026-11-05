@@ -1,0 +1,6 @@
+{
+  "diagram": "graph",
+  "target": "swimlane-beta",
+  "groups": [{"id": "Sales"}],
+  "nodes": [{"id": "lead", "label": "Qualify lead", "group": "Sales"}]
+}

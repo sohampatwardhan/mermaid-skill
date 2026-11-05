@@ -1,0 +1,54 @@
+{
+  "diagram": "sequence",
+  "target": "sequenceDiagram",
+  "autonumber": true,
+  "actors": [
+    {
+      "id": "User"
+    },
+    {
+      "id": "API"
+    },
+    {
+      "id": "DB",
+      "kind": "actor"
+    }
+  ],
+  "steps": [
+    {
+      "type": "message",
+      "from": "User",
+      "to": "API",
+      "label": "request",
+      "arrow": "sync"
+    },
+    {
+      "type": "message",
+      "from": "API",
+      "to": "DB",
+      "label": "query",
+      "arrow": "sync"
+    },
+    {
+      "type": "message",
+      "from": "DB",
+      "to": "API",
+      "label": "result",
+      "arrow": "reply"
+    },
+    {
+      "type": "message",
+      "from": "API",
+      "to": "User",
+      "label": "notify",
+      "arrow": "async"
+    },
+    {
+      "type": "message",
+      "from": "API",
+      "to": "User",
+      "label": "fail",
+      "arrow": "cross"
+    }
+  ]
+}

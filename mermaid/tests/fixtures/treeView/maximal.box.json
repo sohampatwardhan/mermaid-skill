@@ -1,0 +1,33 @@
+{
+  "diagram": "tree",
+  "target": "treeView-beta",
+  "style": "box",
+  "nodes": [
+    {
+      "name": "src",
+      "directory": true,
+      "children": [
+        {
+          "name": "App.tsx",
+          "class": "highlight",
+          "icon": {
+            "pack": "logos",
+            "name": "react"
+          },
+          "description": "main component"
+        },
+        {
+          "name": "index.ts",
+          "description": "entry point"
+        }
+      ]
+    },
+    {
+      "name": ".env",
+      "description": "environment variables"
+    },
+    {
+      "name": "package.json"
+    }
+  ]
+}

@@ -1,0 +1,5 @@
+{
+  "diagram": "graph",
+  "target": "wardley-beta",
+  "components": [{"id": "Kettle", "visibility": 0.43, "evolution": 0.35}]
+}

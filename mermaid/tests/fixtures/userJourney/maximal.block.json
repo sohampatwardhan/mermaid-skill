@@ -1,0 +1,23 @@
+{
+  "diagram": "journey",
+  "target": "journey",
+  "accessibility": {
+    "description": "A short journey\nwith one section"
+  },
+  "title": "Coffee",
+  "sections": [
+    {
+      "name": "Morning",
+      "tasks": [
+        {
+          "name": "Brew",
+          "score": 4,
+          "actors": [
+            "Me",
+            "Barista"
+          ]
+        }
+      ]
+    }
+  ]
+}

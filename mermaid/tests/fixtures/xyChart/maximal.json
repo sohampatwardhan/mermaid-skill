@@ -1,0 +1,66 @@
+{
+  "diagram": "chart",
+  "target": "xychart",
+  "orientation": "vertical",
+  "title": "Quarterly Performance",
+  "accessibility": {"title": "Quarterly revenue", "description": "Revenue bars and a target line by quarter"},
+  "xAxis": {"title": "Quarter", "categories": ["Q1", "Q2", "Q3 late", "Q4"]},
+  "yAxis": {"title": "Revenue ($M)", "min": -10, "max": 100},
+  "comment": "two bar series, two line series",
+  "series": [
+    {"type": "bar", "name": "Actual", "values": [25, 45, 72, 90]},
+    {"type": "bar", "values": [20, 30, 25, 35]},
+    {"type": "line", "name": "Target", "values": [{"value": 25, "label": "Launch"}, 45, 72, {"value": 90, "label": "Target Hit"}]},
+    {"type": "line", "values": [1.5, 0.6, 24.4, -5.34]}
+  ],
+  "config": {
+    "theme": "default",
+    "xyChart": {
+      "width": 900,
+      "height": 600,
+      "titlePadding": 10,
+      "titleFontSize": 20,
+      "showTitle": true,
+      "showLegend": true,
+      "legendFontSize": 14,
+      "legendPadding": 10,
+      "chartOrientation": "vertical",
+      "plotReservedSpacePercent": 50,
+      "showDataLabel": true,
+      "showDataLabelOutsideBar": true,
+      "useMaxWidth": true,
+      "xAxis": {
+        "showLabel": true,
+        "labelFontSize": 14,
+        "labelPadding": 5,
+        "showTitle": true,
+        "titleFontSize": 16,
+        "titlePadding": 5,
+        "showTick": true,
+        "tickLength": 5,
+        "tickWidth": 2,
+        "showAxisLine": true,
+        "axisLineWidth": 2,
+        "labelRotation": 30
+      },
+      "yAxis": {"showLabel": true, "labelFontSize": 14, "showTick": true}
+    },
+    "themeVariables": {
+      "xyChart": {
+        "backgroundColor": "#ffffff",
+        "titleColor": "#b71c1c",
+        "dataLabelColor": "#212121",
+        "legendTextColor": "#212121",
+        "xAxisLabelColor": "#424242",
+        "xAxisTitleColor": "#424242",
+        "xAxisTickColor": "#616161",
+        "xAxisLineColor": "#616161",
+        "yAxisLabelColor": "#424242",
+        "yAxisTitleColor": "#424242",
+        "yAxisTickColor": "#616161",
+        "yAxisLineColor": "#616161",
+        "plotColorPalette": "#1565c0, #ef6c00, #2e7d32, #6a1b9a"
+      }
+    }
+  }
+}

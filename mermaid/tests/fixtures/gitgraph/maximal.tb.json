@@ -1,0 +1,28 @@
+{
+  "diagram": "git",
+  "target": "gitGraph",
+  "orientation": "TB",
+  "accessibility": {
+    "description": "Top to bottom\nwith one branch"
+  },
+  "ops": [
+    {
+      "type": "commit"
+    },
+    {
+      "type": "branch",
+      "name": "develop"
+    },
+    {
+      "type": "commit"
+    },
+    {
+      "type": "checkout",
+      "name": "main"
+    },
+    {
+      "type": "merge",
+      "name": "develop"
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "diagram": "sequence",
+  "target": "sequenceDiagram",
+  "actors": [
+    {
+      "id": "Alice"
+    },
+    {
+      "id": "Bob"
+    }
+  ],
+  "steps": [
+    {
+      "type": "message",
+      "from": "Alice",
+      "to": "Bob",
+      "label": "Hello"
+    }
+  ]
+}

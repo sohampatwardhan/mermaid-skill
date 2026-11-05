@@ -1,0 +1,31 @@
+{
+  "diagram": "packet",
+  "target": "packet",
+  "title": "TCP Packet",
+  "title_in_frontmatter": true,
+  "config": {"bitsPerRow": 32, "bitWidth": 24, "rowHeight": 32, "showBits": true, "paddingX": 5, "paddingY": 5, "useMaxWidth": true},
+  "comment": "fixed header",
+  "accessibility": {
+    "title": "TCP header",
+    "description": "Fields of a TCP header,\nbit by bit."
+  },
+  "fields": [
+    {"bits": 16, "label": "Source Port"},
+    {"start": 16, "end": 31, "label": "Destination Port"},
+    {"start": 32, "end": 63, "label": "Sequence Number"},
+    {"start": 64, "end": 95, "label": "Acknowledgment Number"},
+    {"start": 96, "end": 99, "label": "Data Offset"},
+    {"start": 100, "end": 105, "label": "Reserved"},
+    {"bit": 106, "label": "URG"},
+    {"bits": 1, "label": "ACK"},
+    {"bit": 108, "label": "PSH"},
+    {"bit": 109, "label": "RST"},
+    {"bit": 110, "label": "SYN"},
+    {"bit": 111, "label": "FIN"},
+    {"start": 112, "end": 127, "label": "Window"},
+    {"start": 128, "end": 143, "label": "Checksum"},
+    {"start": 144, "end": 159, "label": "Urgent Pointer"},
+    {"start": 160, "end": 191, "label": "(Options and Padding)"},
+    {"start": 192, "end": 255, "label": "Data (variable length)"}
+  ]
+}

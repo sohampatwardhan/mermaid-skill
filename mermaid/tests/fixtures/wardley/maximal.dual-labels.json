@@ -1,0 +1,16 @@
+{
+  "diagram": "graph",
+  "target": "wardley-beta",
+  "title": "Dual Label Stages",
+  "evolutionStages": [
+    {"label": "Genesis", "dualLabel": "Concept"},
+    {"label": "Custom", "dualLabel": "Emerging"},
+    {"label": "Product", "dualLabel": "Converging"},
+    {"label": "Commodity", "dualLabel": "Accepted"}
+  ],
+  "components": [
+    {"id": "Idea", "label": "Novel Idea", "visibility": 0.05, "evolution": 0.20},
+    {"id": "Utility", "visibility": 0.95, "evolution": 0.90}
+  ],
+  "links": [{"from": "Utility", "to": "Idea"}]
+}

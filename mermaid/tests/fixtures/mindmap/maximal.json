@@ -1,0 +1,107 @@
+{
+  "diagram": "graph",
+  "target": "mindmap",
+  "config": {
+    "mindmap": {
+      "padding": 10,
+      "maxNodeWidth": 200
+    }
+  },
+  "comment": "the root and its first three children are the old maximal example",
+  "root": "root",
+  "nodes": [
+    {
+      "id": "root",
+      "label": "Duplicate detector"
+    },
+    {
+      "id": "a",
+      "label": "Approach A: embeddings",
+      "kind": "square",
+      "classes": [
+        "urgent",
+        "large"
+      ]
+    },
+    {
+      "id": "b",
+      "label": "Approach B: hashing",
+      "kind": "cloud"
+    },
+    {
+      "id": "c",
+      "label": "Risk: false positives",
+      "kind": "bang"
+    },
+    {
+      "id": "d",
+      "label": "On effectiveness\nand features",
+      "kind": "default",
+      "icon": "fa fa-book"
+    },
+    {
+      "id": "e",
+      "label": "Rounded idea",
+      "kind": "rounded"
+    },
+    {
+      "id": "f",
+      "label": "Hexagon idea",
+      "kind": "hexagon"
+    },
+    {
+      "id": "g",
+      "label": "**Bold** and *italic*\non two lines",
+      "kind": "square",
+      "markdown": true
+    },
+    {
+      "id": "h",
+      "label": "Inner circle",
+      "kind": "circle"
+    },
+    {
+      "id": "i",
+      "label": "Plain leaf",
+      "kind": "default"
+    }
+  ],
+  "edges": [
+    {
+      "from": "root",
+      "to": "a"
+    },
+    {
+      "from": "root",
+      "to": "b"
+    },
+    {
+      "from": "a",
+      "to": "c"
+    },
+    {
+      "from": "root",
+      "to": "d"
+    },
+    {
+      "from": "d",
+      "to": "e"
+    },
+    {
+      "from": "e",
+      "to": "f"
+    },
+    {
+      "from": "root",
+      "to": "g"
+    },
+    {
+      "from": "b",
+      "to": "h"
+    },
+    {
+      "from": "h",
+      "to": "i"
+    }
+  ]
+}

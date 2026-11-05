@@ -1,0 +1,31 @@
+{
+  "diagram": "cynefin",
+  "target": "cynefin-beta",
+  "title": "Incident Response",
+  "accessibility": {
+    "title": "Cynefin framework for software delivery decisions",
+    "description": "A Cynefin map categorizing software tasks by complexity domain"
+  },
+  "config": {
+    "width": 800,
+    "height": 600,
+    "padding": 40,
+    "showDomainDescriptions": true,
+    "boundaryAmplitude": 6,
+    "seed": 42
+  },
+  "domains": [
+    {"domain": "complex", "items": ["Investigate root cause", "Run chaos experiment"]},
+    {"domain": "complicated", "items": ["Analyze performance data", "Expert review needed"]},
+    {"domain": "clear", "items": ["Restart service", "Apply known fix"]},
+    {"domain": "chaotic", "items": ["Page on-call immediately"]},
+    {"domain": "confusion", "items": ["Unknown failure mode", "Flaky alert", "Odd latency", "Missing logs"]}
+  ],
+  "transitions": [
+    {"from": "complex", "to": "complicated", "label": "Pattern identified"},
+    {"from": "complicated", "to": "clear", "label": "Best practice codified"},
+    {"from": "clear", "to": "chaotic", "label": "Complacency"},
+    {"from": "chaotic", "to": "complex", "label": "Stabilized"},
+    {"from": "confusion", "to": "complex"}
+  ]
+}

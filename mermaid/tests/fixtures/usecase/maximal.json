@@ -1,0 +1,78 @@
+{
+  "diagram": "usecase",
+  "target": "usecase-beta",
+  "title": "Online ordering",
+  "config": {"colorScheme": "rotate", "nodeSpacing": 60, "rankSpacing": 50, "diagramPadding": 20, "actorFontSize": 14, "usecaseFontSize": 12, "actorFontWeight": "normal", "usecaseFontWeight": "bold", "useMaxWidth": true},
+  "direction": "LR",
+  "accessibility": {
+    "title": "Online ordering use cases",
+    "description": "A customer places an order.\nStaff review it and inspect its data."
+  },
+  "comment": "Actors are declared explicitly",
+  "actors": [
+    {"id": "Customer"},
+    {"id": "Staff", "label": "Order staff", "type": "hollow", "business": true, "stereotype": "Employee"},
+    {"id": "Bot", "label": "Bot", "type": "awesome"},
+    {"id": "Normal", "label": "Normal actor", "type": "normal"},
+    {"id": "Ext", "label": "External", "icon": "fa:user", "class": "external"},
+    {"id": "Person"},
+    {"id": "3rd", "label": "Third party"},
+    {"id": "Clerk", "label": "Clerk", "boundary": "support"}
+  ],
+  "boundaries": [
+    {"id": "ordering", "label": "Ordering System", "type": "package", "class": "system"},
+    {"id": "Back_office", "label": "Back office", "form": "quoted", "type": "package", "metadataStatement": true},
+    {"id": "support", "label": "Support", "type": "rect"}
+  ],
+  "usecases": [
+    {"id": "Browse", "label": "Browse products", "boundary": "ordering"},
+    {"id": "Checkout", "label": "Checkout", "business": true, "stereotype": "Core", "class": "critical", "boundary": "ordering"},
+    {"id": "Payment", "label": "Process payment", "shape": "ellipse", "boundary": "ordering"},
+    {"id": "Review", "label": "Review order", "shape": "rect", "stereotype": "Record", "boundary": "ordering"},
+    {"id": "Refund", "label": "Refund (partial)", "boundary": "Back_office"},
+    {"id": "Reset_password", "label": "Reset password", "form": "quoted", "boundary": "Back_office"},
+    {"id": "Ticket", "label": "Open ticket", "boundary": "support"},
+    {"id": "Formatted", "markdown": "**Formatted**\nlabel"},
+    {"id": "Plain", "label": "**Literal markers**"},
+    {"id": "Priced", "label": "Costs 19.95 EUR!", "shape": "rect"},
+    {"id": "Undeclared", "implicit": true}
+  ],
+  "jsonNodes": [
+    {"id": "OrderData", "data": {"status": "pending", "items": [{"name": "Book"}], "total": 29.95, "gift": false, "coupon": null}, "class": "data"}
+  ],
+  "notes": [{"for": "Checkout", "text": "Validates the cart"}],
+  "edges": [
+    {"from": "Customer", "to": "Checkout", "id": "starts", "label": "places order", "length": 1, "animation": "fast"},
+    {"from": "Customer", "to": "Browse"},
+    {"from": "Customer", "to": "Undeclared", "kind": "association"},
+    {"from": "Browse", "to": "Staff", "kind": "reverseAssociation"},
+    {"from": "Staff", "to": "Review", "kind": "line"},
+    {"from": "Staff", "to": "Refund", "kind": "circle"},
+    {"from": "Refund", "to": "Bot", "kind": "reverseCircle"},
+    {"from": "Bot", "to": "Reset_password", "kind": "cross"},
+    {"from": "Reset_password", "to": "Ext", "kind": "reverseCross"},
+    {"from": "Normal", "to": "Ticket", "id": "slow", "animation": "slow"},
+    {"from": "Checkout", "to": "Payment", "kind": "include", "id": "pays", "animate": true},
+    {"from": "Refund", "to": "Checkout", "kind": "extend"},
+    {"from": "Staff", "to": "Person", "kind": "generalization"},
+    {"from": "3rd", "to": "Priced", "label": "files R&D report"},
+    {"from": "3rd", "to": "Formatted"},
+    {"from": "3rd", "to": "Plain", "length": 2},
+    {"from": "Clerk", "to": "Ticket"},
+    {"from": "Review", "to": "OrderData"}
+  ],
+  "classDefs": [
+    {"names": ["default"], "style": {"stroke": "#7f8ea3"}},
+    {"names": ["system"], "style": {"stroke": "#c8a02a", "strokeWidth": "2px"}},
+    {"names": ["critical", "external"], "style": {"stroke": "#c33", "strokeWidth": "3px"}},
+    {"names": ["data"], "style": {"stroke": "#3572a5"}}
+  ],
+  "classAssignments": [
+    {"ids": ["starts", "pays"], "classes": ["critical"]},
+    {"ids": ["Customer", "Bot"], "classes": ["external"]}
+  ],
+  "styles": [
+    {"id": "pays", "style": {"stroke": "#6b46c1", "strokeWidth": "2px"}},
+    {"id": "ordering", "style": {"stroke": "#536878"}}
+  ]
+}

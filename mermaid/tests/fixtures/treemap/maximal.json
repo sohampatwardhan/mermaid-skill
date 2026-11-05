@@ -1,0 +1,40 @@
+{
+  "diagram": "chart",
+  "target": "treemap-beta",
+  "indent": "spaces",
+  "accessibility": {"title": "Budget treemap", "description": "Operations and marketing budget lines"},
+  "nodes": [
+    {"label": "Budget", "children": [
+      {"label": "Operations", "children": [
+        {"label": "Salaries", "value": 700000},
+        {"label": "Equipment", "value": 200000, "class": "important"},
+        {"label": "Supplies", "value": 100000}
+      ]},
+      {"label": "Marketing", "class": "highlight", "children": [
+        {"label": "Advertising", "value": 400000},
+        {"label": "Events", "value": 100000.5}
+      ]}
+    ]},
+    {"label": "Reserve", "value": 0}
+  ],
+  "classes": {
+    "important": {"fill": "#f96", "stroke": "#333", "strokeWidth": "2px"},
+    "highlight": {"fill": "#9cf", "color": "#000", "stroke": "#036"}
+  },
+  "config": {
+    "theme": "forest",
+    "treemap": {
+      "useMaxWidth": true,
+      "padding": 10,
+      "diagramPadding": 20,
+      "showValues": true,
+      "nodeWidth": 100,
+      "nodeHeight": 40,
+      "borderWidth": 1,
+      "valueFontSize": 12,
+      "labelFontSize": 14,
+      "valueFormat": "$0,0"
+    },
+    "themeVariables": {"cScale0": "#4e79a7", "cScalePeer0": "#2c4a6b"}
+  }
+}

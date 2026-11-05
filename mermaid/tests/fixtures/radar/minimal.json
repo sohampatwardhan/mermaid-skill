@@ -1,0 +1,6 @@
+{
+  "diagram": "chart",
+  "target": "radar-beta",
+  "axes": [{"id": "A"}, {"id": "B"}, {"id": "C"}],
+  "curves": [{"id": "c1", "values": [1, 2, 3]}]
+}

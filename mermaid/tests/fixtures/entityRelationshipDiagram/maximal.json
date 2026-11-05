@@ -1,0 +1,623 @@
+{
+  "diagram": "graph",
+  "target": "erDiagram",
+  "title": "ER feature tour",
+  "config": {
+    "theme": "default",
+    "look": "classic",
+    "layout": "dagre",
+    "er": {
+      "layoutDirection": "LR",
+      "titleTopMargin": 25,
+      "diagramPadding": 20,
+      "minEntityWidth": 100,
+      "minEntityHeight": 75,
+      "entityPadding": 15,
+      "nodeSpacing": 140,
+      "rankSpacing": 80,
+      "fontSize": 12,
+      "stroke": "gray",
+      "fill": "honeydew",
+      "useMaxWidth": true
+    }
+  },
+  "accessibility": {
+    "title": "ER feature tour",
+    "description": "Every coexisting erDiagram construct."
+  },
+  "comment": "entities, relationships, subgraphs and styling",
+  "direction": "LR",
+  "nodes": [
+    {
+      "id": "LONELY"
+    },
+    {
+      "id": "PERSON",
+      "attributes": [
+        {
+          "type": "string",
+          "name": "driversLicense",
+          "keys": [
+            "PK"
+          ],
+          "comment": "The license #"
+        },
+        {
+          "type": "string",
+          "name": "firstName",
+          "params": [
+            99
+          ],
+          "comment": "Only 99 characters are allowed"
+        },
+        {
+          "type": "string",
+          "name": "middleName",
+          "optional": true
+        },
+        {
+          "type": "string",
+          "name": "phone",
+          "keys": [
+            "UK"
+          ]
+        },
+        {
+          "type": "int",
+          "name": "*id"
+        },
+        {
+          "type": "decimal",
+          "name": "height",
+          "params": [
+            5,
+            2
+          ],
+          "array": true,
+          "optional": true
+        }
+      ]
+    },
+    {
+      "id": "CUSTOMER",
+      "attributes": [
+        {
+          "type": "string",
+          "name": "name",
+          "keys": [
+            "PK"
+          ]
+        },
+        {
+          "type": "string",
+          "name": "sector"
+        }
+      ]
+    },
+    {
+      "id": "ORDER",
+      "attributes": [
+        {
+          "type": "int",
+          "name": "orderNumber",
+          "keys": [
+            "PK"
+          ],
+          "comment": "the order number"
+        }
+      ]
+    },
+    {
+      "id": "PRODUCT"
+    },
+    {
+      "id": "LINE_ITEM"
+    },
+    {
+      "id": "spaced",
+      "name": "name with space"
+    },
+    {
+      "id": "uni",
+      "name": "This ❤ Unicode"
+    },
+    {
+      "id": "md",
+      "name": "This **is** _Markdown_"
+    },
+    {
+      "id": "CAR",
+      "classes": [
+        "someclass"
+      ],
+      "attributes": [
+        {
+          "type": "string",
+          "name": "registrationNumber",
+          "keys": [
+            "PK"
+          ]
+        },
+        {
+          "type": "string",
+          "name": "make"
+        },
+        {
+          "type": "string",
+          "name": "parts",
+          "array": true
+        }
+      ]
+    },
+    {
+      "id": "NAMED-DRIVER",
+      "attributes": [
+        {
+          "type": "string",
+          "name": "carRegistrationNumber",
+          "keys": [
+            "PK",
+            "FK"
+          ]
+        },
+        {
+          "type": "string",
+          "name": "driverLicence",
+          "keys": [
+            "FK"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "p",
+      "label": "Person",
+      "attributes": [
+        {
+          "type": "string",
+          "name": "firstName"
+        }
+      ]
+    },
+    {
+      "id": "a",
+      "label": "Customer Account",
+      "classes": [
+        "foo"
+      ],
+      "attributes": [
+        {
+          "type": "string",
+          "name": "email"
+        }
+      ]
+    },
+    {
+      "id": "HOUSE",
+      "classes": [
+        "foo",
+        "bar"
+      ]
+    },
+    {
+      "id": "A1"
+    },
+    {
+      "id": "B1"
+    },
+    {
+      "id": "A2"
+    },
+    {
+      "id": "B2"
+    },
+    {
+      "id": "MANUFACTURER"
+    },
+    {
+      "id": "DRIVER"
+    },
+    {
+      "id": "S1"
+    },
+    {
+      "id": "S2"
+    },
+    {
+      "id": "S3"
+    },
+    {
+      "id": "id2"
+    },
+    {
+      "id": "id3"
+    }
+  ],
+  "subgraphs": [
+    {
+      "id": "title1",
+      "members": [
+        "CUSTOMER"
+      ]
+    },
+    {
+      "id": "customer_domain",
+      "name": "Customer Domain",
+      "members": [
+        "ORDER"
+      ]
+    },
+    {
+      "id": "id1",
+      "title": "title 1",
+      "direction": "TB",
+      "members": [
+        "S1",
+        "S2"
+      ],
+      "subgraphs": [
+        {
+          "id": "inner",
+          "members": [
+            "S3"
+          ]
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "from": "CUSTOMER",
+      "to": "ORDER",
+      "label": "places",
+      "left": "exactly_one",
+      "right": "zero_or_more",
+      "identifying": true
+    },
+    {
+      "from": "PRODUCT",
+      "to": "LINE_ITEM",
+      "label": "appears in",
+      "left": "exactly_one",
+      "right": "zero_or_more"
+    },
+    {
+      "from": "A1",
+      "to": "B1",
+      "label": "r",
+      "left": "zero_or_one",
+      "right": "exactly_one"
+    },
+    {
+      "from": "A1",
+      "to": "B1",
+      "label": "r",
+      "left": "exactly_one",
+      "right": "zero_or_one"
+    },
+    {
+      "from": "A1",
+      "to": "B1",
+      "label": "r",
+      "left": "zero_or_more",
+      "right": "exactly_one"
+    },
+    {
+      "from": "A1",
+      "to": "B1",
+      "label": "r",
+      "left": "one_or_more",
+      "right": "one_or_more"
+    },
+    {
+      "from": "PERSON",
+      "to": "HOUSE",
+      "label": "has",
+      "left": "zero_or_more",
+      "right": "exactly_one",
+      "left_form": "mirrored"
+    },
+    {
+      "from": "CAR",
+      "to": "NAMED-DRIVER",
+      "label": "allows",
+      "left": "exactly_one",
+      "right": "zero_or_more"
+    },
+    {
+      "from": "PERSON",
+      "to": "NAMED-DRIVER",
+      "label": "is",
+      "left": "zero_or_more",
+      "right": "zero_or_more",
+      "identifying": false
+    },
+    {
+      "from": "A2",
+      "to": "B2",
+      "label": "r",
+      "left": "zero_or_one",
+      "right": "exactly_one",
+      "left_form": "one-or-zero",
+      "right_form": "1",
+      "connector_form": "words"
+    },
+    {
+      "from": "A2",
+      "to": "B2",
+      "label": "r",
+      "left": "zero_or_one",
+      "right": "exactly_one",
+      "left_form": "zero-or-one",
+      "right_form": "1",
+      "connector_form": "words"
+    },
+    {
+      "from": "A2",
+      "to": "B2",
+      "label": "r",
+      "left": "one_or_more",
+      "right": "exactly_one",
+      "left_form": "one-or-more",
+      "right_form": "1",
+      "connector_form": "words"
+    },
+    {
+      "from": "A2",
+      "to": "B2",
+      "label": "r",
+      "left": "one_or_more",
+      "right": "exactly_one",
+      "left_form": "one-or-many",
+      "right_form": "1",
+      "connector_form": "words"
+    },
+    {
+      "from": "A2",
+      "to": "B2",
+      "label": "r",
+      "left": "one_or_more",
+      "right": "exactly_one",
+      "left_form": "many-1",
+      "right_form": "1",
+      "connector_form": "words"
+    },
+    {
+      "from": "A2",
+      "to": "B2",
+      "label": "r",
+      "left": "one_or_more",
+      "right": "exactly_one",
+      "left_form": "1-plus",
+      "right_form": "1",
+      "connector_form": "words"
+    },
+    {
+      "from": "A2",
+      "to": "B2",
+      "label": "r",
+      "left": "zero_or_more",
+      "right": "exactly_one",
+      "left_form": "zero-or-more",
+      "right_form": "1",
+      "connector_form": "words"
+    },
+    {
+      "from": "A2",
+      "to": "B2",
+      "label": "r",
+      "left": "zero_or_more",
+      "right": "exactly_one",
+      "left_form": "zero-or-many",
+      "right_form": "1",
+      "connector_form": "words"
+    },
+    {
+      "from": "A2",
+      "to": "B2",
+      "label": "r",
+      "left": "zero_or_more",
+      "right": "exactly_one",
+      "left_form": "many-0",
+      "right_form": "1",
+      "connector_form": "words"
+    },
+    {
+      "from": "A2",
+      "to": "B2",
+      "label": "r",
+      "left": "zero_or_more",
+      "right": "exactly_one",
+      "left_form": "0-plus",
+      "right_form": "1",
+      "connector_form": "words"
+    },
+    {
+      "from": "A2",
+      "to": "B2",
+      "label": "r",
+      "left": "exactly_one",
+      "right": "exactly_one",
+      "left_form": "only-one",
+      "right_form": "1",
+      "connector_form": "words"
+    },
+    {
+      "from": "MANUFACTURER",
+      "to": "CAR",
+      "label": "makes",
+      "left": "exactly_one",
+      "right": "zero_or_more",
+      "left_form": "1",
+      "right_form": "zero-or-more",
+      "connector_form": "words"
+    },
+    {
+      "from": "DRIVER",
+      "to": "CAR",
+      "label": "drives",
+      "left": "zero_or_more",
+      "right": "one_or_more",
+      "left_form": "many-0",
+      "right_form": "1-plus",
+      "connector_form": "words",
+      "identifying": false
+    },
+    {
+      "from": "p",
+      "to": "a",
+      "label": "has",
+      "left": "exactly_one",
+      "right": "zero_or_one"
+    },
+    {
+      "from": "CUSTOMER",
+      "to": "p",
+      "label": "links",
+      "left": "zero_or_more",
+      "right": "zero_or_more",
+      "identifying": false
+    },
+    {
+      "from": "S1",
+      "to": "S2",
+      "label": "links",
+      "left": "exactly_one",
+      "right": "exactly_one"
+    },
+    {
+      "from": "title1",
+      "to": "id1",
+      "label": "links",
+      "left": "exactly_one",
+      "right": "exactly_one"
+    },
+    {
+      "from": "customer_domain",
+      "to": "LINE_ITEM",
+      "label": "contains",
+      "left": "exactly_one",
+      "right": "zero_or_more"
+    },
+    {
+      "from": "PERSON",
+      "to": "HOUSE",
+      "label": "owns",
+      "left": "exactly_one",
+      "right": "exactly_one",
+      "from_classes": [
+        "foo"
+      ],
+      "to_classes": [
+        "bar"
+      ]
+    },
+    {
+      "from": "A2",
+      "to": "B2",
+      "label": "has one",
+      "left": "exactly_one",
+      "right": "zero_or_more",
+      "left_form": "one",
+      "right_form": "many"
+    },
+    {
+      "from": "B2",
+      "to": "A2",
+      "label": "r",
+      "left": "zero_or_one",
+      "right": "one_or_more",
+      "left_form": "symbol",
+      "right_form": "mirrored",
+      "identifying": false
+    },
+    {
+      "from": "id2",
+      "to": "id3",
+      "label": "label",
+      "left": "exactly_one",
+      "right": "exactly_one"
+    }
+  ],
+  "styles": [
+    {
+      "nodes": [
+        "id2"
+      ],
+      "style": {
+        "fill": "#f9f",
+        "stroke": "#333",
+        "strokeWidth": "4px"
+      }
+    },
+    {
+      "nodes": [
+        "id2",
+        "id3"
+      ],
+      "style": {
+        "strokeDasharray": "5"
+      }
+    }
+  ],
+  "class_defs": [
+    {
+      "names": [
+        "default"
+      ],
+      "style": {
+        "fill": "#f9f"
+      }
+    },
+    {
+      "names": [
+        "someclass"
+      ],
+      "style": {
+        "fill": "#f96"
+      }
+    },
+    {
+      "names": [
+        "foo",
+        "bar"
+      ],
+      "style": {
+        "stroke": "#f00",
+        "color": "#000",
+        "fontSize": "12pt",
+        "fontWeight": "bold",
+        "fontStyle": "italic"
+      }
+    }
+  ],
+  "class_assignments": [
+    {
+      "nodes": [
+        "A1"
+      ],
+      "classes": [
+        "foo"
+      ]
+    },
+    {
+      "nodes": [
+        "A2",
+        "B2"
+      ],
+      "classes": [
+        "bar"
+      ]
+    },
+    {
+      "nodes": [
+        "A1",
+        "B1"
+      ],
+      "classes": [
+        "foo",
+        "bar"
+      ]
+    }
+  ]
+}

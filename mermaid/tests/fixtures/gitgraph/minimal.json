@@ -1,0 +1,9 @@
+{
+  "diagram": "git",
+  "target": "gitGraph",
+  "ops": [
+    {
+      "type": "commit"
+    }
+  ]
+}

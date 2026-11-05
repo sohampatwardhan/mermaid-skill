@@ -1,0 +1,20 @@
+{
+  "diagram": "graph",
+  "target": "block-beta",
+  "columns": "auto",
+  "blocks": [
+    {"id": "a", "kind": "block", "label": "process"},
+    {"id": "b", "label": "terminator", "shape": "stadium"},
+    {"id": "c", "label": "decision", "shape": "rhombus"},
+    {"kind": "composite", "id": "grp_1", "label": "Group One", "children": [
+      {"id": "d", "label": "subprocess", "shape": "subroutine"},
+      {"id": "e", "label": "store", "shape": "cylinder"}
+    ]},
+    {"id": "f", "label": "connector", "shape": "circle"},
+    {"id": "g", "label": "io", "shape": "parallelogram"}
+  ],
+  "edges": [
+    {"from": "a", "to": "b", "label": "next"},
+    {"from": "grp_1", "to": "f"}
+  ]
+}

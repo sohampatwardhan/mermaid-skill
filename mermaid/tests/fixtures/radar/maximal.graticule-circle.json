@@ -1,0 +1,19 @@
+{
+  "diagram": "chart",
+  "target": "radar-beta",
+  "title": "Restaurant Comparison",
+  "axes": [
+    {"id": "food", "label": "Food Quality"},
+    {"id": "service", "label": "Service"},
+    {"id": "price", "label": "Price"},
+    {"id": "ambiance", "label": "Ambiance"}
+  ],
+  "curves": [
+    {"id": "ra", "label": "Restaurant A", "values": [4, 3, 2, 4]},
+    {"id": "rb", "label": "Restaurant B", "values": [3, 4, 3, 3]}
+  ],
+  "showLegend": false,
+  "max": 5,
+  "graticule": "circle",
+  "ticks": 3
+}

@@ -1,0 +1,142 @@
+{
+  "diagram": "graph",
+  "target": "C4Container",
+  "config": {
+    "wrap": false
+  },
+  "accessibility": {
+    "title": "Internet banking containers",
+    "description": "Containers inside the banking system"
+  },
+  "groups": [
+    {
+      "id": "c1",
+      "label": "Internet Banking",
+      "kind": "container_boundary"
+    },
+    {
+      "id": "ext",
+      "label": "Outside",
+      "kind": "boundary",
+      "boundary_type": "zone"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "customer",
+      "label": "Customer",
+      "kind": "person",
+      "description": "A bank customer"
+    },
+    {
+      "id": "spa",
+      "label": "Single-Page App",
+      "kind": "container",
+      "technology": "Angular",
+      "description": "Banking UI",
+      "group": "c1"
+    },
+    {
+      "id": "db",
+      "label": "Database",
+      "kind": "container_db",
+      "technology": "PostgreSQL",
+      "description": "Accounts",
+      "group": "c1"
+    },
+    {
+      "id": "mq",
+      "label": "Message Queue",
+      "kind": "container_queue",
+      "technology": "RabbitMQ",
+      "description": "Async jobs",
+      "group": "c1"
+    },
+    {
+      "id": "mobile",
+      "label": "Mobile App",
+      "kind": "container_ext",
+      "technology": "Xamarin",
+      "description": "Limited UI",
+      "group": "c1"
+    },
+    {
+      "id": "api",
+      "label": "API Store",
+      "kind": "container_db_ext",
+      "technology": "Docker",
+      "description": "API data",
+      "group": "c1"
+    },
+    {
+      "id": "xq",
+      "label": "Partner Queue",
+      "kind": "container_queue_ext",
+      "description": "Partner feed",
+      "group": "c1"
+    },
+    {
+      "id": "mail",
+      "label": "E-mail system",
+      "kind": "system_ext",
+      "group": "ext"
+    }
+  ],
+  "edges": [
+    {
+      "from": "customer",
+      "to": "spa",
+      "label": "Uses",
+      "technology": "HTTPS"
+    },
+    {
+      "from": "spa",
+      "to": "db",
+      "label": "Reads/Writes",
+      "technology": "JDBC"
+    },
+    {
+      "from": "spa",
+      "to": "mq",
+      "label": "Publishes",
+      "kind": "birel"
+    },
+    {
+      "from": "mobile",
+      "to": "api",
+      "label": "Uses",
+      "technology": "JSON/HTTPS",
+      "kind": "rel_down"
+    },
+    {
+      "from": "mq",
+      "to": "xq",
+      "label": "Forwards",
+      "kind": "rel_right"
+    },
+    {
+      "from": "mail",
+      "to": "customer",
+      "label": "Notifies",
+      "kind": "rel_back"
+    }
+  ],
+  "element_styles": [
+    {
+      "element": "c1",
+      "bg_color": "#eeeeee",
+      "font_color": "#111111",
+      "form": "positional"
+    }
+  ],
+  "rel_styles": [
+    {
+      "from": "customer",
+      "to": "spa",
+      "line_color": "#ff0000"
+    }
+  ],
+  "layout": {
+    "shape_in_row": 3
+  }
+}

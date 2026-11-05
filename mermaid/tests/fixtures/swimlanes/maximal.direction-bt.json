@@ -1,0 +1,11 @@
+{
+  "diagram": "graph",
+  "target": "swimlane-beta",
+  "direction": "BT",
+  "groups": [{"id": "Sales"}, {"id": "Finance"}],
+  "nodes": [
+    {"id": "lead", "label": "Qualify lead", "group": "Sales"},
+    {"id": "approve", "label": "Approve", "group": "Finance"}
+  ],
+  "edges": [{"from": "lead", "to": "approve"}]
+}

@@ -1,0 +1,30 @@
+{
+  "diagram": "timeline",
+  "target": "timeline",
+  "direction": "TD",
+  "accessibility": {
+    "description": "Social platforms\nby launch year"
+  },
+  "title": "History of Social Media Platform",
+  "events": [
+    {
+      "period": "2002",
+      "text": [
+        "LinkedIn"
+      ]
+    },
+    {
+      "period": "2004",
+      "text": [
+        "Facebook",
+        "Google"
+      ]
+    },
+    {
+      "period": "2005",
+      "text": [
+        "YouTube"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,46 @@
+{
+  "diagram": "requirement-links",
+  "target": "requirementDiagram",
+  "title": "Requirement catalog example",
+  "accessibility": {
+    "title": "Test requirements",
+    "description": "Six requirement kinds, three elements,\nevery relationship."
+  },
+  "direction": "TB",
+  "comment": "requirements",
+  "requirements": [
+    {"id": "test_req", "req_id": "1", "text": "the test text.", "risk": "high", "verify_method": "test", "classes": ["important"]},
+    {"id": "test_req2", "type": "functionalRequirement", "req_id": "1.1", "text": "*italic text* **bold text**", "risk": "low", "verify_method": "inspection", "markdown": true},
+    {"id": "test_req3", "type": "performanceRequirement", "req_id": "1.2", "text": "the third test text.", "risk": "medium", "verify_method": "demonstration"},
+    {"id": "test_req4", "type": "interfaceRequirement", "req_id": "1.2.1", "text": "the fourth test text.", "risk": "medium", "verify_method": "analysis"},
+    {"id": "test_req5", "type": "physicalRequirement", "req_id": "1.2.2", "text": "the fifth test text.", "risk": "medium", "verify_method": "analysis"},
+    {"id": "test_req6", "type": "designConstraint", "name": "__test_req6__", "markdown": true, "req_id": "1.2.3", "text": "the sixth test text.", "risk": "medium", "verify_method": "analysis"}
+  ],
+  "elements": [
+    {"id": "test_entity", "type": "simulation"},
+    {"id": "test_entity2", "type": "word doc", "docref": "reqs/test_entity"},
+    {"id": "test_entity3", "name": "Test Entity 3", "type": "test suite", "docref": "github.com/all_the_tests"}
+  ],
+  "links": [
+    {"from": "test_entity", "to": "test_req2", "kind": "satisfies"},
+    {"from": "test_req", "to": "test_req2", "kind": "traces"},
+    {"from": "test_req", "to": "test_req3", "kind": "contains"},
+    {"from": "test_req3", "to": "test_req4", "kind": "contains"},
+    {"from": "test_req4", "to": "test_req5", "kind": "derives"},
+    {"from": "test_req5", "to": "test_req6", "kind": "refines"},
+    {"from": "test_entity3", "to": "test_req5", "kind": "verifies"},
+    {"from": "test_entity2", "to": "test_req", "kind": "copies", "reverse": true}
+  ],
+  "class_defs": [
+    {"name": "default", "style": {"fill": "#eef", "stroke": "#333"}},
+    {"name": "important", "style": {"fontWeight": "bold", "fontStyle": "italic"}},
+    {"name": "tested", "style": {"fill": "#ffa", "stroke": "#000", "strokeWidth": "2px", "strokeDasharray": "5 5", "color": "#003", "fontSize": "14px"}}
+  ],
+  "class_assignments": [
+    {"nodes": ["test_entity", "test_entity2"], "classes": ["tested"]},
+    {"nodes": ["test_entity3"], "classes": ["tested", "important"], "shorthand": true}
+  ],
+  "styles": [
+    {"nodes": ["test_req2", "test_req3"], "style": {"fill": "#f9f", "stroke": "#333", "color": "blue"}}
+  ]
+}

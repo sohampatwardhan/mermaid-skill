@@ -1,0 +1,10 @@
+{
+  "diagram": "cynefin",
+  "target": "cynefin-beta",
+  "domains": [
+    {"domain": "complex", "items": ["Investigate"]},
+    {"domain": "complicated", "items": []},
+    {"domain": "clear"}
+  ],
+  "transitions": [{"from": "complex", "to": "complicated"}]
+}

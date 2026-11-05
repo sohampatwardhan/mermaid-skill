@@ -1,0 +1,10 @@
+{
+  "diagram": "graph",
+  "target": "agentflow-beta",
+  "direction": "BT",
+  "nodes": [
+    {"id": "a", "label": "A", "shape": "task"},
+    {"id": "b", "label": "B", "shape": "action"}
+  ],
+  "edges": [{"from": "a", "to": "b"}]
+}

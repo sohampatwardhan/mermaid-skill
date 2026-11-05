@@ -1,0 +1,5 @@
+{
+  "diagram": "graph",
+  "target": "agentflow-beta",
+  "nodes": [{"id": "draft", "label": "Draft"}]
+}

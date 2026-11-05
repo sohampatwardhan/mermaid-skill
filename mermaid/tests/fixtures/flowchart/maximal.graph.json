@@ -1,0 +1,103 @@
+{
+  "diagram": "graph",
+  "target": "graph",
+  "accessibility": {
+    "title": "Review pipeline",
+    "description": "Two stages with a review decision."
+  },
+  "direction": "TD",
+  "groups": [
+    {
+      "id": "stage_1",
+      "label": "Stage 1"
+    },
+    {
+      "id": "stage_2",
+      "label": "Stage 2"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "start",
+      "kind": "terminator",
+      "label": "Begin",
+      "group": "stage_1"
+    },
+    {
+      "id": "s1_1",
+      "kind": "process",
+      "label": "1.1 Session rotation",
+      "group": "stage_1"
+    },
+    {
+      "id": "decide",
+      "kind": "decision",
+      "label": "Needs review?",
+      "group": "stage_1"
+    },
+    {
+      "id": "s1_3",
+      "kind": "subprocess",
+      "label": "1.3 Integration test",
+      "group": "stage_2"
+    },
+    {
+      "id": "log",
+      "kind": "store",
+      "label": "Audit log",
+      "group": "stage_2"
+    },
+    {
+      "id": "inp",
+      "kind": "io",
+      "label": "Input"
+    },
+    {
+      "id": "rep",
+      "kind": "document",
+      "label": "Report"
+    },
+    {
+      "id": "jump",
+      "kind": "connector",
+      "label": "A"
+    }
+  ],
+  "edges": [
+    {
+      "from": "start",
+      "to": "s1_1",
+      "kind": "normal"
+    },
+    {
+      "from": "s1_1",
+      "to": "decide",
+      "kind": "normal"
+    },
+    {
+      "from": "decide",
+      "to": "s1_3",
+      "kind": "dependency",
+      "label": "yes"
+    },
+    {
+      "from": "s1_3",
+      "to": "log",
+      "kind": "weak"
+    },
+    {
+      "from": "log",
+      "to": "inp",
+      "kind": "conditional"
+    },
+    {
+      "from": "inp",
+      "to": "rep",
+      "kind": "strong"
+    },
+    {
+      "from": "rep",
+      "to": "jump"
+    }
+  ]
+}

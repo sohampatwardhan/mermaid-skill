@@ -1,0 +1,7 @@
+{
+  "diagram": "packet",
+  "target": "packet",
+  "fields": [
+    {"bits": 8, "label": "Type"}
+  ]
+}

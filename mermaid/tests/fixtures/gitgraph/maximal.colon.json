@@ -1,0 +1,17 @@
+{
+  "diagram": "git",
+  "target": "gitGraph",
+  "colon": true,
+  "ops": [
+    {
+      "type": "commit"
+    },
+    {
+      "type": "branch",
+      "name": "develop"
+    },
+    {
+      "type": "commit"
+    }
+  ]
+}

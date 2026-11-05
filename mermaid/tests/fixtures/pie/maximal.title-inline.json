@@ -1,0 +1,14 @@
+{
+  "diagram": "chart",
+  "target": "pie",
+  "title": "Pets adopted by volunteers",
+  "titlePlacement": "inline",
+  "showData": true,
+  "accessibility": {"title": "Pets", "description": "Adoptions by kind of pet\nfrom the volunteer log"},
+  "slices": [
+    {"label": "Dogs", "value": 386},
+    {"label": "Cats", "value": 85},
+    {"label": "Rats", "value": 15}
+  ],
+  "config": {"pie": {"highlightSlice": "hover"}}
+}

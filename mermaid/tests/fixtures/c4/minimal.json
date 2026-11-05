@@ -1,0 +1,5 @@
+{
+  "diagram": "graph",
+  "target": "C4Context",
+  "nodes": [{"id": "customer", "label": "Customer", "kind": "person"}]
+}

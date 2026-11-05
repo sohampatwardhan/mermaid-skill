@@ -1,0 +1,9 @@
+{
+  "diagram": "tree",
+  "target": "treeView-beta",
+  "nodes": [
+    {
+      "name": "README.md"
+    }
+  ]
+}

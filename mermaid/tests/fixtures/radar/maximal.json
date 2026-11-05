@@ -1,0 +1,60 @@
+{
+  "diagram": "chart",
+  "target": "radar-beta",
+  "title": "Term grades",
+  "accessibility": {"title": "Grades radar", "description": "Three students scored on six subjects"},
+  "axes": [
+    {"id": "m", "label": "Math"},
+    {"id": "s", "label": "Science"},
+    {"id": "e", "label": "English"},
+    {"id": "h", "label": "History"},
+    {"id": "g"},
+    {"id": "a", "label": "Art"}
+  ],
+  "curves": [
+    {"id": "alice", "label": "Alice", "values": [85, 90, 80, 70, 75, 90]},
+    {"id": "bob", "label": "Bob", "values": [70, 75, 85, 80, 90, 85.5]},
+    {"id": "cara", "entries": [
+      {"axis": "a", "value": 60}, {"axis": "g", "value": 65}, {"axis": "h", "value": 70},
+      {"axis": "e", "value": 95}, {"axis": "s", "value": 60}, {"axis": "m", "value": 55}
+    ]}
+  ],
+  "showLegend": true,
+  "max": 100,
+  "min": 0,
+  "graticule": "polygon",
+  "ticks": 5,
+  "config": {
+    "theme": "base",
+    "radar": {
+      "width": 600,
+      "height": 600,
+      "marginTop": 50,
+      "marginBottom": 50,
+      "marginLeft": 50,
+      "marginRight": 50,
+      "axisScaleFactor": 1,
+      "axisLabelFactor": 1.05,
+      "curveTension": 0.17
+    },
+    "themeVariables": {
+      "fontSize": "16px",
+      "titleColor": "#333333",
+      "cScale0": "#ff0000",
+      "cScale1": "#00aa00",
+      "cScale2": "#0000ff",
+      "radar": {
+        "axisColor": "#333333",
+        "axisStrokeWidth": 1,
+        "axisLabelFontSize": "12px",
+        "curveOpacity": 0.5,
+        "curveStrokeWidth": 2,
+        "graticuleColor": "#999999",
+        "graticuleOpacity": 0.5,
+        "graticuleStrokeWidth": 1,
+        "legendBoxSize": 10,
+        "legendFontSize": "14px"
+      }
+    }
+  }
+}

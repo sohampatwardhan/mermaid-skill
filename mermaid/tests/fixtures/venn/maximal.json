@@ -1,0 +1,43 @@
+{
+  "diagram": "chart",
+  "target": "venn-beta",
+  "title": "What makes a good feature",
+  "sets": [
+    {"id": "Ops", "label": "Operations", "size": 6, "texts": [{"id": "O1", "label": "On-call"}, {"id": "O2"}]},
+    {"id": "Desirable", "label": "Desirable", "size": 20, "texts": [{"id": "D1", "label": "Users ask for it"}, {"id": "D2"}]},
+    {"id": "Feasible tech", "texts": [{"id": "F1", "label": "Prototype exists"}]},
+    {"id": "Viable", "size": 15}
+  ],
+  "unions": [
+    {"sets": ["Desirable", "Feasible tech"], "label": "Buildable", "size": 5, "texts": [{"id": "B1", "label": "Prototype"}, {"id": "B2"}]},
+    {"sets": ["Desirable", "Viable"], "label": "Marketable"},
+    {"sets": ["Desirable", "Feasible tech", "Viable"], "label": "Ship it", "size": 2}
+  ],
+  "styles": [
+    {"targets": ["Desirable"], "style": {"fill": "#ff6b6b"}},
+    {"targets": ["Viable"], "style": {"stroke": "#333333", "strokeWidth": "3px", "fillOpacity": 0.3}},
+    {"targets": ["Desirable", "Viable"], "style": {"color": "#333333"}},
+    {"targets": ["D1"], "style": {"color": "red"}},
+    {"targets": ["Feasible tech"], "style": {"fill": "#4e79a7", "color": "white"}}
+  ],
+  "config": {
+    "theme": "default",
+    "look": "classic",
+    "venn": {
+      "theme": "default",
+      "look": "classic",
+      "width": 800,
+      "height": 450,
+      "padding": 8,
+      "useMaxWidth": true,
+      "useDebugLayout": false
+    },
+    "themeVariables": {
+      "venn1": "#ff6b6b",
+      "venn2": "#4e79a7",
+      "venn3": "#59a14f",
+      "vennSetTextColor": "#222222",
+      "vennTitleTextColor": "#000000"
+    }
+  }
+}

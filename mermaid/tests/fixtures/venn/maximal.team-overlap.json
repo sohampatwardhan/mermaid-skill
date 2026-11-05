@@ -1,0 +1,14 @@
+{
+  "diagram": "chart",
+  "target": "venn-beta",
+  "title": "Team overlap",
+  "sets": [
+    {"id": "A", "label": "Frontend", "size": 20, "texts": [{"id": "A1", "label": "React"}, {"id": "A2", "label": "Design Systems"}]},
+    {"id": "B", "label": "Backend", "size": 12, "texts": [{"id": "B1", "label": "API"}]},
+    {"id": "C", "label": "Viable"}
+  ],
+  "unions": [
+    {"sets": ["A", "B"], "label": "Shared", "size": 3, "texts": [{"id": "AB1", "label": "OpenAPI"}]},
+    {"sets": ["A", "B", "C"], "label": "Innovation"}
+  ]
+}

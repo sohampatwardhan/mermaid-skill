@@ -1,0 +1,20 @@
+{
+  "diagram": "graph",
+  "target": "C4Deployment",
+  "title": "Deployment - Live",
+  "groups": [
+    {"id": "dc", "label": "Big Bank plc", "kind": "deployment_node", "technology": "Data center", "description": "Primary site"},
+    {"id": "web", "label": "bigbank-web x4", "kind": "node", "technology": "Ubuntu 22.04", "group": "dc"},
+    {"id": "dbL", "label": "bigbank-db01", "kind": "node_left", "technology": "Ubuntu 22.04", "group": "dc"},
+    {"id": "dbR", "label": "bigbank-db02", "kind": "node_right", "description": "Standby", "group": "dc"}
+  ],
+  "nodes": [
+    {"id": "webapp", "label": "Web Application", "kind": "container", "technology": "Java and Spring MVC", "group": "web"},
+    {"id": "db1", "label": "Primary DB", "kind": "container_db", "technology": "Oracle 19c", "group": "dbL"},
+    {"id": "db2", "label": "Secondary DB", "kind": "container_db", "description": "Replica", "group": "dbR"}
+  ],
+  "edges": [
+    {"from": "webapp", "to": "db1", "label": "Reads and writes", "technology": "JDBC"},
+    {"from": "db1", "to": "db2", "label": "Replicates to", "kind": "rel_r"}
+  ]
+}

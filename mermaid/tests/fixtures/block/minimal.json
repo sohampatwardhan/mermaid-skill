@@ -1,0 +1,5 @@
+{
+  "diagram": "graph",
+  "target": "block",
+  "blocks": [{"id": "a", "label": "Start"}]
+}

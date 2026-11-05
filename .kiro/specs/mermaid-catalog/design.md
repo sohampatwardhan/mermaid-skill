@@ -1,5 +1,20 @@
 # Design Document
 
+## Decision note — parse-only validation (2026-11-02)
+
+Validation is **parse-only**. `scripts/check.sh` confirms that Mermaid source parses with the
+pinned Mermaid 12.0.0 by calling `mermaid.parse()` through `scripts/mermaid-parse.mjs` (Node +
+`mermaid@12.0.0` + `jsdom`, plus the zenuml plugin for that one type). It does **not** render:
+no headless browser, Puppeteer, Playwright, Chromium, or `mmdc` render in the validation path or
+the main test suite. Mermaid diagrams live in Markdown and are rendered by whatever viewer
+displays them, so validation only needs to confirm the source parses. The builder reliability
+bar reads accordingly: **every accepted IR parses with the pinned Mermaid 12.0.0; unrepresentable
+input is rejected with a JSON Pointer.** `render.py` remains an optional IR-to-source tool and is
+not used to render images by `check.sh` or the tests. Where this note conflicts with the
+render-based wording below (Requirement 3's error-placeholder SVG, the mmdc CLI selection, the
+"accepted IR always renders" phrasing), this note governs; the surrounding text is kept for
+history. This supersedes the render-based approach discussed in issue #5.
+
 ## Overview
 
 The `mermaid` skill becomes a per-type catalog with a deterministic check and a smaller, stricter set of optional IR builders. Four pieces change:

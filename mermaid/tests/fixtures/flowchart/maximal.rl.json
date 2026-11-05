@@ -1,0 +1,19 @@
+{
+  "diagram": "graph",
+  "target": "flowchart",
+  "direction": "RL",
+  "nodes": [
+    {
+      "id": "A"
+    },
+    {
+      "id": "B"
+    }
+  ],
+  "edges": [
+    {
+      "from": "A",
+      "to": "B"
+    }
+  ]
+}

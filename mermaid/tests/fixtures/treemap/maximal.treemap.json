@@ -1,0 +1,16 @@
+{
+  "diagram": "chart",
+  "target": "treemap",
+  "indent": "tabs",
+  "accessibility": {"title": "Market share", "description": "Shares by company"},
+  "nodes": [
+    {"label": "Market Share", "children": [
+      {"label": "Company A", "value": 0.35},
+      {"label": "Company B", "value": 0.25},
+      {"label": "Others", "children": [
+        {"label": "Company C", "value": 0.15},
+        {"label": "Company D", "value": 0.25}
+      ]}
+    ]}
+  ]
+}

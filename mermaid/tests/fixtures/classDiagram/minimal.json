@@ -1,0 +1,9 @@
+{
+  "diagram": "graph",
+  "target": "classDiagram",
+  "nodes": [
+    {
+      "id": "Animal"
+    }
+  ]
+}

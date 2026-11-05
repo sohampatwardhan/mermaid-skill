@@ -1,0 +1,47 @@
+{
+  "diagram": "eventmodeling",
+  "target": "eventmodeling",
+  "timeframes": [
+    {"number": "01", "type": "ui", "entity": "CartUI", "form": "compact"},
+    {
+      "number": "02", "type": "cmd", "entity": "AddItem",
+      "dataType": "json",
+      "data": [{"key": "name", "value": "jack"}, {"key": "description", "value": "string", "raw": true}]
+    },
+    {"number": "03", "type": "evt", "entity": "ItemAdded", "dataRef": "ItemAdded"},
+    {"number": "04", "type": "cmd", "entity": "AddItem", "dataRef": "AddItem02"},
+    {"number": "05", "type": "evt", "entity": "ItemAdded", "dataRef": "ItemAdded"},
+    {"number": "06", "type": "evt", "entity": "External.InventoryChanged", "reset": true},
+    {"number": "07", "type": "pcr", "entity": "InventoryProcessor"},
+    {"number": "08", "type": "cmd", "entity": "ChangeInventory"},
+    {"number": "09", "type": "evt", "entity": "Cart.InventoryChanged"},
+    {"number": "10", "type": "rmo", "entity": "CartUI", "relations": ["03", "05", "09"]},
+    {"number": "11", "type": "command", "entity": "Checkout", "form": "relaxed", "data": [{"key": "total", "value": 29.95}]},
+    {"number": "12", "type": "event", "entity": "CheckedOut", "form": "relaxed", "dataType": "jsobj", "data": [{"key": "total", "value": 29.95}]},
+    {"number": "13", "type": "readmodel", "entity": "Orders", "form": "relaxed", "dataType": "figma", "data": [{"key": "frame", "value": "orders"}]},
+    {"number": "14", "type": "processor", "entity": "Shipper", "form": "relaxed", "dataType": "salt", "data": [{"key": "form", "value": "ship"}]},
+    {"number": "15", "type": "evt", "entity": "Inventory.Restocked", "form": "relaxed", "reset": true, "dataType": "uri", "data": [{"key": "link", "value": "https://example.com/stock"}]},
+    {"number": "16", "type": "ui", "entity": "Receipt", "dataType": "md", "data": [{"key": "text", "value": "Thanks"}]},
+    {"number": "17", "type": "ui", "entity": "Done", "dataType": "html", "data": [{"key": "markup", "value": "done"}]},
+    {"number": "18", "type": "rmo", "entity": "Summary", "dataType": "text", "data": [{"key": "note", "value": "summary"}]}
+  ],
+  "dataBlocks": [
+    {
+      "id": "AddItem02",
+      "dataType": "text",
+      "fields": [
+        {"key": "description", "value": "jack"},
+        {"key": "image", "value": "avatar_jack"},
+        {"key": "price", "value": 12.5}
+      ]
+    },
+    {
+      "id": "ItemAdded",
+      "fields": [
+        {"key": "description", "value": "string", "raw": true},
+        {"key": "image", "value": "string", "raw": true},
+        {"key": "price", "value": "number", "raw": true}
+      ]
+    }
+  ]
+}

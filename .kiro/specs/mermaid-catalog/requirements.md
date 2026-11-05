@@ -70,6 +70,12 @@ flowchart TB
 
 ### Requirement 3
 
+> **Decision note (2026-11-02):** validation is parse-only — `check.sh` confirms the source
+> parses with the pinned Mermaid 12.0.0 via `mermaid.parse()`, with no browser or render. The
+> criteria below that assume a render (CLI/`mmdc` selection, the error-placeholder SVG) are
+> satisfied by the equivalent parse behaviour: a usable parser instead of a usable CLI, and a
+> thrown parse error instead of an error SVG. See `design.md`'s decision note. Supersedes #5.
+
 **User Story:** As an agent or CI job, I want `check.sh` to give the same verdict on the same source with a line number on failure, so that I can fix the right line and trust a PASS.
 
 #### Acceptance Criteria

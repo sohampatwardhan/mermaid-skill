@@ -2,22 +2,25 @@
 
 An [Agent Skills](https://agentskills.io/specification)-compatible skill for authoring,
 validating, and deterministically generating [Mermaid](https://mermaid.js.org/) diagrams. Built
-for Claude Code, and portable to any tool that reads the open `SKILL.md` format.
+for Claude Code, and portable to any tool that reads the open `SKILL.md` format. The skill is
+named `mermaid`; [`mermaid/SKILL.md`](mermaid/SKILL.md) is a lean index that points at one
+catalog file per diagram type.
 
-- **Cached syntax, checked against the renderer.** Per-type syntax lives in
-  `mermaid/reference/syntax/` (version stamp in `mermaid/reference/diagram-types.md`).
-  `scripts/check.sh` uses the installed Mermaid CLI, which may be newer than that stamp.
-  Escalate to live docs or `scripts/refresh.sh` when a type is missing from the cache.
-- **Never presented unverified.** Every diagram is render-validated (via an MCP render tool or
-  the bundled `scripts/check.sh`) before it's shown, including detection of Mermaid's silent
-  error-placeholder SVG.
-- **Deterministic generation from structured data.** When a diagram's content is already
-  structured data on disk (a dependency graph, a timing ledger, a state machine, a sequence, a
-  requirement-traceability table), `mermaid/scripts/render.py` generates the exact Mermaid source
-  from a small JSON intermediate representation (IR) instead of hand-authoring it — see
-  [`mermaid/reference/ir.md`](mermaid/reference/ir.md) and
-  [`mermaid/reference/ir-catalog.md`](mermaid/reference/ir-catalog.md). The matrix of every
-  open-source diagram type, its IR, its tests, and remaining gaps is
+- **One catalog file per type.** Every open-source Mermaid 12.0.0 diagram type has a file under
+  `mermaid/reference/catalog/` with its syntax, every feature, config and theming, traps, and a
+  complete worked example. An agent picks a type from the index and loads only that file. The
+  cached upstream pages stay in `mermaid/reference/syntax/`, pinned to the `mermaid@12.0.0` tag.
+- **Never presented unverified.** Every diagram is validated with `scripts/check.sh`, which
+  **parses** the source with the pinned Mermaid 12.0.0 (no browser, no render) and reports the
+  failing line. Mermaid diagrams live in Markdown and are rendered by whatever viewer shows the
+  note, so validation only needs to confirm the source parses. CI runs it on every example in
+  every catalog file.
+- **Optional, reliable generation from structured data.** When a diagram's content is already
+  structured data, `mermaid/scripts/render.py` generates the exact Mermaid source from a small
+  JSON intermediate representation (IR) — see [`mermaid/reference/ir.md`](mermaid/reference/ir.md).
+  A type keeps a builder only where it is 100% reliable: every accepted IR parses with the pinned
+  Mermaid 12.0.0, and anything it cannot represent is rejected with a JSON path rather than
+  guessed. The checked matrix of every type, its keywords, its builder, and its tests is
   [`mermaid/reference/coverage.md`](mermaid/reference/coverage.md).
 
 ## Install
@@ -51,9 +54,25 @@ part of the installed skill.
 cd mermaid && python3 -m pytest tests/ -q
 ```
 
-Every positive-case test in `tests/test_render.py` is a real render through `scripts/check.sh`
-(an installed `mmdc`, otherwise `npx -y @mermaid-js/mermaid-cli@12.0.0`), not just a string match.
-GitHub Actions installs that same pin on Node 22. Mermaid 11 does not register `agentflow-beta`.
+The builder tests parse every fixture and text-corpus case through `scripts/check.sh`, which
+runs `scripts/mermaid-parse.mjs` to load `mermaid@12.0.0` (with `jsdom`, and the zenuml plugin)
+on Node 22+ and call `mermaid.parse()`; `check.sh --markdown` validates every example in every
+catalog file — not just string matches. GitHub Actions installs that same pin on Node 22. The
+pin matters: Mermaid 11 does not register `agentflow-beta`.
+
+## Versioning
+
+The skill declares its version in [`mermaid/SKILL.md`](mermaid/SKILL.md) frontmatter under
+`metadata.version`, as a quoted [SemVer 2.0.0](https://semver.org) string. CI
+(`tests/test_version.py`) fails if any `SKILL.md` is missing that version or carries a value
+that is not valid SemVer. Bump it with every change that ships:
+
+- **PATCH** (`x.y.Z`) — a fix that changes nothing an agent relies on: a corrected example, a
+  typo, a clarified trap, a non-breaking CI or test change.
+- **MINOR** (`x.Y.0`) — new guidance that is backwards compatible: a new catalog file, a new
+  builder, additional features or keywords, a new diagram type.
+- **MAJOR** (`X.0.0`) — a breaking change to the skill's layout or contract: renaming or
+  removing catalog files, changing the index shape, or removing a builder an IR relied on.
 
 ## License
 

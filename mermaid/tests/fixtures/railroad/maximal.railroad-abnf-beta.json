@@ -1,0 +1,172 @@
+{
+  "diagram": "grammar",
+  "target": "railroad-abnf-beta",
+  "title": "Address",
+  "rules": [
+    {
+      "name": "address",
+      "comment": {
+        "style": "line",
+        "text": "ABNF comment"
+      },
+      "expression": {
+        "kind": "sequence",
+        "separator": "space",
+        "items": [
+          {
+            "kind": "optional",
+            "form": "brackets",
+            "item": {
+              "kind": "sequence",
+              "items": [
+                {
+                  "kind": "terminal",
+                  "text": "+"
+                },
+                {
+                  "kind": "nonterminal",
+                  "name": "code"
+                }
+              ]
+            }
+          },
+          {
+            "kind": "nonterminal",
+            "name": "local-part"
+          },
+          {
+            "kind": "terminal",
+            "text": "@"
+          },
+          {
+            "kind": "nonterminal",
+            "name": "domain"
+          }
+        ]
+      }
+    },
+    {
+      "name": "code",
+      "expression": {
+        "kind": "oneOrMore",
+        "item": {
+          "kind": "nonterminal",
+          "name": "DIGIT"
+        }
+      }
+    },
+    {
+      "name": "local-part",
+      "expression": {
+        "kind": "oneOrMore",
+        "item": {
+          "kind": "choice",
+          "items": [
+            {
+              "kind": "nonterminal",
+              "name": "ALPHA"
+            },
+            {
+              "kind": "nonterminal",
+              "name": "DIGIT"
+            },
+            {
+              "kind": "terminal",
+              "text": "."
+            },
+            {
+              "kind": "terminal",
+              "text": "-"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "domain",
+      "expression": {
+        "kind": "sequence",
+        "items": [
+          {
+            "kind": "nonterminal",
+            "name": "label"
+          },
+          {
+            "kind": "zeroOrMore",
+            "item": {
+              "kind": "group",
+              "item": {
+                "kind": "sequence",
+                "items": [
+                  {
+                    "kind": "terminal",
+                    "text": "."
+                  },
+                  {
+                    "kind": "nonterminal",
+                    "name": "label"
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "label",
+      "expression": {
+        "kind": "sequence",
+        "items": [
+          {
+            "kind": "repeat",
+            "min": 2,
+            "max": 4,
+            "item": {
+              "kind": "nonterminal",
+              "name": "ALPHA"
+            }
+          },
+          {
+            "kind": "repeat",
+            "min": 3,
+            "max": 3,
+            "item": {
+              "kind": "nonterminal",
+              "name": "DIGIT"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "hex",
+      "expression": {
+        "kind": "choice",
+        "items": [
+          {
+            "kind": "charValue",
+            "base": "hex",
+            "value": 48,
+            "to": 57
+          },
+          {
+            "kind": "charValue",
+            "base": "dec",
+            "value": 65
+          },
+          {
+            "kind": "charValue",
+            "base": "bin",
+            "value": 65
+          },
+          {
+            "kind": "charValue",
+            "base": "hex",
+            "value": 65
+          }
+        ]
+      }
+    }
+  ]
+}

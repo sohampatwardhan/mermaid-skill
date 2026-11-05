@@ -1,0 +1,15 @@
+{
+  "diagram": "tree",
+  "target": "ishikawa",
+  "effect": "Late delivery",
+  "causes": [
+    {
+      "label": "Logistics",
+      "children": [
+        {
+          "label": "Truck breakdown"
+        }
+      ]
+    }
+  ]
+}
